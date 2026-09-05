@@ -22,6 +22,10 @@ module CycleFar
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
+    config.beginning_of_week = :monday
+    config.time_zone = "London"
+    # Preserve PostgreSQL history-protection triggers in schema loads.
+    config.active_record.schema_format = :sql
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
@@ -38,5 +42,9 @@ module CycleFar
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+    config.generators do |g|
+      g.test_framework :rspec
+      g.fixture_replacement :factory_bot, dir: "spec/factories"
+    end
   end
 end

@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
-# Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3", ">= 8.1.3.1"
+ruby "4.0.6"
+gem "rails", "8.1.3.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
@@ -61,6 +61,6 @@ group :development do
   gem "web-console"
 end
 
-gem "rspec-rails", "~> 8.0", groups: [:development, :test]
+gem "rspec-rails", "~> 8.0", groups: [ :development, :test ]
 
-gem "factory_bot_rails", "~> 6.5", groups: [:development, :test]
+gem "factory_bot_rails", "~> 6.5", groups: [ :development, :test ]
