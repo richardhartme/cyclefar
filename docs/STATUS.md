@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 2 — Pure workout engine
+Current milestone: 3 — Plan preview engine
 Status: Not started; awaiting the next implementation task
 
 ## Milestones
@@ -9,7 +9,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 - [x] Milestone 0 — Bootstrap and guardrails
 - [x] Milestone 1 — Settings and core persistence
-- [ ] Milestone 2 — Pure workout engine
+- [x] Milestone 2 — Pure workout engine
 - [ ] Milestone 3 — Plan preview engine
 - [ ] Milestone 4 — Persist plan + continuous calendar
 - [ ] Milestone 5 — Workout detail and manual editing
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Task 01 is complete. No later implementation milestone has started.
+Milestone 2 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -39,9 +39,18 @@ Task 01 is complete. No later implementation milestone has started.
 - Brakeman: no warnings; gem and importmap audits: no vulnerabilities.
 - `bin/setup --skip-server`, Tailwind build and development encryption check: passed.
 
+2026-09-05: Milestone 2 implemented locally (not committed by Codex).
+
+- Added a versioned, deterministic pure-Ruby workout engine for all seven workout subtypes.
+- Added exact-duration fitting, progression ladders, warm-ups/cool-downs, deterministic variants, FTP-independent profiles and one-second metrics.
+- Added 993 focused engine examples covering duration, progression, target bounds, metrics and edge cases.
+- `bundle exec rspec`: 1081 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 79 files, no offenses.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. Milestone 2 will implement
-only the pure deterministic workout engine. Plan configuration, generation UI,
-calendar, completion/adaptation workflows and external HTTP calls remain deferred.
+aligned with the authoritative implementation plan. The completed workout engine
+does not generate plans, persist workouts, render UI, mutate schedules or make
+external HTTP calls; those remain deferred to their documented milestones.

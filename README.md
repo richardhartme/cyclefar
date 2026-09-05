@@ -86,8 +86,9 @@ bin/importmap audit
 `bin/ci` runs setup and these checks. GitHub Actions includes PostgreSQL-backed
 RSpec and autoload checks alongside the existing lint and security jobs.
 
-Milestone 2 is the pure deterministic workout engine: target constants,
-progression ladders, exact-duration generation, metrics and workout profile data.
-Plan configuration, preview, calendar, completion/adaptation, schedule changes,
-sync and realistic generated demo plans remain deferred to their documented
-milestones. There is no authentication or new deployment infrastructure.
+Milestone 2 adds the pure deterministic workout engine: versioned target
+constants, progression ladders, exact-duration generation, metrics and workout
+profile data. Plan configuration, preview, calendar, completion/adaptation,
+schedule changes, sync and realistic generated demo plans remain deferred to
+their documented milestones. There is no authentication or new deployment
+infrastructure.
