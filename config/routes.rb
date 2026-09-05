@@ -4,6 +4,13 @@ Rails.application.routes.draw do
   resource :training_plan, only: [ :new, :create ] do
     post :preview
   end
+  resources :planned_workouts, only: [ :show ] do
+    member do
+      post :shuffle
+      post :change
+      post :move
+    end
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

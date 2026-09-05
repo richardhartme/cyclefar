@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 5 — Workout detail and manual editing
+Current milestone: 6 — Completion, overdue and adaptations
 Status: Not started; awaiting the next implementation task
 
 ## Milestones
@@ -12,7 +12,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 2 — Pure workout engine
 - [x] Milestone 3 — Plan preview engine
 - [x] Milestone 4 — Persist plan + continuous calendar
-- [ ] Milestone 5 — Workout detail and manual editing
+- [x] Milestone 5 — Workout detail and manual editing
 - [ ] Milestone 6 — Completion, overdue and adaptations
 - [ ] Milestone 7 — Missed workouts and schedule changes
 - [ ] Milestone 8 — Time off and return to training
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Milestone 4 is complete. No later implementation milestone has started.
+Milestone 5 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -67,9 +67,18 @@ Milestone 4 is complete. No later implementation milestone has started.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 94 files, no offenses.
 
+2026-09-05: Milestone 5 implemented locally (not committed by Codex).
+
+- Added Turbo Frame workout detail, canonical step/metric presentation and manual workout controls.
+- Added deterministic Same, Easier, Harder, ±15-minute and Change Workout regeneration with material-change messaging.
+- Added collision-safe moves and guards against completed-workout changes; no individual step-edit route exists.
+- `bundle exec rspec`: 1105 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 98 files, no offenses.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. The calendar is read-only;
-workout editing, completion/adaptation, schedule changes and external HTTP calls
-remain deferred to their documented milestones.
+aligned with the authoritative implementation plan. Completion/adaptation,
+schedule changes and external HTTP calls remain deferred to their documented
+milestones.

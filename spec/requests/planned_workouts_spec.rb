@@ -1,0 +1,39 @@
+require "rails_helper"
+
+RSpec.describe "Planned workouts", type: :request do
+  let(:plan) { create(:training_plan) }
+  let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
+  let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }
+
+  it "WKO-001 renders detail without an individual-step editing endpoint" do
+    get planned_workout_path(workout)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Move workout")
+    expect { Rails.application.routes.recognize_path("/planned_workouts/#{workout.id}", method: :patch) }.to raise_error(ActionController::RoutingError)
+  end
+
+  it "WKO-004 rejects shorter below 30 minutes through the action" do
+    short = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, duration_minutes: 30, scheduled_on: plan.starts_on + 2)
+    post shuffle_planned_workout_path(short), params: { action_kind: "shorter" }
+    expect(response).to redirect_to(planned_workout_path(short))
+    expect(flash[:alert]).to include("below 30")
+    expect(short.reload.duration_minutes).to eq(30)
+  end
+
+  it "WKO-006 moves only to an empty date inside the plan" do
+    post move_planned_workout_path(workout), params: { scheduled_on: (plan.starts_on + 3).iso8601 }
+    expect(response).to redirect_to(root_path)
+    expect(workout.reload.scheduled_on).to eq(plan.starts_on + 3)
+    other = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 4)
+    post move_planned_workout_path(workout), params: { scheduled_on: other.scheduled_on.iso8601 }
+    expect(flash[:alert]).to include("already has a workout")
+    expect(workout.reload.scheduled_on).to eq(plan.starts_on + 3)
+  end
+
+  it "WKO-006 preserves completed workout history when a move is requested" do
+    completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 5)
+    post move_planned_workout_path(completed), params: { scheduled_on: (plan.starts_on + 6).iso8601 }
+    expect(flash[:alert]).to include("Completed workouts cannot be moved")
+    expect(completed.reload.scheduled_on).to eq(plan.starts_on + 5)
+  end
+end

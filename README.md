@@ -86,10 +86,9 @@ bin/importmap audit
 `bin/ci` runs setup and these checks. GitHub Actions includes PostgreSQL-backed
 RSpec and autoload checks alongside the existing lint and security jobs.
 
-Milestone 4 confirms previews transactionally and shows a continuous read-only
-calendar. It stores outline prescriptions across the plan and canonical workout
-steps only for the 14-day horizon, with phase/recovery treatment, weekly totals,
-event and FTP-test cards, and mini workout profiles. Workout editing,
-completion/adaptation, schedule changes, sync and realistic generated demo plans
-remain deferred to their documented milestones. There is no authentication or
-new deployment infrastructure.
+Milestone 5 adds a Turbo workout detail view and manual controls for deterministic
+Same/Easier/Harder changes, 15-minute duration changes, type changes and moves to
+empty dates. Every edit regenerates canonical steps and metrics; completed
+workouts remain protected. Completion/adaptation, schedule changes, sync and
+realistic generated demo plans remain deferred to their documented milestones.
+There is no authentication or new deployment infrastructure.
