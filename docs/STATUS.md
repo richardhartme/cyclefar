@@ -1,7 +1,7 @@
 # CycleFar Build Status
 
 Current milestone: 7 — Missed workouts and schedule changes
-Status: Not started; awaiting the next implementation task
+Status: Complete; awaiting the next implementation task
 
 ## Milestones
 
@@ -14,7 +14,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 4 — Persist plan + continuous calendar
 - [x] Milestone 5 — Workout detail and manual editing
 - [x] Milestone 6 — Completion, overdue and adaptations
-- [ ] Milestone 7 — Missed workouts and schedule changes
+- [x] Milestone 7 — Missed workouts and schedule changes
 - [ ] Milestone 8 — Time off and return to training
 - [ ] Milestone 9 — FTP lifecycle
 - [ ] Milestone 10 — Intervals.icu sync
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Milestone 6 is complete. No later implementation milestone has started.
+Milestone 7 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -85,9 +85,19 @@ Milestone 6 is complete. No later implementation milestone has started.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 104 files, no offenses.
 
+2026-09-05: Milestone 7 implemented locally (not committed by Codex).
+
+- Added explicit missed-workout resolution for leave unchanged, collision-safe move and a deterministic replan of the next 14 days without training-debt stacking.
+- Added one-week and ongoing availability changes, immutable availability-template history, future high-level re-prescription and horizon rematerialisation.
+- Preserved past/completed workouts, FTP tests, openers, phases and target events during schedule changes; re-prescription runs through the existing plan engine so its load-cap rules remain in effect.
+- Added service and request coverage for missed resolution, availability versions, one-workout-per-date protection, calendar actions and completed/past preservation.
+- `bundle exec rspec`: 1118 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 112 files, no offenses.
+- Brakeman and Bundler Audit: no warnings or vulnerabilities.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. Missed-workout handling,
-schedule changes and external HTTP calls remain deferred to their documented
-milestones.
+aligned with the authoritative implementation plan. Time off and external HTTP
+calls remain deferred to their documented milestones.

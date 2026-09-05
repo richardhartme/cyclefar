@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Planned workouts", type: :request do
-  let(:plan) { create(:training_plan) }
+  let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70) }
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }
 
@@ -35,5 +35,14 @@ RSpec.describe "Planned workouts", type: :request do
     post move_planned_workout_path(completed), params: { scheduled_on: (plan.starts_on + 6).iso8601 }
     expect(flash[:alert]).to include("Completed workouts cannot be moved")
     expect(completed.reload.scheduled_on).to eq(plan.starts_on + 5)
+  end
+
+  it "MIS-001 removes a past workout after the rider resolves it as missed" do
+    past = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1)
+
+    post miss_planned_workout_path(past), params: { resolution: "leave_unchanged" }
+
+    expect(response).to redirect_to(root_path)
+    expect { past.reload }.to raise_error(ActiveRecord::RecordNotFound)
   end
 end

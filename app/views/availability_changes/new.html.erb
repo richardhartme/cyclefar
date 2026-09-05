@@ -1,0 +1,44 @@
+<section class="max-w-3xl rounded-lg border border-slate-200 bg-white p-6">
+  <%= link_to "Back to calendar", root_path, class: "font-semibold text-teal-800 underline" %>
+  <h1 class="mt-5 text-3xl font-semibold">Change availability</h1>
+  <p class="mt-2 text-slate-600">Update a single Monday–Sunday week or every future week from a chosen date.</p>
+
+  <%= form_with url: availability_change_path, class: "mt-6 space-y-6" do %>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <%= label_tag :scope, "Apply change", class: "block font-semibold" %>
+        <%= select_tag :scope, options_for_select([["This week only", "one_week"], ["From date onward", "from_date"]]), class: "mt-1 w-full rounded border-slate-300" %>
+      </div>
+      <div>
+        <%= label_tag :effective_from, "Date", class: "block font-semibold" %>
+        <%= date_field_tag :effective_from, Date.current, min: @plan.starts_on, max: @plan.ends_on, class: "mt-1 w-full rounded border-slate-300" %>
+      </div>
+    </div>
+
+    <fieldset>
+      <legend class="font-semibold">Weekly availability</legend>
+      <p class="mt-1 text-sm text-slate-600">Select each day you can train. Unselected days remain rest days.</p>
+      <div class="mt-3 space-y-3">
+        <% (1..7).each do |day| %>
+          <div class="grid items-center gap-3 border-b pb-3 sm:grid-cols-[10rem_1fr_1fr]">
+            <div>
+              <%= hidden_field_tag "slots[#{day}][weekday]", day %>
+              <%= check_box_tag "slots[#{day}][enabled]", "1", false, id: "availability_day_#{day}" %>
+              <%= label_tag "availability_day_#{day}", Date::DAYNAMES.rotate.fetch(day - 1), class: "ml-1 font-medium" %>
+            </div>
+            <div>
+              <%= label_tag "availability_duration_#{day}", "Minutes", class: "sr-only" %>
+              <%= number_field_tag "slots[#{day}][duration_minutes]", 60, min: 30, id: "availability_duration_#{day}", class: "w-full rounded border-slate-300" %>
+            </div>
+            <div>
+              <%= label_tag "availability_intent_#{day}", "Intent", class: "sr-only" %>
+              <%= select_tag "slots[#{day}][intent]", options_for_select(AvailabilitySlot::INTENTS.map { |intent| [intent.humanize, intent] }), id: "availability_intent_#{day}", class: "w-full rounded border-slate-300" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <%= submit_tag "Update availability", class: "rounded bg-teal-800 px-4 py-2 font-semibold text-white" %>
+  <% end %>
+</section>

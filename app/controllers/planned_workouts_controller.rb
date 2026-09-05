@@ -39,6 +39,13 @@ class PlannedWorkoutsController < ApplicationController
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 
+  def miss
+    Planning::MissedWorkoutResolver.new(@workout).resolve!(mode: params.require(:resolution), destination: params[:scheduled_on])
+    redirect_to root_path, notice: "Missed workout resolved."
+  rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to planned_workout_path(@workout), alert: error.message
+  end
+
   private
 
   def load_workout

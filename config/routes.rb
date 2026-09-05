@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       post :change
       post :move
       post :complete
+      post :miss
     end
   end
   resources :adaptation_proposals, only: [] do
@@ -18,6 +19,7 @@ Rails.application.routes.draw do
       delete :reject
     end
   end
+  resource :availability_change, only: [ :new, :create ]
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
