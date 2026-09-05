@@ -9,6 +9,13 @@ Rails.application.routes.draw do
       post :shuffle
       post :change
       post :move
+      post :complete
+    end
+  end
+  resources :adaptation_proposals, only: [] do
+    member do
+      post :accept
+      delete :reject
     end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

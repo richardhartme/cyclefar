@@ -1,6 +1,6 @@
 class HomeController < ApplicationController
   def index
-    @plan = TrainingPlan.active.includes(:target_event, :plan_phases, planned_workouts: :workout_steps).first
+    @plan = TrainingPlan.active.includes(:target_event, :plan_phases, :adaptation_proposals, planned_workouts: :workout_steps).first
     return unless @plan
 
     Planning::HorizonMaterializer.new(@plan).call

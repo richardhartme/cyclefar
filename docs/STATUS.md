@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 6 — Completion, overdue and adaptations
+Current milestone: 7 — Missed workouts and schedule changes
 Status: Not started; awaiting the next implementation task
 
 ## Milestones
@@ -13,7 +13,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 3 — Plan preview engine
 - [x] Milestone 4 — Persist plan + continuous calendar
 - [x] Milestone 5 — Workout detail and manual editing
-- [ ] Milestone 6 — Completion, overdue and adaptations
+- [x] Milestone 6 — Completion, overdue and adaptations
 - [ ] Milestone 7 — Missed workouts and schedule changes
 - [ ] Milestone 8 — Time off and return to training
 - [ ] Milestone 9 — FTP lifecycle
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Milestone 5 is complete. No later implementation milestone has started.
+Milestone 6 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -76,9 +76,18 @@ Milestone 5 is complete. No later implementation milestone has started.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 98 files, no offenses.
 
+2026-09-05: Milestone 6 implemented locally (not committed by Codex).
+
+- Added transactional manual completion with feedback and frozen FTP/target/metric snapshots.
+- Added awaiting-status and completed calendar states, deterministic adaptation evaluation, and explicit proposal accept/reject actions.
+- Added bounded long-term intensity-bias updates only after proposal acceptance.
+- `bundle exec rspec`: 1110 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 104 files, no offenses.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. Completion/adaptation,
+aligned with the authoritative implementation plan. Missed-workout handling,
 schedule changes and external HTTP calls remain deferred to their documented
 milestones.

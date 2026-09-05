@@ -32,6 +32,13 @@ class PlannedWorkoutsController < ApplicationController
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 
+  def complete
+    proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality)).call
+    redirect_to root_path, notice: proposal ? "Workout completed. An adaptation proposal is ready for review." : "Workout completed."
+  rescue ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to planned_workout_path(@workout), alert: error.message
+  end
+
   private
 
   def load_workout

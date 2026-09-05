@@ -86,9 +86,9 @@ bin/importmap audit
 `bin/ci` runs setup and these checks. GitHub Actions includes PostgreSQL-backed
 RSpec and autoload checks alongside the existing lint and security jobs.
 
-Milestone 5 adds a Turbo workout detail view and manual controls for deterministic
-Same/Easier/Harder changes, 15-minute duration changes, type changes and moves to
-empty dates. Every edit regenerates canonical steps and metrics; completed
-workouts remain protected. Completion/adaptation, schedule changes, sync and
-realistic generated demo plans remain deferred to their documented milestones.
-There is no authentication or new deployment infrastructure.
+Milestone 6 adds manual completion with RPE and quality feedback, immutable
+completion snapshots, overdue status, and explicit adaptation proposals. Proposed
+changes only affect near-term structured workouts after acceptance. Missed-workout
+handling, schedule changes, sync and realistic generated demo plans remain
+deferred to their documented milestones. There is no authentication or new
+deployment infrastructure.

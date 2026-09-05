@@ -12,8 +12,8 @@ module Workouts
       raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && workout.workout?
     end
 
-    def apply!(action:, subtype: nil, duration_minutes: nil)
-      attributes = next_attributes(action, subtype, duration_minutes)
+    def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
+      attributes = next_attributes(action, subtype, duration_minutes, progression_level)
       definition = Generator.new(**attributes).call
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.initial_ftp_watts).call
       material_change = material_change?(definition.subtype, metrics)
@@ -31,7 +31,7 @@ module Workouts
 
     private
 
-    def next_attributes(action, subtype, duration_minutes)
+    def next_attributes(action, subtype, duration_minutes, progression_level)
       current_level = @workout.progression_level || 1
       level, variation, duration, chosen_subtype = case action.to_s
       when "same" then [ current_level, Variations.next_key(@workout.variation_key || "a"), @workout.duration_minutes, @workout.subtype ]
@@ -40,6 +40,7 @@ module Workouts
       when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
       when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
       when "change" then [ current_level, @workout.variation_key, Integer(duration_minutes), subtype.to_s ]
+      when "adapt" then [ Integer(progression_level), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
       end
       raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::V1::Rules::MINIMUM_DURATION_MINUTES
