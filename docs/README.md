@@ -1,0 +1,71 @@
+# CycleFar — V1 Build Specification
+
+This folder is the implementation brief for **CycleFar**, a local, single-user indoor cycling training planner built with Ruby on Rails.
+
+## Product in one sentence
+
+**CycleFar** generates an adaptive, periodised indoor cycling training plan from a rider's goal, FTP, weekly availability and preferred workout types, then manages it through a continuous calendar and optionally syncs the next two workouts to Intervals.icu.
+
+## V1 technology stack
+
+- Ruby 4.0.x (pin to 4.0.6 initially)
+- Rails 8.1.x (pin to 8.1.3.1 initially)
+- PostgreSQL
+- Hotwire: Turbo + Stimulus
+- Tailwind CSS
+- RSpec
+- FactoryBot
+- Rails built-in Active Record Encryption for the Intervals.icu API key
+- No React
+- No authentication in V1
+- No AI/LLM in V1
+
+CycleFar is desktop-first and intended to run locally. Do not add deployment infrastructure unless required to make local development work.
+
+## Read order for Codex
+
+1. `AGENTS.md` — implementation rules and quality bar.
+2. `PRODUCT.md` — product intent, scope and non-goals.
+3. `REQUIREMENTS.md` — functional requirements and acceptance criteria.
+4. `TRAINING_ENGINE.md` — deterministic planning/workout-generation rules.
+5. `DATA_MODEL.md` — suggested Rails persistence model.
+6. `ARCHITECTURE.md` — service boundaries and application structure.
+7. `UX.md` — screens and interaction flows.
+8. `INTERVALS_ICU.md` — integration contract.
+9. `IMPLEMENTATION_PLAN.md` — build order.
+10. `SOURCES.md` — external references used when writing the specification.
+
+## Core design constraints
+
+- There is at most one active training plan.
+- Plan generation must be deterministic and rules based.
+- The next 14 calendar days contain fully structured workouts; later workouts remain high-level prescriptions.
+- As each new day enters the 14-day horizon, its workout is structured automatically. Existing structured workouts are not silently regenerated.
+- The user's weekly availability is a repeating Monday–Sunday template and normally uses exact durations.
+- A recovery week may intentionally use less than the available duration because recovery takes priority over filling the slot.
+- Workouts prescribe power as ranges of FTP and are designed for ERG mode.
+- Completed workouts become immutable snapshots.
+- Past planned workouts remain actionable until explicitly completed or missed.
+- Plan adaptations are proposed to the rider and only applied after acceptance.
+- Intervals.icu sync is explicit via a button and only syncs the next two upcoming structured workouts.
+
+## Suggested bootstrap
+
+A reasonable initial app creation command is:
+
+```bash
+rails new cycle_far \
+  --database=postgresql \
+  --css=tailwind
+```
+
+Then add RSpec and FactoryBot and remove/avoid Minitest-generated tests.
+
+Do not start by implementing the entire training engine. Follow `IMPLEMENTATION_PLAN.md` and build vertical slices with tests.
+
+## Product naming
+
+- Product/UI name: **CycleFar**
+- Rails project/application identifier: `cycle_far` / `CycleFar`
+- Owned domain: `cyclefar.com` (future deployment context only; V1 remains local)
+- Keep product branding out of domain model/table names unless the name is genuinely part of an external identifier. A future rename should not require rewriting core training logic.
