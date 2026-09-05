@@ -2,6 +2,8 @@ require_relative "availability"
 require_relative "existing_plan_configuration"
 require_relative "horizon_materializer"
 require_relative "plan_builder"
+require_relative "../metrics/workout_calculator"
+require_relative "../workouts/generator"
 
 module Planning
   class FuturePrescriber
@@ -19,8 +21,10 @@ module Planning
       dates = range.select { |date| date >= Date.current && date.between?(@plan.starts_on, @plan.ends_on) }
       return if dates.empty?
 
+      @pre_break_levels = pre_break_levels
+      @plan.planned_workouts.planned.where(scheduled_on: dates & blocked_dates(dates)).destroy_all
       @plan.planned_workouts.planned.where(kind: :workout, scheduled_on: dates).destroy_all
-      prescriptions.select { |item| item.kind == "workout" && dates.include?(item.scheduled_on) }.each do |item|
+      prescriptions.filter_map { |item| prepared_prescription(item, dates) }.each do |item|
         next if @plan.planned_workouts.where(scheduled_on: item.scheduled_on).exists?
 
         phase = @plan.plan_phases.find { |candidate| item.scheduled_on.between?(candidate.starts_on, candidate.ends_on) }
@@ -37,6 +41,97 @@ module Planning
 
     def prescriptions
       PlanBuilder.new(ExistingPlanConfiguration.new(plan: @plan, availability: @slots)).preview.prescriptions
+    end
+
+    def prepared_prescription(item, dates)
+      return unless dates.include?(item.scheduled_on)
+      return unless %w[workout ftp_test opener].include?(item.kind)
+      return if time_off_period_for(item.scheduled_on)
+      return if return_ramp_period_for(item.scheduled_on) && item.kind != "workout"
+      return item unless item.kind == "workout"
+
+      reentry_prescription(item)
+    end
+
+    def blocked_dates(dates)
+      dates.select { |date| blocked?(date) }
+    end
+
+    def blocked?(date)
+      time_off_period_for(date) || return_ramp_period_for(date)
+    end
+
+    def time_off_period_for(date)
+      time_off_periods.find { |period| date.between?(period.starts_on, period.ends_on) }
+    end
+
+    def return_ramp_period_for(date)
+      time_off_periods.find do |period|
+        period.return_ramp_days.present? && date.between?(period.ends_on + 1, period.ends_on + period.return_ramp_days)
+      end
+    end
+
+    def reentry_prescription(item)
+      period = return_ramp_period_for(item.scheduled_on)
+      return illness_reentry(item, period) if period
+
+      period = latest_completed_break_before(item.scheduled_on)
+      return item unless period
+
+      resume_after_break(item, period)
+    end
+
+    def illness_reentry(item, period)
+      stage = [ ((item.scheduled_on - period.ends_on - 1) * 4 / period.return_ramp_days), 3 ].min
+      subtype, duration_factor, level = case stage
+      when 0 then [ :recovery, 0.60, nil ]
+      when 1 then [ :endurance, 0.70, nil ]
+      when 2 then [ item.intensity? ? :tempo : :endurance, 0.80, item.intensity? ? 1 : nil ]
+      else [ item.subtype, 1.0, item.intensity? ? resumed_level(item, period, reduction: 1) : nil ]
+      end
+      recalculate(item, subtype: subtype, duration_minutes: reduced_duration(item.duration_minutes, duration_factor), progression_level: level,
+        purpose: "Return-to-training stage #{stage + 1} after #{period.reason.humanize.downcase}.")
+    end
+
+    def resume_after_break(item, period)
+      return item unless item.intensity?
+
+      recalculate(item, subtype: item.subtype, duration_minutes: item.duration_minutes,
+        progression_level: resumed_level(item, period), purpose: "Resuming progression after #{period.reason.humanize.downcase} time off.")
+    end
+
+    def resumed_level(item, period, reduction: 0)
+      baseline = @pre_break_levels.fetch(period.id, 1)
+      weekly_progression = ((item.scheduled_on - period.ends_on - 1) / 7).to_i
+      [ item.progression_level.to_i, [ baseline - reduction + weekly_progression, 1 ].max ].min
+    end
+
+    def reduced_duration(duration, factor)
+      [ (duration * factor).round, Training::V1::Rules::MINIMUM_DURATION_MINUTES ].max
+    end
+
+    def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:)
+      level = progression_level || 1
+      definition = Workouts::Generator.new(subtype: subtype, duration_minutes: duration_minutes, progression_level: level,
+        variation_key: "a", phase: item.phase, goal: @plan.goal, discipline: @plan.discipline).call
+      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.initial_ftp_watts).call
+      item.with(subtype: definition.subtype, duration_minutes: duration_minutes, progression_level: definition.progression_level,
+        name: definition.name, purpose: purpose, main_set_summary: definition.main_set_summary, metrics: metrics)
+    end
+
+    def latest_completed_break_before(date)
+      time_off_periods.select { |period| period.ends_on < date }.max_by(&:ends_on)
+    end
+
+    def pre_break_levels
+      time_off_periods.to_h do |period|
+        level = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(progression_level: nil).maximum(:progression_level)
+        [ period.id, level || 1 ]
+      end
+    end
+
+    def time_off_periods
+      @time_off_periods ||= @plan.time_off_periods.order(:starts_on).to_a
     end
   end
 end

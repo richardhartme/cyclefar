@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 7 — Missed workouts and schedule changes
+Current milestone: 8 — Time off and return to training
 Status: Complete; awaiting the next implementation task
 
 ## Milestones
@@ -15,14 +15,14 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 5 — Workout detail and manual editing
 - [x] Milestone 6 — Completion, overdue and adaptations
 - [x] Milestone 7 — Missed workouts and schedule changes
-- [ ] Milestone 8 — Time off and return to training
+- [x] Milestone 8 — Time off and return to training
 - [ ] Milestone 9 — FTP lifecycle
 - [ ] Milestone 10 — Intervals.icu sync
 - [ ] Milestone 11 — Polish and hardening
 
 ## Current work
 
-Milestone 7 is complete. No later implementation milestone has started.
+Milestone 8 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -94,6 +94,17 @@ Milestone 7 is complete. No later implementation milestone has started.
 - `bundle exec rspec`: 1118 examples, 0 failures.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 112 files, no offenses.
+- Brakeman and Bundler Audit: no warnings or vulnerabilities.
+
+2026-09-05: Milestone 8 implemented locally (not committed by Codex).
+
+- Added add/remove time-off actions with Holiday, Illness, Recovery and Other reasons, including validated user-selected return-ramp days for Illness and Recovery.
+- Re-prescribed future training around time off without extending the fixed plan end; planned FTP tests and openers in time-off or re-entry dates are removed while completed workouts, phases and target events remain intact.
+- Added deterministic Holiday/Other resumption and four-stage illness/recovery re-entry prescriptions, including collapsed short ramps and horizon materialisation.
+- Added calendar time-off cards and request/service coverage for changes, completed-workout protection, event/taper interactions, short and long ramps, removal and fixed plan dates.
+- `bundle exec rspec`: 1123 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 116 files, no offenses.
 - Brakeman and Bundler Audit: no warnings or vulnerabilities.
 
 ## Notes
