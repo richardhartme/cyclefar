@@ -17,6 +17,7 @@ module Settings
         @profile.save!
         if ftp_changed
           @profile.ftp_readings.create!(ftp_watts: @profile.ftp_watts, effective_on: @effective_on)
+          Planning::FtpRecalculator.new(ftp_watts: @profile.ftp_watts, effective_on: @effective_on).call
         end
       end
       @profile

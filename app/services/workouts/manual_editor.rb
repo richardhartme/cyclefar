@@ -15,7 +15,7 @@ module Workouts
     def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
       attributes = next_attributes(action, subtype, duration_minutes, progression_level)
       definition = Generator.new(**attributes).call
-      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.initial_ftp_watts).call
+      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
       material_change = material_change?(definition.subtype, metrics)
       @workout.transaction do
         @workout.workout_steps.destroy_all
@@ -58,6 +58,10 @@ module Workouts
       intensity?(subtype) != intensity?(@workout.subtype) ||
         ((metrics.estimated_tss / @workout.estimated_tss) - 1).abs >= 0.15 ||
         (metrics.estimated_if - @workout.estimated_if).abs >= 0.08
+    end
+
+    def current_ftp_watts
+      RiderProfile.current.ftp_watts || @workout.training_plan.initial_ftp_watts
     end
 
     def intensity?(subtype)

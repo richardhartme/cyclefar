@@ -45,4 +45,27 @@ RSpec.describe "Planned workouts", type: :request do
     expect(response).to redirect_to(root_path)
     expect { past.reload }.to raise_error(ActiveRecord::RecordNotFound)
   end
+
+  it "FTP-001 presents an assessment action and records a completed FTP test" do
+    ftp_test = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 2)
+
+    get planned_workout_path(ftp_test)
+    expect(response.body).to include("preferred FTP assessment protocol", "Test done — update FTP")
+    post complete_test_planned_workout_path(ftp_test)
+
+    expect(response).to redirect_to(settings_path)
+    expect(ftp_test.reload).to be_completed
+    expect(ftp_test.completed_at).to be_present
+  end
+
+  it "SET-001 displays current FTP watt targets for planned workouts and snapshots for completed workouts" do
+    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 300 }).call
+    planned = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 2)
+    completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 3)
+
+    get planned_workout_path(planned)
+    expect(response.body).to include("FTP basis: 300 W", "180–210 W")
+    get planned_workout_path(completed)
+    expect(response.body).to include("FTP basis: 260 W", "156–182 W")
+  end
 end

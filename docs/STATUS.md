@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 8 — Time off and return to training
+Current milestone: 9 — FTP lifecycle
 Status: Complete; awaiting the next implementation task
 
 ## Milestones
@@ -16,13 +16,13 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 6 — Completion, overdue and adaptations
 - [x] Milestone 7 — Missed workouts and schedule changes
 - [x] Milestone 8 — Time off and return to training
-- [ ] Milestone 9 — FTP lifecycle
+- [x] Milestone 9 — FTP lifecycle
 - [ ] Milestone 10 — Intervals.icu sync
 - [ ] Milestone 11 — Polish and hardening
 
 ## Current work
 
-Milestone 8 is complete. No later implementation milestone has started.
+Milestone 9 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -105,6 +105,17 @@ Milestone 8 is complete. No later implementation milestone has started.
 - `bundle exec rspec`: 1123 examples, 0 failures.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 116 files, no offenses.
+- Brakeman and Bundler Audit: no warnings or vulnerabilities.
+
+2026-09-05: Milestone 9 implemented locally (not committed by Codex).
+
+- Added an FTP Test detail flow that records an assessment separately and directs the rider to update Settings with the result.
+- Added transactional recalculation of future planned structured-workout metrics when FTP changes, while keeping canonical percentage steps and all completed snapshots untouched.
+- Materialisation, schedule re-prescription, manual workout edits and workout-detail target-watt displays now use the rider’s current FTP context.
+- Added service and request coverage for current future watts, preserved percentage structures and completed snapshots, and FTP-test completion.
+- `bundle exec rspec`: 1126 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 118 files, no offenses.
 - Brakeman and Bundler Audit: no warnings or vulnerabilities.
 
 ## Notes

@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       post :change
       post :move
       post :complete
+      post :complete_test
       post :miss
     end
   end

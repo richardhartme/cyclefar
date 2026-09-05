@@ -39,6 +39,15 @@ class PlannedWorkoutsController < ApplicationController
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 
+  def complete_test
+    raise ArgumentError, "Only a planned FTP test can be marked done" unless @workout.planned? && @workout.ftp_test?
+
+    @workout.update!(status: :completed, completed_at: Time.current)
+    redirect_to settings_path, notice: "FTP test recorded. Update your current FTP from the result."
+  rescue ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to planned_workout_path(@workout), alert: error.message
+  end
+
   def miss
     Planning::MissedWorkoutResolver.new(@workout).resolve!(mode: params.require(:resolution), destination: params[:scheduled_on])
     redirect_to root_path, notice: "Missed workout resolved."

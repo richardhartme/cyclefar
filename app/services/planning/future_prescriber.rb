@@ -114,7 +114,7 @@ module Planning
       level = progression_level || 1
       definition = Workouts::Generator.new(subtype: subtype, duration_minutes: duration_minutes, progression_level: level,
         variation_key: "a", phase: item.phase, goal: @plan.goal, discipline: @plan.discipline).call
-      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.initial_ftp_watts).call
+      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
       item.with(subtype: definition.subtype, duration_minutes: duration_minutes, progression_level: definition.progression_level,
         name: definition.name, purpose: purpose, main_set_summary: definition.main_set_summary, metrics: metrics)
     end
@@ -132,6 +132,10 @@ module Planning
 
     def time_off_periods
       @time_off_periods ||= @plan.time_off_periods.order(:starts_on).to_a
+    end
+
+    def current_ftp_watts
+      RiderProfile.current.ftp_watts || @plan.initial_ftp_watts
     end
   end
 end
