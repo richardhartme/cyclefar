@@ -11,8 +11,8 @@ RSpec.describe "Home", type: :request do
     expect(action["href"]).to eq(new_training_plan_path)
     get action["href"]
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Plan creation is coming soon")
-    expect(Nokogiri::HTML(response.body).css("form")).to be_empty
+    expect(response.body).to include("Weekly availability", "Preview plan")
+    expect(Nokogiri::HTML(response.body).css("form")).not_to be_empty
   end
 
   it "uses Monday-first calendar dates" do

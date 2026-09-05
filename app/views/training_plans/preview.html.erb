@@ -1,0 +1,29 @@
+<section class="max-w-5xl">
+  <h1 class="mb-2 text-3xl font-semibold">Plan preview</h1>
+  <p class="mb-8 text-slate-600"><%= @presenter.goal_label %> · <%= @presenter.discipline_label %> · <%= @presenter.date_range %></p>
+
+  <% if @presenter.event_summary %><p class="mb-6 rounded bg-amber-50 p-4"><strong>Target event:</strong> <%= @presenter.event_summary %></p><% end %>
+
+  <section aria-labelledby="phase-timeline" class="mb-8">
+    <h2 id="phase-timeline" class="text-xl font-semibold">Phase timeline</h2>
+    <ol class="mt-3 grid gap-3 md:grid-cols-4"><% @preview.phases.each do |phase| %><li class="rounded border border-slate-300 p-3"><strong><%= @presenter.phase_label(phase) %></strong><br><%= phase.starts_on.to_fs(:long) %> – <%= phase.ends_on.to_fs(:long) %></li><% end %></ol>
+  </section>
+
+  <section aria-labelledby="availability-summary" class="mb-8">
+    <h2 id="availability-summary" class="text-xl font-semibold">Weekly template</h2>
+    <p class="mt-2"><%= @configuration.availability.map { |slot| "#{Date::DAYNAMES.rotate.fetch(slot.weekday - 1)}: #{slot.duration_minutes} min #{slot.intent.humanize}" }.join(" · ") %></p>
+    <p class="mt-2">Recovery pattern: <%= @configuration.progression_mode == "continuous" ? "Continuous progression" : "#{@configuration.hard_weeks_before_recovery} hard weeks, then one recovery week" %></p>
+  </section>
+
+  <section aria-labelledby="assessment-dates" class="mb-8"><h2 id="assessment-dates" class="text-xl font-semibold">FTP assessments</h2><p class="mt-2"><%= @preview.ftp_test_dates.any? ? @preview.ftp_test_dates.map { |date| date.to_fs(:long) }.join(" · ") : "No routine FTP test is proposed for this plan length." %></p></section>
+  <% opener = @preview.prescriptions.find { |item| item.kind == "opener" } %>
+  <% if opener %><section aria-labelledby="taper-details" class="mb-8"><h2 id="taper-details" class="text-xl font-semibold">Taper and opener</h2><p class="mt-2"><%= opener.name %> on <%= opener.scheduled_on.to_fs(:long) %>, <%= opener.duration_minutes %> minutes.</p></section><% end %>
+
+  <section aria-labelledby="weekly-load" class="mb-8">
+    <h2 id="weekly-load" class="text-xl font-semibold">Projected weekly load</h2>
+    <div class="mt-3 overflow-x-auto"><table class="w-full text-left"><thead><tr><th>Week</th><th>Phase</th><th>Duration</th><th>TSS</th><th>Work</th></tr></thead><tbody><% @preview.weeks.each do |week| %><tr><td><%= week.starts_on.to_fs(:long) %></td><td><%= week.recovery_week ? "Recovery week" : week.phase.humanize %></td><td><%= @presenter.week_duration(week) %></td><td><%= @presenter.week_tss(week) %></td><td><%= @presenter.week_work(week) %></td></tr><% end %></tbody></table></div>
+    <% @preview.warnings.each do |warning| %><p role="status" class="mt-3 rounded bg-amber-50 p-3"><%= warning %></p><% end %>
+  </section>
+
+  <%= link_to "Back to edit", new_training_plan_path, class: "font-semibold text-teal-800 underline" %>
+</section>

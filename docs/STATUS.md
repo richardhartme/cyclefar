@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 3 — Plan preview engine
+Current milestone: 4 — Persist plan + continuous calendar
 Status: Not started; awaiting the next implementation task
 
 ## Milestones
@@ -10,7 +10,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 0 — Bootstrap and guardrails
 - [x] Milestone 1 — Settings and core persistence
 - [x] Milestone 2 — Pure workout engine
-- [ ] Milestone 3 — Plan preview engine
+- [x] Milestone 3 — Plan preview engine
 - [ ] Milestone 4 — Persist plan + continuous calendar
 - [ ] Milestone 5 — Workout detail and manual editing
 - [ ] Milestone 6 — Completion, overdue and adaptations
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Milestone 2 is complete. No later implementation milestone has started.
+Milestone 3 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -48,9 +48,18 @@ Milestone 2 is complete. No later implementation milestone has started.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 79 files, no offenses.
 
+2026-09-05: Milestone 3 implemented locally (not committed by Codex).
+
+- Added a validated plan-configuration form and an in-memory plan preview screen.
+- Added deterministic phase allocation, recovery overlays, interval selection, taper/opener and FTP-test placement, forecast metrics and weekly load-cap enforcement.
+- Added plan-preview unit and request specs covering goals, durations, phases, recovery modes, taper, FTP tests, load limits and non-persistence.
+- `bundle exec rspec`: 1094 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 89 files, no offenses.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. The completed workout engine
-does not generate plans, persist workouts, render UI, mutate schedules or make
-external HTTP calls; those remain deferred to their documented milestones.
+aligned with the authoritative implementation plan. The preview is generated in
+memory and does not persist workouts, render the calendar, mutate schedules or
+make external HTTP calls; those remain deferred to their documented milestones.
