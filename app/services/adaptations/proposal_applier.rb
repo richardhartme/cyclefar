@@ -1,5 +1,3 @@
-require_relative "../workouts/manual_editor"
-
 module Adaptations
   class ProposalApplier
     def initialize(proposal)

@@ -1,5 +1,3 @@
-require_relative "../metrics/workout_calculator"
-
 module Planning
   class FtpRecalculator
     def initialize(ftp_watts:, effective_on: Date.current)

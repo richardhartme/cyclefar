@@ -1,5 +1,3 @@
-require_relative "future_prescriber"
-
 module Planning
   class AvailabilityChanger
     def initialize(plan:, slots:, effective_from:, scope:)

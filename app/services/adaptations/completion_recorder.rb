@@ -1,5 +1,3 @@
-require_relative "feedback_evaluator"
-
 module Adaptations
   class CompletionRecorder
     def initialize(workout:, rpe:, completion_quality:)

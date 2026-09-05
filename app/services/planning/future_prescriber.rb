@@ -1,10 +1,3 @@
-require_relative "availability"
-require_relative "existing_plan_configuration"
-require_relative "horizon_materializer"
-require_relative "plan_builder"
-require_relative "../metrics/workout_calculator"
-require_relative "../workouts/generator"
-
 module Planning
   class FuturePrescriber
     attr_reader :slots

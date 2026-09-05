@@ -1,6 +1,3 @@
-require_relative "plan_builder"
-require_relative "horizon_materializer"
-
 module Planning
   class PlanCreator
     def initialize(configuration)

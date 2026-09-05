@@ -1,5 +1,3 @@
-require_relative "future_prescriber"
-
 module Planning
   class TimeOffPlanner
     def initialize(plan:)

@@ -1,7 +1,3 @@
-require_relative "../workouts/generator"
-require_relative "../workouts/opener_generator"
-require_relative "../metrics/workout_calculator"
-
 module Planning
   class HorizonMaterializer
     def initialize(plan, date: Date.current)
