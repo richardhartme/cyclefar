@@ -42,4 +42,17 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Target event:", "Taper and opener", "Event Opener")
   end
+
+  it "PLN-013 / CAL-001 confirms the preview and renders a continuous persisted calendar" do
+    post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+    expect {
+      post training_plan_path
+    }.to change(TrainingPlan, :count).by(1)
+    expect(response).to redirect_to(root_path)
+    follow_redirect!
+    expect(response.body).to include("Training calendar", "Training plan created.", "September", "November")
+    expect(response.body).to include("FTP Test")
+    expect(response.body).to include("Workout intensity profile")
+    expect(TrainingPlan.active.sole.planned_workouts.structured.count).to be < TrainingPlan.active.sole.planned_workouts.count
+  end
 end

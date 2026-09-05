@@ -35,6 +35,9 @@
       <% if notice %>
         <p role="status" class="mb-6 rounded-lg bg-teal-50 p-4 text-teal-900"><%= notice %></p>
       <% end %>
+      <% if alert %>
+        <p role="alert" class="mb-6 rounded-lg bg-red-50 p-4 text-red-900"><%= alert %></p>
+      <% end %>
       <%= yield %>
     </main>
   </body>

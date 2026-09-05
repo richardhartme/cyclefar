@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 4 — Persist plan + continuous calendar
+Current milestone: 5 — Workout detail and manual editing
 Status: Not started; awaiting the next implementation task
 
 ## Milestones
@@ -11,7 +11,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 1 — Settings and core persistence
 - [x] Milestone 2 — Pure workout engine
 - [x] Milestone 3 — Plan preview engine
-- [ ] Milestone 4 — Persist plan + continuous calendar
+- [x] Milestone 4 — Persist plan + continuous calendar
 - [ ] Milestone 5 — Workout detail and manual editing
 - [ ] Milestone 6 — Completion, overdue and adaptations
 - [ ] Milestone 7 — Missed workouts and schedule changes
@@ -22,7 +22,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 ## Current work
 
-Milestone 3 is complete. No later implementation milestone has started.
+Milestone 4 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -57,9 +57,19 @@ Milestone 3 is complete. No later implementation milestone has started.
 - `bin/rails zeitwerk:check`: passed.
 - RuboCop: 89 files, no offenses.
 
+2026-09-05: Milestone 4 implemented locally (not committed by Codex).
+
+- Added transactional confirmation from the preview, persisted plan phases, availability, event and high-level prescriptions.
+- Materialised canonical steps for the 14-day horizon only and added an idempotent horizon materializer.
+- Added the continuous Monday–Sunday calendar with phase/recovery treatment, weekly totals, structured/outlines cards, mini SVG profiles, FTP-test and event cards.
+- Added persistence and request specs for preview equivalence, horizon materialisation and calendar rendering.
+- `bundle exec rspec`: 1097 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 94 files, no offenses.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. The preview is generated in
-memory and does not persist workouts, render the calendar, mutate schedules or
-make external HTTP calls; those remain deferred to their documented milestones.
+aligned with the authoritative implementation plan. The calendar is read-only;
+workout editing, completion/adaptation, schedule changes and external HTTP calls
+remain deferred to their documented milestones.

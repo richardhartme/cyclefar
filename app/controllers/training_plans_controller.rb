@@ -8,9 +8,25 @@ class TrainingPlansController < ApplicationController
     if @configuration.valid?
       @preview = Planning::PlanBuilder.new(@configuration).preview
       @presenter = Planning::PreviewPresenter.new(@preview)
+      session[:plan_configuration] = plan_configuration_params
     else
       render :new, status: :unprocessable_content
     end
+  end
+
+  def create
+    @configuration = Planning::PlanConfiguration.new(session.delete(:plan_configuration) || {})
+    unless @configuration.valid?
+      flash[:alert] = "Preview the plan again before creating it."
+      redirect_to new_training_plan_path
+      return
+    end
+
+    Planning::PlanCreator.new(@configuration).create!
+    redirect_to root_path, notice: "Training plan created."
+  rescue ActiveRecord::RecordInvalid => error
+    flash[:alert] = error.record.errors.full_messages.to_sentence
+    redirect_to new_training_plan_path
   end
 
   private

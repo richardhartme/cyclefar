@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "home#index"
   resource :settings, only: [ :show, :update ]
-  resource :training_plan, only: [ :new ] do
+  resource :training_plan, only: [ :new, :create ] do
     post :preview
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

@@ -25,5 +25,8 @@
     <% @preview.warnings.each do |warning| %><p role="status" class="mt-3 rounded bg-amber-50 p-3"><%= warning %></p><% end %>
   </section>
 
-  <%= link_to "Back to edit", new_training_plan_path, class: "font-semibold text-teal-800 underline" %>
+  <div class="flex gap-5">
+    <%= link_to "Back to edit", new_training_plan_path, class: "font-semibold text-teal-800 underline" %>
+    <%= button_to "Create plan", training_plan_path, method: :post, class: "rounded bg-teal-800 px-5 py-3 font-semibold text-white" %>
+  </div>
 </section>
