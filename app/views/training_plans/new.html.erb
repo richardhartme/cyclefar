@@ -9,7 +9,7 @@
     </section>
   <% end %>
 
-  <%= form_with url: preview_training_plan_path, scope: :plan_configuration, class: "space-y-10" do %>
+  <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false }, class: "space-y-10" do %>
     <fieldset>
       <legend class="text-xl font-semibold">Goal</legend>
       <div class="mt-3 grid gap-3 sm:grid-cols-2">

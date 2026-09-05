@@ -18,6 +18,7 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response).to have_http_status(:ok)
     html = Nokogiri::HTML(response.body)
     expect(html.at_css("form")).to be_present
+    expect(html.at_css("form")["data-turbo"]).to eq("false")
     expect(response.body).to include("Goal", "Discipline", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
   end
 
