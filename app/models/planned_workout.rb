@@ -5,7 +5,7 @@ class PlannedWorkout < ApplicationRecord
   belongs_to :plan_phase, optional: true
   has_many :workout_steps, -> { order(:position) }, dependent: :destroy, autosave: true
   has_one :workout_feedback, dependent: :destroy, autosave: true
-  has_one :intervals_icu_sync, dependent: :destroy
+  has_one :intervals_icu_sync, dependent: :nullify
 
   enum :kind, %w[workout ftp_test opener].index_by(&:itself), validate: true
   enum :intent, AvailabilitySlot::INTENTS.index_by(&:itself), prefix: true, validate: { allow_nil: true }

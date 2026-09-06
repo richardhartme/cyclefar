@@ -228,7 +228,7 @@ ALTER SEQUENCE public.ftp_readings_id_seq OWNED BY public.ftp_readings.id;
 
 CREATE TABLE public.intervals_icu_syncs (
     id bigint NOT NULL,
-    planned_workout_id bigint NOT NULL,
+    planned_workout_id bigint,
     external_id character varying NOT NULL,
     intervals_event_id bigint,
     last_synced_at timestamp(6) without time zone,
@@ -984,7 +984,7 @@ ALTER TABLE ONLY public.workout_steps
 --
 
 ALTER TABLE ONLY public.intervals_icu_syncs
-    ADD CONSTRAINT fk_rails_1b42bdfe2e FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id);
+    ADD CONSTRAINT fk_rails_1b42bdfe2e FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id) ON DELETE SET NULL;
 
 
 --
@@ -1074,6 +1074,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260906000001'),
 ('20260905000002'),
 ('20260905000001');
 

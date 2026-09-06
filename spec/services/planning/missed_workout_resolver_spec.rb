@@ -29,6 +29,8 @@ RSpec.describe Planning::MissedWorkoutResolver, type: :service do
 
     expect { workout.reload }.to raise_error(ActiveRecord::RecordNotFound)
     expect { future_workout.reload }.to raise_error(ActiveRecord::RecordNotFound)
-    expect(plan.planned_workouts.where(scheduled_on: Date.current + 3).count).to eq(1)
+    next_available_date = Date.current.beginning_of_week + availability_slot.weekday - 1
+    next_available_date += 7 if next_available_date < Date.current
+    expect(plan.planned_workouts.where(scheduled_on: next_available_date).count).to eq(1)
   end
 end

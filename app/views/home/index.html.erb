@@ -10,7 +10,9 @@
 <section>
   <h1 class="text-3xl font-semibold">Training calendar</h1>
   <p class="mt-2 text-slate-600"><%= @plan.goal.humanize %> · <%= @plan.discipline.humanize %> · <%= @plan.starts_on.to_fs(:long) %> – <%= @plan.ends_on.to_fs(:long) %></p>
-  <p class="mt-3 flex gap-4"><%= link_to "Change availability", new_availability_change_path, class: "font-semibold text-teal-800 underline" %><%= link_to "Add time off", new_time_off_period_path, class: "font-semibold text-teal-800 underline" %></p>
+  <% last_intervals_sync = @plan.planned_workouts.joins(:intervals_icu_sync).maximum("intervals_icu_syncs.last_synced_at") %>
+  <div class="mt-3 flex flex-wrap items-center gap-4"><%= link_to "Change availability", new_availability_change_path, class: "font-semibold text-teal-800 underline" %><%= link_to "Add time off", new_time_off_period_path, class: "font-semibold text-teal-800 underline" %><%= button_to "Sync next 2 to Intervals.icu", intervals_icu_sync_path, class: "font-semibold text-teal-800 underline" %></div>
+  <% if last_intervals_sync %><p class="mt-2 text-sm text-slate-600">Last synced to Intervals.icu <%= time_ago_in_words(last_intervals_sync) %> ago.</p><% end %>
   <% @plan.adaptation_proposals.each do |proposal| %><section class="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4"><strong>Adaptation proposal</strong><p><%= proposal.reason %></p><div class="mt-2 flex gap-3"><%= button_to "Accept all", accept_adaptation_proposal_path(proposal), class: "rounded bg-teal-800 px-3 py-2 text-white" %><%= button_to "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, class: "rounded border px-3 py-2" %></div></section><% end %>
   <% @calendar.weeks.each do |week| %>
     <section class="mt-8 overflow-x-auto rounded-lg border border-slate-200 bg-white" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">

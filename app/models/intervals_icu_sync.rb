@@ -1,5 +1,5 @@
 class IntervalsIcuSync < ApplicationRecord
-  belongs_to :planned_workout
+  belongs_to :planned_workout, optional: true
   validates :planned_workout_id, uniqueness: true
   validates :external_id, presence: true, uniqueness: true, format: { with: /\Acyclefar-.+\z/ }
   validates :intervals_event_id, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true

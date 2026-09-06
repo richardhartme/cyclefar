@@ -1,6 +1,6 @@
 # CycleFar Build Status
 
-Current milestone: 9 — FTP lifecycle
+Current milestone: 10 — Intervals.icu sync
 Status: Complete; awaiting the next implementation task
 
 ## Milestones
@@ -17,12 +17,12 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 7 — Missed workouts and schedule changes
 - [x] Milestone 8 — Time off and return to training
 - [x] Milestone 9 — FTP lifecycle
-- [ ] Milestone 10 — Intervals.icu sync
+- [x] Milestone 10 — Intervals.icu sync
 - [ ] Milestone 11 — Polish and hardening
 
 ## Current work
 
-Milestone 9 is complete. No later implementation milestone has started.
+Milestone 10 is complete. No later implementation milestone has started.
 
 ## Last completed
 
@@ -118,8 +118,19 @@ Milestone 9 is complete. No later implementation milestone has started.
 - RuboCop: 118 files, no offenses.
 - Brakeman and Bundler Audit: no warnings or vulnerabilities.
 
+2026-09-06: Milestone 10 implemented locally (not committed by Codex).
+
+- Added explicit manual sync of exactly the next two executable structured workouts to Intervals.icu.
+- Added an isolated API-key-authenticated bulk upsert/delete client, stable CycleFar-owned external IDs, canonical workout-builder serialization and safe retry/error handling.
+- Reconciled moved and deleted CycleFar workouts while preserving unrelated events, and added calendar sync feedback and last-sync status.
+- Added client, serializer, reconciliation and request coverage, including API-key error handling and current FTP context.
+- `bundle exec rspec`: 1139 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 127 files, no offenses.
+- Brakeman and Bundler Audit: no warnings or vulnerabilities.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. Time off and external HTTP
-calls remain deferred to their documented milestones.
+aligned with the authoritative implementation plan. Polish and hardening remain
+deferred to Milestone 11.
