@@ -57,7 +57,8 @@ RSpec.describe "Training plan preview", type: :request do
     follow_redirect!
     expect(response.body).to include("Training calendar", "Training plan created.", "September", "November")
     expect(response.body).to include("FTP Test")
-    expect(response.body).to include("Workout intensity profile")
+    expect(response.body).to include("Workout power profile")
+    expect(Nokogiri::HTML(response.body).css("svg polygon")).not_to be_empty
     expect(TrainingPlan.active.sole.planned_workouts.structured.count).to be < TrainingPlan.active.sole.planned_workouts.count
   end
 end
