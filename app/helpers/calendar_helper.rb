@@ -1,4 +1,14 @@
 module CalendarHelper
+  PROFILE_ZONE_COLORS = {
+    recovery: "#94A3B8",
+    endurance: "#38BDF8",
+    tempo: "#14B8A6",
+    sweet_spot: "#22C55E",
+    threshold: "#F59E0B",
+    vo2_max: "#F97316",
+    anaerobic: "#EF4444"
+  }.freeze
+
   def workout_profile_svg(workout, detailed: false)
     segments = Workouts::ProfileBuilder.new(steps: workout.workout_steps).call.segments
     total = workout.duration_minutes * 60.0
@@ -11,7 +21,7 @@ module CalendarHelper
         stroke: "#cbd5e1", "stroke-width": 1)
     end
     blocks = segments.map do |segment|
-      tag.polygon(points: block_points(segment, total, width, height, inset), fill: "#2563eb", stroke: "#dbeafe",
+      tag.polygon(points: block_points(segment, total, width, height, inset), fill: profile_zone_color(segment), stroke: "#ffffff",
         "stroke-width": 1.5, "shape-rendering": "geometricPrecision")
     end
     content_tag(:svg, safe_join([ background ] + grid + blocks), viewBox: "0 0 #{width} #{height}", role: "img",
@@ -34,6 +44,20 @@ module CalendarHelper
 
   def target_midpoint(low, high)
     (low + high) / 2.0
+  end
+
+  def profile_zone_color(segment)
+    percentage = target_midpoint(segment.start_low_pct_ftp, segment.start_high_pct_ftp)
+
+    case percentage
+    when ..55 then PROFILE_ZONE_COLORS[:recovery]
+    when ..75 then PROFILE_ZONE_COLORS[:endurance]
+    when ..87 then PROFILE_ZONE_COLORS[:tempo]
+    when ..94 then PROFILE_ZONE_COLORS[:sweet_spot]
+    when ..105 then PROFILE_ZONE_COLORS[:threshold]
+    when ..120 then PROFILE_ZONE_COLORS[:vo2_max]
+    else PROFILE_ZONE_COLORS[:anaerobic]
+    end
   end
 
   def y_position(percentage, height, inset)
