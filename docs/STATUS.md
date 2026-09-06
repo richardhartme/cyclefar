@@ -1,7 +1,7 @@
 # CycleFar Build Status
 
-Current milestone: 10 — Intervals.icu sync
-Status: Complete; awaiting the next implementation task
+Current milestone: 11 — Polish and hardening
+Status: Complete; V1 implementation plan finished
 
 ## Milestones
 
@@ -18,11 +18,11 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 8 — Time off and return to training
 - [x] Milestone 9 — FTP lifecycle
 - [x] Milestone 10 — Intervals.icu sync
-- [ ] Milestone 11 — Polish and hardening
+- [x] Milestone 11 — Polish and hardening
 
 ## Current work
 
-Milestone 10 is complete. No later implementation milestone has started.
+Milestone 11 is complete. The V1 implementation plan is complete.
 
 ## Last completed
 
@@ -129,8 +129,19 @@ Milestone 10 is complete. No later implementation milestone has started.
 - RuboCop: 127 files, no offenses.
 - Brakeman and Bundler Audit: no warnings or vulnerabilities.
 
+2026-09-06: Milestone 11 implemented locally (not committed by Codex).
+
+- Added an idempotent, development-only 12-week sample plan with the documented 260 W FTP and weekly training template.
+- Improved calendar efficiency by eager-loading workout phases with structured steps, and added accessible skip navigation.
+- Made workout detail a keyboard-operable Turbo dialog with initial focus, focus containment and Escape/close controls; enlarged the detailed workout graph.
+- Added confirmed destructive actions and archive/delete-plan handling that removes planned workouts while retaining completed history.
+- Rechecked empty/error states, plan warnings and encrypted API-key log filtering through the existing request coverage.
+- `bundle exec rspec`: 1142 examples, 0 failures.
+- `bin/rails zeitwerk:check`: passed.
+- RuboCop: 127 files, no offenses.
+- Brakeman and Bundler Audit: no warnings or vulnerabilities.
+
 ## Notes
 
 The previous status checklist used different milestone names/numbers; it is now
-aligned with the authoritative implementation plan. Polish and hardening remain
-deferred to Milestone 11.
+aligned with the authoritative implementation plan.

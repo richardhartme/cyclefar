@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "home#index"
   resource :settings, only: [ :show, :update ]
-  resource :training_plan, only: [ :new, :create ] do
+  resource :training_plan, only: [ :new, :create, :destroy ] do
     post :preview
   end
   resources :planned_workouts, only: [ :show ] do

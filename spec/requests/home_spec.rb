@@ -19,4 +19,37 @@ RSpec.describe "Home", type: :request do
     expect(Date.new(2026, 9, 13).beginning_of_week).to eq(Date.new(2026, 9, 7))
     expect(CycleFar::Application.module_parent_name).to eq("CycleFar")
   end
+
+  it "provides keyboard navigation and confirmed plan deletion for an active plan" do
+    plan = create(:training_plan)
+    create(:plan_phase, training_plan: plan)
+
+    get root_path
+
+    html = Nokogiri::HTML(response.body)
+    expect(html.at_css('a[href="#main-content"]').text).to eq("Skip to main content")
+    expect(html.at_css("main#main-content")["tabindex"]).to eq("-1")
+    delete_form = html.css("form").find { |form| form.at_css("button")&.text == "Delete plan" }
+    expect(delete_form["data-turbo-confirm"]).to include("Delete this plan")
+
+    delete training_plan_path
+    expect(response).to redirect_to(root_path)
+    expect(TrainingPlan.active).not_to exist
+    expect(TrainingPlan.find_by(id: plan.id)).to be_nil
+  end
+
+  it "archives a plan with completed workouts and labels the control accordingly" do
+    plan = create(:training_plan)
+    phase = create(:plan_phase, training_plan: plan)
+    create(:planned_workout, :completed, training_plan: plan, plan_phase: phase)
+    planned = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 2)
+
+    get root_path
+    expect(response.body).to include("Archive plan")
+
+    delete training_plan_path
+    expect(plan.reload).to be_archived
+    expect(PlannedWorkout.exists?(planned.id)).to be(false)
+    expect(response).to redirect_to(root_path)
+  end
 end

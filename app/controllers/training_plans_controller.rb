@@ -29,6 +29,22 @@ class TrainingPlansController < ApplicationController
     redirect_to new_training_plan_path
   end
 
+  def destroy
+    plan = TrainingPlan.active.sole
+    if plan.planned_workouts.completed.exists?
+      TrainingPlan.transaction do
+        plan.planned_workouts.planned.destroy_all
+        plan.update!(status: :archived)
+      end
+      redirect_to root_path, notice: "Training plan archived. Completed workouts are kept as history."
+    else
+      plan.destroy!
+      redirect_to root_path, notice: "Training plan deleted."
+    end
+  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordInvalid => error
+    redirect_to root_path, alert: error.message
+  end
+
   private
 
   def default_configuration

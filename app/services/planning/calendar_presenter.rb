@@ -4,7 +4,7 @@ module Planning
 
     def initialize(plan)
       @plan = plan
-      @workouts_by_date = plan.planned_workouts.includes(:workout_steps).group_by(&:scheduled_on)
+      @workouts_by_date = plan.planned_workouts.includes(:workout_steps, :plan_phase).order(:scheduled_on).group_by(&:scheduled_on)
       @time_off_by_date = plan.time_off_periods.flat_map { |period| (period.starts_on..period.ends_on).map { |date| [ date, period ] } }.to_h
     end
 
