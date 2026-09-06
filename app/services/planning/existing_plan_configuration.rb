@@ -1,5 +1,3 @@
-require "active_model"
-
 module Planning
   ExistingPlanConfiguration = Data.define(:plan, :availability) do
     def goal = plan.goal

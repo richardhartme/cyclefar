@@ -12,15 +12,25 @@ RSpec.describe "Planned workouts", type: :request do
     expect { Rails.application.routes.recognize_path("/planned_workouts/#{workout.id}", method: :patch) }.to raise_error(ActionController::RoutingError)
   end
 
-  it "WKO-001 renders the workout detail as an accessible Turbo dialog" do
+  it "WKO-001 renders the workout detail as a navigable page" do
     get planned_workout_path(workout)
 
     html = Nokogiri::HTML(response.body)
-    dialog = html.at_css('[role="dialog"]')
-    expect(dialog["aria-modal"]).to eq("true")
-    expect(dialog["aria-labelledby"]).to eq("workout-detail-title")
-    expect(dialog["data-controller"]).to eq("modal")
-    expect(dialog.at_css("button").text).to eq("Close workout detail")
+    expect(html.at_css("h1").text).to eq(workout.name)
+    expect(html.css("a").find { |link| link.text == "Back to calendar" }["href"]).to eq(root_path)
+  end
+
+  it "WKO-001 provides a useful detail state before a workout is structured" do
+    outline = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 2)
+
+    get root_path
+    calendar_link = Nokogiri::HTML(response.body).css("a").find { |link| link.text == outline.name }
+    expect(calendar_link["href"]).to eq(planned_workout_path(outline))
+
+    get planned_workout_path(outline)
+
+    expect(response.body).to include("detailed structure for this workout will be generated")
+    expect(response.body).not_to include("Adjust workout")
   end
 
   it "WKO-004 rejects shorter below 30 minutes through the action" do

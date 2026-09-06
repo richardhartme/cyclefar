@@ -29,6 +29,8 @@ RSpec.describe "Home", type: :request do
     html = Nokogiri::HTML(response.body)
     expect(html.at_css('a[href="#main-content"]').text).to eq("Skip to main content")
     expect(html.at_css("main#main-content")["tabindex"]).to eq("-1")
+    summary = html.at_css('aside[aria-label^="Weekly summary for"]')
+    expect(summary.text).to include("Duration", "Load", "Work")
     delete_form = html.css("form").find { |form| form.at_css("button")&.text == "Delete plan" }
     expect(delete_form["data-turbo-confirm"]).to include("Delete this plan")
 

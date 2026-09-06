@@ -1,7 +1,3 @@
-require_relative "generator"
-require_relative "variations"
-require_relative "../metrics/workout_calculator"
-
 module Workouts
   class ManualEditor
     Result = Data.define(:workout, :material_change)

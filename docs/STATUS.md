@@ -133,7 +133,7 @@ Milestone 11 is complete. The V1 implementation plan is complete.
 
 - Added an idempotent, development-only 12-week sample plan with the documented 260 W FTP and weekly training template.
 - Improved calendar efficiency by eager-loading workout phases with structured steps, and added accessible skip navigation.
-- Made workout detail a keyboard-operable Turbo dialog with initial focus, focus containment and Escape/close controls; enlarged the detailed workout graph.
+- Improved keyboard navigation and enlarged the detailed workout graph.
 - Added confirmed destructive actions and archive/delete-plan handling that removes planned workouts while retaining completed history.
 - Rechecked empty/error states, plan warnings and encrypted API-key log filtering through the existing request coverage.
 - `bundle exec rspec`: 1142 examples, 0 failures.

@@ -1,4 +1,4 @@
-<section class="max-w-4xl">
+<section class="max-w-6xl">
   <h1 class="mb-4 text-3xl font-semibold">Create training plan</h1>
   <p class="mb-8 text-slate-600">Set your goal, schedule and progression preferences, then review a generated plan before creating it.</p>
 
@@ -14,7 +14,7 @@
       <legend class="text-xl font-semibold">Goal</legend>
       <div class="mt-3 grid gap-3 sm:grid-cols-2">
         <% Planning::PreviewPresenter::GOAL_LABELS.each do |value, label| %>
-          <label class="rounded border border-slate-300 p-3"><%= radio_button_tag "plan_configuration[goal]", value, @configuration.goal == value %> <%= label %></label>
+          <label class="rounded border border-slate-300 p-3"><%= radio_button_tag "plan_configuration[goal]", value, @configuration.goal == value %> <span class="font-semibold"><%= label %></span><span class="mt-1 block text-sm text-slate-600"><%= Planning::PreviewPresenter::GOAL_DESCRIPTIONS.fetch(value) %></span></label>
         <% end %>
       </div>
     </fieldset>

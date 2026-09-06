@@ -20,6 +20,10 @@ RSpec.describe "Training plan preview", type: :request do
     expect(html.at_css("form")).to be_present
     expect(html.at_css("form")["data-turbo"]).to eq("false")
     expect(response.body).to include("Goal", "Discipline", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
+    expect(response.body).to include(
+      "Balances aerobic endurance with varied intensity", "Prioritises threshold, VO2 Max and over-under progression",
+      "Emphasises endurance volume", "sustained climbing efforts", "shape speciality sessions, taper and opener"
+    )
   end
 
   it "PLN-013 generates and renders an in-memory preview without persisting a plan" do

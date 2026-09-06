@@ -1,7 +1,5 @@
 require "spec_helper"
 require "active_support/all"
-require_relative "../app/services/metrics/workout_calculator"
-require_relative "../app/services/workouts/generator"
-require_relative "../app/services/workouts/profile_builder"
 require_relative "../app/services/planning/plan_builder"
+require_relative "../app/services/workouts/profile_builder"
 require_relative "../app/services/planning/preview_presenter"

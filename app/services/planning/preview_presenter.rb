@@ -4,6 +4,13 @@ module Planning
       "general_fitness" => "General Fitness", "increase_ftp" => "Increase FTP", "improve_endurance" => "Improve Endurance",
       "improve_climbing" => "Improve Climbing", "event" => "Prepare for an Event"
     }.freeze
+    GOAL_DESCRIPTIONS = {
+      "general_fitness" => "Balances aerobic endurance with varied intensity across the plan.",
+      "increase_ftp" => "Prioritises threshold, VO2 Max and over-under progression to raise sustainable power.",
+      "improve_endurance" => "Emphasises endurance volume with aerobic tempo and Sweet Spot work.",
+      "improve_climbing" => "Prioritises threshold, VO2 Max and over-under sessions for sustained climbing efforts.",
+      "event" => "Uses your event date and discipline to shape speciality sessions, taper and opener."
+    }.freeze
     DISCIPLINE_LABELS = { "road" => "Road", "gravel" => "Gravel", "mtb" => "MTB", "ultra_endurance" => "Ultra / Endurance" }.freeze
 
     def initialize(preview)
