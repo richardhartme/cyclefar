@@ -1,16 +1,42 @@
 # CycleFar
 
-A local, single-rider indoor cycling training planner. Task 01 implements the
-application foundation and core persistence (Milestones 0 and 1 in
-[the implementation plan](docs/IMPLEMENTATION_PLAN.md)).
+CycleFar is a local, single-rider cycling training planner. It turns a rider's
+goal, availability, FTP and target event into a deterministic training plan,
+then keeps the calendar practical as training is completed, missed or changed.
+
+The application is desktop-first and designed around a continuous weekly
+calendar. Workout targets are stored as percentages of FTP, so future workouts
+can adapt when FTP changes while completed workouts retain their historical
+snapshots.
+
+## What it includes
+
+- Guided plan creation with a preview for general fitness, FTP, endurance,
+  climbing and event goals.
+- A deterministic, versioned workout engine for endurance, tempo, Sweet Spot,
+  threshold, VO2 max, over-under and recovery sessions.
+- A continuous calendar with workout details, editable future workouts and
+  inline power-profile graphs.
+- Completion feedback, overdue and missed-workout resolution, and explicit
+  adaptation proposals.
+- Availability changes, planned time off and a gradual return after illness or
+  recovery time.
+- FTP history and recalculation of future workout watt targets without changing
+  completed workouts.
+- Manual Intervals.icu sync for the next two executable structured workouts.
+  CycleFar only reconciles events that it owns.
+- Archive and delete controls for a plan, plus an idempotent development seed
+  for visual testing.
+
+CycleFar V1 intentionally has no authentication, ride imports, trainer control,
+notifications or automatic calendar syncing.
 
 ## Local setup
 
-Requirements: Ruby **4.0.6**, Rails **8.1.3.1** (locked by Bundler), and a running
-PostgreSQL **17+** server with its client tools (`psql`, `pg_dump`) on PATH.
-The local PostgreSQL role must be able to create development and test databases.
-If socket defaults do not match your installation, use `PGHOST`, `PGPORT`,
-`PGUSER`, and `PGPASSWORD`.
+CycleFar requires Ruby **4.0.6**, Bundler and a running PostgreSQL **17+**
+server with `psql` and `pg_dump` on `PATH`. Your local PostgreSQL role must be
+able to create the development and test databases. Set `PGHOST`, `PGPORT`,
+`PGUSER` and `PGPASSWORD` if your PostgreSQL installation needs them.
 
 ```sh
 rbenv install -s 4.0.6
@@ -18,61 +44,34 @@ bin/setup --skip-server
 bin/dev
 ```
 
-Visit <http://localhost:3000>. Home links to Settings and a plan-creation
-placeholder. Save your FTP in Settings; no default FTP is invented. The API key
-is optional. `bin/dev` runs Puma and the Tailwind watcher; its generated launcher
-installs Foreman if needed. Alternatively, after setup, use `bin/rails server`.
+Open <http://localhost:3000>. `bin/setup` installs dependencies, creates local
+Active Record Encryption keys, prepares the database and builds Tailwind CSS.
+It can be rerun safely; existing encryption keys are retained. Use
+`bin/setup --reset` when a local database reset is wanted.
 
-`bin/setup` installs dependencies, generates private local encryption keys,
-prepares the databases, and builds Tailwind. It is safe to rerun without
-replacing encryption keys. The app uses Turbo, Stimulus, and Tailwind with
-import maps; Node is not required.
+The encryption-key files in `config/` are ignored by Git. Keep them with any
+local database backup: losing them prevents decryption of a saved Intervals.icu
+API key.
 
-## API-key storage
+## Development sample plan
 
-Active Record Encryption stores the Intervals.icu key as ciphertext. Local keys
-live in ignored `config/active_record_encryption.*.key` files with mode `0600`.
-Keep these files with any database backup: replacing or losing them prevents
-decryption of existing API keys. No API key is returned in HTML or model
-inspection, and request parameters are filtered from logs.
+In development, load a realistic 12-week plan with a 260 W FTP and a
+Tuesday/Thursday/Saturday/Sunday schedule:
 
-The corresponding environment variables can override local keys:
+```sh
+bin/rails db:seed
+```
 
-- `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`
-- `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`
-- `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`
+The seed is idempotent and does nothing when an active plan already exists.
 
-Rails encrypted credentials under `active_record_encryption` are also supported
-when no override is supplied. Tests use isolated, test-only keys.
+## Working with Intervals.icu
 
-A blank API-key field preserves the stored key. Enter a replacement or select
-`Remove saved API key` to clear it. No Intervals.icu HTTP client exists yet.
+Save an Intervals.icu API key in **Settings**, then use the calendar's manual
+sync action. Sync exports only the next two structured workouts that can be
+performed and uses stable `cyclefar-` external IDs. It neither imports rides nor
+changes unrelated Intervals.icu events.
 
-## Persistence conventions
-
-- The singleton profile has ID 1, enforced by PostgreSQL. Settings writes go
-  through `Settings::Update`, which saves FTP history in the same transaction
-  and serializes concurrent saves. Direct model writes do not create history.
-- Availability uses ISO weekdays: Monday=1 through Sunday=7. Missing slots are
-  rest days. Application dates use the London timezone and Monday-first weeks.
-- All 13 models from `docs/DATA_MODEL.md` are present. `FtpReading` additionally
-  references the singleton profile. Two migrations create the schema and protect
-  completed history. The schema is stored as `db/structure.sql` so PostgreSQL
-  triggers survive schema loads.
-- Unique indexes enforce one active plan, one workout per plan/date, and the
-  specified one-to-one relationships. Models validate domain enums, dates,
-  ranges, canonical steps, and completion snapshot prerequisites.
-- Completed workouts, steps and feedback reject edits/deletion, including bulk
-  writes. Parent plans containing completed workouts cannot be destroyed.
-  The later completion service must save steps/feedback and then mark the
-  workout completed in one transaction. No completion workflow is implemented.
-- A structured workout must have steps totaling its duration when saved.
-  Full plan assembly validation and workout generation belong to later milestones.
-
-Routes: `GET /`, `GET /settings`, `PATCH/PUT /settings`,
-`GET /training_plan/new` (placeholder), and the existing `GET /up` health check.
-
-## Checks
+## Validation
 
 ```sh
 bundle exec rspec
@@ -83,12 +82,14 @@ bin/bundler-audit
 bin/importmap audit
 ```
 
-`bin/ci` runs setup and these checks. GitHub Actions includes PostgreSQL-backed
-RSpec and autoload checks alongside the existing lint and security jobs.
+`bin/ci` runs the configured continuous-integration checks.
 
-Milestone 6 adds manual completion with RPE and quality feedback, immutable
-completion snapshots, overdue status, and explicit adaptation proposals. Proposed
-changes only affect near-term structured workouts after acceptance. Missed-workout
-handling, schedule changes, sync and realistic generated demo plans remain
-deferred to their documented milestones. There is no authentication or new
-deployment infrastructure.
+## Documentation
+
+- [Product overview](docs/PRODUCT.md)
+- [Requirements](docs/REQUIREMENTS.md)
+- [Training-engine rules](docs/TRAINING_ENGINE.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data model](docs/DATA_MODEL.md)
+- [UX guide](docs/UX.md)
+- [Implementation status](docs/STATUS.md)
