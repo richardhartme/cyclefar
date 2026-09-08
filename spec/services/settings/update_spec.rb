@@ -8,9 +8,10 @@ RSpec.describe Settings::Update do
   it "SET-001 records initial FTP and subsequent changes with effective dates" do
     update_settings({ ftp_watts: 260 })
     update_settings({ ftp_watts: 275 }, effective_on: Date.new(2026, 9, 8))
-    expect(FtpReading.order(:id).pluck(:ftp_watts, :effective_on)).to eq([
-      [ 260, Date.new(2026, 9, 7) ], [ 275, Date.new(2026, 9, 8) ]
-    ])
+    expect(FtpReading.order(:id).pluck(:ftp_watts, :effective_on)).to eq(
+      [
+            [ 260, Date.new(2026, 9, 7) ], [ 275, Date.new(2026, 9, 8) ]
+          ])
     expect(RiderProfile.current.ftp_watts).to eq(275)
   end
 

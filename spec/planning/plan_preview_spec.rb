@@ -64,7 +64,9 @@ RSpec.describe Planning::PlanBuilder do
   end
 
   it "selects broad interval cycles deterministically and preserves specific intents" do
-    broad = preview(goal: "improve_climbing", include_base: false,
+    broad = preview(
+      goal: "improve_climbing",
+      include_base: false,
       availability: availability(1 => [ 60, "intervals" ], 3 => [ 60, "intervals" ]))
     build = broad.prescriptions.select { |item| item.phase == "build" && item.intent == "intervals" }.map(&:subtype)
     expect(build.first(4)).to eq(%w[threshold vo2_max over_under threshold])

@@ -2,8 +2,13 @@ require "engine_helper"
 
 RSpec.describe Metrics::WorkoutCalculator do
   def steady(duration: 3600, low: 100, high: low, position: 1)
-    Workouts::StepDefinition.new(position: position, kind: "steady", label: "Fixture",
-      duration_seconds: duration, target_low_pct_ftp: low, target_high_pct_ftp: high)
+    Workouts::StepDefinition.new(
+      position: position,
+      kind: "steady",
+      label: "Fixture",
+      duration_seconds: duration,
+      target_low_pct_ftp: low,
+      target_high_pct_ftp: high)
   end
 
   [ [ 100, 1.0, 100, 936 ], [ 50, 0.5, 25, 468 ] ].each do |pct, intensity, tss, work|

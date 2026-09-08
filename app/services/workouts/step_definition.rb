@@ -1,8 +1,16 @@
 module Workouts
   # Matches WorkoutStep attributes; watts and graph coordinates remain derived.
-  StepDefinition = Data.define(:position, :kind, :label, :duration_seconds,
-    :target_low_pct_ftp, :target_high_pct_ftp, :end_target_low_pct_ftp,
-    :end_target_high_pct_ftp, :group_key, :group_iteration) do
+  StepDefinition = Data.define(
+    :position,
+    :kind,
+    :label,
+    :duration_seconds,
+    :target_low_pct_ftp,
+    :target_high_pct_ftp,
+    :end_target_low_pct_ftp,
+    :end_target_high_pct_ftp,
+    :group_key,
+    :group_iteration) do
     def initialize(position: 1, kind:, label:, duration_seconds:, target_low_pct_ftp:, target_high_pct_ftp:,
       end_target_low_pct_ftp: nil, end_target_high_pct_ftp: nil, group_key: nil, group_iteration: nil)
       raise ArgumentError, "position must be a positive integer" unless position.is_a?(Integer) && position.positive?
@@ -18,10 +26,17 @@ module Workouts
       elsif end_target_low_pct_ftp || end_target_high_pct_ftp
         raise ArgumentError, "steady steps cannot have ramp endpoints"
       end
-      super(position: position, kind: kind.to_s.dup.freeze, label: label.dup.freeze, duration_seconds: duration_seconds,
-        target_low_pct_ftp: target_low_pct_ftp.to_f, target_high_pct_ftp: target_high_pct_ftp.to_f,
-        end_target_low_pct_ftp: end_target_low_pct_ftp&.to_f, end_target_high_pct_ftp: end_target_high_pct_ftp&.to_f,
-        group_key: group_key&.to_s&.dup&.freeze, group_iteration: group_iteration)
+      super(
+        position: position,
+        kind: kind.to_s.dup.freeze,
+        label: label.dup.freeze,
+        duration_seconds: duration_seconds,
+        target_low_pct_ftp: target_low_pct_ftp.to_f,
+        target_high_pct_ftp: target_high_pct_ftp.to_f,
+        end_target_low_pct_ftp: end_target_low_pct_ftp&.to_f,
+        end_target_high_pct_ftp: end_target_high_pct_ftp&.to_f,
+        group_key: group_key&.to_s&.dup&.freeze,
+        group_iteration: group_iteration)
     end
 
     def self.from(step)

@@ -1,8 +1,21 @@
 require_relative "step_sequence"
 
 module Workouts
-  WorkoutDefinition = Data.define(:engine_version, :subtype, :duration_minutes, :requested_progression_level,
-    :progression_level, :variation_key, :phase, :goal, :discipline, :name, :purpose, :main_set_summary, :steps, :reason_codes) do
+  WorkoutDefinition = Data.define(
+    :engine_version,
+    :subtype,
+    :duration_minutes,
+    :requested_progression_level,
+    :progression_level,
+    :variation_key,
+    :phase,
+    :goal,
+    :discipline,
+    :name,
+    :purpose,
+    :main_set_summary,
+    :steps,
+    :reason_codes) do
     def initialize(**attributes)
       attributes[:steps] = StepSequence.normalize(attributes.fetch(:steps))
       attributes[:reason_codes] = attributes.fetch(:reason_codes).map { |code| code.dup.freeze }.freeze

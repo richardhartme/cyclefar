@@ -6,9 +6,23 @@ module Planning
   class PlanConfiguration
     include ActiveModel::Model
 
-    attr_accessor :goal, :discipline, :starts_on, :duration_mode, :duration_months, :custom_duration_weeks,
-      :ftp_watts, :include_base, :progression_mode, :hard_weeks_before_recovery, :event_name, :event_on,
-      :event_discipline, :event_distance_km, :event_elevation_m, :event_expected_duration_minutes, :availability
+    attr_accessor :goal,
+      :discipline,
+      :starts_on,
+      :duration_mode,
+      :duration_months,
+      :custom_duration_weeks,
+      :ftp_watts,
+      :include_base,
+      :progression_mode,
+      :hard_weeks_before_recovery,
+      :event_name,
+      :event_on,
+      :event_discipline,
+      :event_distance_km,
+      :event_elevation_m,
+      :event_expected_duration_minutes,
+      :availability
 
     validates :goal, inclusion: { in: Training::V1::Rules::GOALS }
     validates :discipline, inclusion: { in: Training::V1::Rules::DISCIPLINES }
@@ -103,7 +117,8 @@ module Planning
         values = attributes.respond_to?(:to_unsafe_h) ? attributes.to_unsafe_h : attributes.to_h
         next unless ActiveModel::Type::Boolean.new.cast(values["enabled"] || values[:enabled])
 
-        Planning::Availability.new(weekday: integer(values["weekday"] || values[:weekday]),
+        Planning::Availability.new(
+          weekday: integer(values["weekday"] || values[:weekday]),
           duration_minutes: integer(values["duration_minutes"] || values[:duration_minutes]),
           intent: values["intent"] || values[:intent])
       rescue ArgumentError

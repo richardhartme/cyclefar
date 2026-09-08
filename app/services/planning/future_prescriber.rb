@@ -21,11 +21,22 @@ module Planning
         next if @plan.planned_workouts.where(scheduled_on: item.scheduled_on).exists?
 
         phase = @plan.plan_phases.find { |candidate| item.scheduled_on.between?(candidate.starts_on, candidate.ends_on) }
-        @plan.planned_workouts.create!(plan_phase: phase, scheduled_on: item.scheduled_on, kind: item.kind, intent: item.intent,
-          subtype: item.subtype, duration_minutes: item.duration_minutes, progression_level: item.progression_level,
-          variation_key: "a", name: item.name, purpose: item.purpose, detail_status: :outline,
-          estimated_np_watts: item.metrics&.estimated_np_watts, estimated_if: item.metrics&.estimated_if,
-          estimated_tss: item.metrics&.estimated_tss, estimated_work_kj: item.metrics&.estimated_work_kj)
+        @plan.planned_workouts.create!(
+          plan_phase: phase,
+          scheduled_on: item.scheduled_on,
+          kind: item.kind,
+          intent: item.intent,
+          subtype: item.subtype,
+          duration_minutes: item.duration_minutes,
+          progression_level: item.progression_level,
+          variation_key: "a",
+          name: item.name,
+          purpose: item.purpose,
+          detail_status: :outline,
+          estimated_np_watts: item.metrics&.estimated_np_watts,
+          estimated_if: item.metrics&.estimated_if,
+          estimated_tss: item.metrics&.estimated_tss,
+          estimated_work_kj: item.metrics&.estimated_work_kj)
       end
       HorizonMaterializer.new(@plan).call
     end
@@ -82,15 +93,23 @@ module Planning
       when 2 then [ item.intensity? ? :tempo : :endurance, 0.80, item.intensity? ? 1 : nil ]
       else [ item.subtype, 1.0, item.intensity? ? resumed_level(item, period, reduction: 1) : nil ]
       end
-      recalculate(item, subtype: subtype, duration_minutes: reduced_duration(item.duration_minutes, duration_factor), progression_level: level,
+      recalculate(
+        item,
+        subtype: subtype,
+        duration_minutes: reduced_duration(item.duration_minutes, duration_factor),
+        progression_level: level,
         purpose: "Return-to-training stage #{stage + 1} after #{period.reason.humanize.downcase}.")
     end
 
     def resume_after_break(item, period)
       return item unless item.intensity?
 
-      recalculate(item, subtype: item.subtype, duration_minutes: item.duration_minutes,
-        progression_level: resumed_level(item, period), purpose: "Resuming progression after #{period.reason.humanize.downcase} time off.")
+      recalculate(
+        item,
+        subtype: item.subtype,
+        duration_minutes: item.duration_minutes,
+        progression_level: resumed_level(item, period),
+        purpose: "Resuming progression after #{period.reason.humanize.downcase} time off.")
     end
 
     def resumed_level(item, period, reduction: 0)
@@ -105,11 +124,23 @@ module Planning
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:)
       level = progression_level || 1
-      definition = Workouts::Generator.new(subtype: subtype, duration_minutes: duration_minutes, progression_level: level,
-        variation_key: "a", phase: item.phase, goal: @plan.goal, discipline: @plan.discipline).call
+      definition = Workouts::Generator.new(
+        subtype: subtype,
+        duration_minutes: duration_minutes,
+        progression_level: level,
+        variation_key: "a",
+        phase: item.phase,
+        goal: @plan.goal,
+        discipline: @plan.discipline).call
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
-      item.with(subtype: definition.subtype, duration_minutes: duration_minutes, progression_level: definition.progression_level,
-        name: definition.name, purpose: purpose, main_set_summary: definition.main_set_summary, metrics: metrics)
+      item.with(
+        subtype: definition.subtype,
+        duration_minutes: duration_minutes,
+        progression_level: definition.progression_level,
+        name: definition.name,
+        purpose: purpose,
+        main_set_summary: definition.main_set_summary,
+        metrics: metrics)
     end
 
     def latest_completed_break_before(date)

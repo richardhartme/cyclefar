@@ -8,14 +8,36 @@ require_relative "v1/rules"
 
 module Planning
   class PlanBuilder
-    Prescription = Data.define(:scheduled_on, :kind, :intent, :subtype, :duration_minutes, :progression_level,
-      :phase, :recovery_week, :name, :purpose, :main_set_summary, :metrics, :reason_codes) do
+    Prescription = Data.define(
+      :scheduled_on,
+      :kind,
+      :intent,
+      :subtype,
+      :duration_minutes,
+      :progression_level,
+      :phase,
+      :recovery_week,
+      :name,
+      :purpose,
+      :main_set_summary,
+      :metrics,
+      :reason_codes) do
       def initialize(scheduled_on:, kind:, intent: nil, subtype: nil, duration_minutes: nil, progression_level: nil,
         phase:, recovery_week: false, name: nil, purpose: nil, main_set_summary: nil, metrics: nil, reason_codes: [])
-        super(scheduled_on: scheduled_on, kind: kind.to_s.dup.freeze, intent: intent&.to_s&.dup&.freeze,
-          subtype: subtype&.to_s&.dup&.freeze, duration_minutes: duration_minutes, progression_level: progression_level,
-          phase: phase.to_s.dup.freeze, recovery_week: recovery_week, name: name&.dup&.freeze, purpose: purpose&.dup&.freeze,
-          main_set_summary: main_set_summary&.dup&.freeze, metrics: metrics, reason_codes: reason_codes.map { |code| code.to_s.dup.freeze }.freeze)
+        super(
+          scheduled_on: scheduled_on,
+          kind: kind.to_s.dup.freeze,
+          intent: intent&.to_s&.dup&.freeze,
+          subtype: subtype&.to_s&.dup&.freeze,
+          duration_minutes: duration_minutes,
+          progression_level: progression_level,
+          phase: phase.to_s.dup.freeze,
+          recovery_week: recovery_week,
+          name: name&.dup&.freeze,
+          purpose: purpose&.dup&.freeze,
+          main_set_summary: main_set_summary&.dup&.freeze,
+          metrics: metrics,
+          reason_codes: reason_codes.map { |code| code.to_s.dup.freeze }.freeze)
       end
 
       def executable?
@@ -27,19 +49,42 @@ module Planning
       end
     end
 
-    Week = Data.define(:starts_on, :ends_on, :phase, :recovery_week, :partial, :prescriptions,
-      :duration_minutes, :estimated_tss, :estimated_work_kj, :warning) do
+    Week = Data.define(
+      :starts_on,
+      :ends_on,
+      :phase,
+      :recovery_week,
+      :partial,
+      :prescriptions,
+      :duration_minutes,
+      :estimated_tss,
+      :estimated_work_kj,
+      :warning) do
       def initialize(starts_on:, ends_on:, phase:, recovery_week:, partial:, prescriptions:, duration_minutes:, estimated_tss:, estimated_work_kj:, warning: nil)
-        super(starts_on: starts_on, ends_on: ends_on, phase: phase.to_s.dup.freeze, recovery_week: recovery_week,
-          partial: partial, prescriptions: prescriptions.freeze, duration_minutes: duration_minutes,
-          estimated_tss: estimated_tss, estimated_work_kj: estimated_work_kj, warning: warning&.dup&.freeze)
+        super(
+          starts_on: starts_on,
+          ends_on: ends_on,
+          phase: phase.to_s.dup.freeze,
+          recovery_week: recovery_week,
+          partial: partial,
+          prescriptions: prescriptions.freeze,
+          duration_minutes: duration_minutes,
+          estimated_tss: estimated_tss,
+          estimated_work_kj: estimated_work_kj,
+          warning: warning&.dup&.freeze)
       end
     end
 
     Preview = Data.define(:configuration, :starts_on, :ends_on, :phases, :prescriptions, :weeks, :ftp_test_dates, :warnings) do
       def initialize(configuration:, starts_on:, ends_on:, phases:, prescriptions:, weeks:, ftp_test_dates:, warnings:)
-        super(configuration: configuration, starts_on: starts_on, ends_on: ends_on, phases: phases.freeze,
-          prescriptions: prescriptions.freeze, weeks: weeks.freeze, ftp_test_dates: ftp_test_dates.freeze,
+        super(
+          configuration: configuration,
+          starts_on: starts_on,
+          ends_on: ends_on,
+          phases: phases.freeze,
+          prescriptions: prescriptions.freeze,
+          weeks: weeks.freeze,
+          ftp_test_dates: ftp_test_dates.freeze,
           warnings: warnings.map { |warning| warning.dup.freeze }.freeze)
       end
     end
@@ -58,9 +103,15 @@ module Planning
       evaluated = prescriptions.map { |prescription| evaluate(prescription) }
       evaluated, warnings = enforce_load_cap(evaluated)
       weeks = build_weeks(evaluated, warnings)
-      Preview.new(configuration: @configuration, starts_on: @configuration.starts_on, ends_on: @configuration.ends_on,
-        phases: @phases, prescriptions: evaluated.sort_by(&:scheduled_on), weeks: weeks,
-        ftp_test_dates: evaluated.select { |prescription| prescription.kind == "ftp_test" }.map(&:scheduled_on), warnings: warnings)
+      Preview.new(
+        configuration: @configuration,
+        starts_on: @configuration.starts_on,
+        ends_on: @configuration.ends_on,
+        phases: @phases,
+        prescriptions: evaluated.sort_by(&:scheduled_on),
+        weeks: weeks,
+        ftp_test_dates: evaluated.select { |prescription| prescription.kind == "ftp_test" }.map(&:scheduled_on),
+        warnings: warnings)
     end
 
     private
@@ -85,8 +136,16 @@ module Planning
 
         recovery = recovery_week?(date)
         subtype, level, duration, reason_codes = normal_attributes(slot, phase, date, interval_ordinals, recovery, taper_intensity_on)
-        prescriptions << Prescription.new(scheduled_on: date, kind: :workout, intent: slot.intent, subtype: subtype,
-          duration_minutes: duration, progression_level: level, phase: phase.kind, recovery_week: recovery, reason_codes: reason_codes)
+        prescriptions << Prescription.new(
+          scheduled_on: date,
+          kind: :workout,
+          intent: slot.intent,
+          subtype: subtype,
+          duration_minutes: duration,
+          progression_level: level,
+          phase: phase.kind,
+          recovery_week: recovery,
+          reason_codes: reason_codes)
       end
       prescriptions
     end
@@ -124,9 +183,18 @@ module Planning
     def opener(date, phase)
       normal_duration = @configuration.slot_for(date.cwday)&.duration_minutes.to_i
       duration = normal_duration.between?(40, 45) ? normal_duration : normal_duration >= 45 ? 45 : 30
-      Prescription.new(scheduled_on: date, kind: :opener, intent: :intervals, subtype: :endurance, duration_minutes: duration,
-        phase: phase.kind, recovery_week: false, name: "Event Opener", purpose: "Brief activation before your event.",
-        main_set_summary: "Short intensity touches with easy recovery", reason_codes: [ "event_opener" ])
+      Prescription.new(
+        scheduled_on: date,
+        kind: :opener,
+        intent: :intervals,
+        subtype: :endurance,
+        duration_minutes: duration,
+        phase: phase.kind,
+        recovery_week: false,
+        name: "Event Opener",
+        purpose: "Brief activation before your event.",
+        main_set_summary: "Short intensity touches with easy recovery",
+        reason_codes: [ "event_opener" ])
     end
 
     def special(date, kind, phase, name, purpose)
@@ -213,16 +281,29 @@ module Planning
       return prescription unless prescription.executable?
 
       definition = if prescription.kind == "opener"
-        Workouts::OpenerGenerator.new(duration_minutes: prescription.duration_minutes, phase: prescription.phase,
-          goal: @configuration.goal, discipline: @configuration.discipline).call
+        Workouts::OpenerGenerator.new(
+          duration_minutes: prescription.duration_minutes,
+          phase: prescription.phase,
+          goal: @configuration.goal,
+          discipline: @configuration.discipline).call
       else
-        Workouts::Generator.new(subtype: prescription.subtype, duration_minutes: prescription.duration_minutes,
-          progression_level: prescription.progression_level || 1, variation_key: "a", phase: prescription.phase,
-          goal: @configuration.goal, discipline: @configuration.discipline).call
+        Workouts::Generator.new(
+          subtype: prescription.subtype,
+          duration_minutes: prescription.duration_minutes,
+          progression_level: prescription.progression_level || 1,
+          variation_key: "a",
+          phase: prescription.phase,
+          goal: @configuration.goal,
+          discipline: @configuration.discipline).call
       end
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @configuration.ftp_watts).call
-      prescription.with(subtype: definition.subtype, progression_level: definition.progression_level, name: definition.name,
-        purpose: definition.purpose, main_set_summary: definition.main_set_summary, metrics: metrics,
+      prescription.with(
+        subtype: definition.subtype,
+        progression_level: definition.progression_level,
+        name: definition.name,
+        purpose: definition.purpose,
+        main_set_summary: definition.main_set_summary,
+        metrics: metrics,
         reason_codes: (prescription.reason_codes + definition.reason_codes).uniq)
     end
 
@@ -257,8 +338,10 @@ module Planning
           .max_by { |prescription| prescription.metrics.estimated_tss }
         break adjusted unless candidate
 
-        replacement = evaluate(candidate.with(progression_level: candidate.progression_level - 1,
-          reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq))
+        replacement = evaluate(
+          candidate.with(
+            progression_level: candidate.progression_level - 1,
+            reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq))
         adjusted[adjusted.index(candidate)] = replacement
       end
     end
@@ -267,10 +350,17 @@ module Planning
       weekly_starts.map do |week_start|
         items = prescriptions.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }.sort_by(&:scheduled_on)
         phases = items.map(&:phase).uniq
-        Week.new(starts_on: week_start, ends_on: week_start + 6, phase: phases.one? ? phases.first : "mixed",
-          recovery_week: recovery_week_start?(week_start), partial: partial_week?(week_start), prescriptions: items,
-          duration_minutes: items.sum { |item| item.duration_minutes.to_i }, estimated_tss: tss_for(items),
-          estimated_work_kj: items.sum { |item| item.metrics&.estimated_work_kj.to_f }, warning: warnings.find { |warning| warning.include?(week_start.to_s) })
+        Week.new(
+          starts_on: week_start,
+          ends_on: week_start + 6,
+          phase: phases.one? ? phases.first : "mixed",
+          recovery_week: recovery_week_start?(week_start),
+          partial: partial_week?(week_start),
+          prescriptions: items,
+          duration_minutes: items.sum { |item| item.duration_minutes.to_i },
+          estimated_tss: tss_for(items),
+          estimated_work_kj: items.sum { |item| item.metrics&.estimated_work_kj.to_f },
+          warning: warnings.find { |warning| warning.include?(week_start.to_s) })
       end
     end
 

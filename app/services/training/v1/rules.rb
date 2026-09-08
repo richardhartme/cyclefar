@@ -22,21 +22,35 @@ module Training
 
       ZONES = deep_freeze(recovery: 0..55, endurance: 56..75, tempo: 76..90, threshold: 91..105, vo2_max: 106..120)
       TARGETS = deep_freeze(
-        recovery: [ 45, 55 ], endurance: [ 60, 72 ], tempo: [ 78, 87 ],
-        sweet_spot: [ 88, 94 ], threshold: [ 95, 102 ], vo2_max: [ 108, 118 ],
-        under: [ 88, 94 ], over: [ 102, 108 ], easy: [ 50, 60 ]
+        recovery: [ 45, 55 ],
+        endurance: [ 60, 72 ],
+        tempo: [ 78, 87 ],
+        sweet_spot: [ 88, 94 ],
+        threshold: [ 95, 102 ],
+        vo2_max: [ 108, 118 ],
+        under: [ 88, 94 ],
+        over: [ 102, 108 ],
+        easy: [ 50, 60 ]
       )
       UPPER_THRESHOLD_LEVEL = 5
       UPPER_THRESHOLD_TARGET = [ 95, 100 ].freeze
       VO2_TARGETS = deep_freeze(120 => [ 112, 118 ], 180 => [ 110, 116 ], 240 => [ 108, 114 ], 300 => [ 106, 112 ])
       SUBTYPE_NAMES = deep_freeze(
-        recovery: "Recovery", endurance: "Endurance", tempo: "Tempo", sweet_spot: "Sweet Spot",
-        threshold: "Threshold", vo2_max: "VO2 Max", over_under: "Over-Unders"
+        recovery: "Recovery",
+        endurance: "Endurance",
+        tempo: "Tempo",
+        sweet_spot: "Sweet Spot",
+        threshold: "Threshold",
+        vo2_max: "VO2 Max",
+        over_under: "Over-Unders"
       )
       PURPOSES = deep_freeze(
-        recovery: "Easy riding to support recovery.", endurance: "Develops steady aerobic endurance.",
-        tempo: "Builds sustained aerobic strength.", sweet_spot: "Builds sustainable time just below threshold.",
-        threshold: "Develops sustained power near FTP.", vo2_max: "Develops repeated aerobic-power efforts.",
+        recovery: "Easy riding to support recovery.",
+        endurance: "Develops steady aerobic endurance.",
+        tempo: "Builds sustained aerobic strength.",
+        sweet_spot: "Builds sustainable time just below threshold.",
+        threshold: "Develops sustained power near FTP.",
+        vo2_max: "Develops repeated aerobic-power efforts.",
         over_under: "Practises sustained work with repeated changes around threshold."
       )
       PHASES = %w[base build speciality taper].map(&:freeze).freeze
@@ -54,8 +68,11 @@ module Training
       # The spec permits shorter variations when even level 1 cannot fit.
       # Preserve multiple work bouts and normal recovery, with >=5 min at each end.
       SHORT_MAIN_SETS = deep_freeze(
-        tempo: [ 2, 8, 4 ], sweet_spot: [ 2, 8, 4 ], threshold: [ 2, 6, 4 ],
-        vo2_max: [ 4, 2, 3 ], over_under: [ 2, 6, 5 ]
+        tempo: [ 2, 8, 4 ],
+        sweet_spot: [ 2, 8, 4 ],
+        threshold: [ 2, 6, 4 ],
+        vo2_max: [ 4, 2, 3 ],
+        over_under: [ 2, 6, 5 ]
       )
       # Under/over minutes per cycle. Levels 5/7 continue the 3:1 pattern;
       # the 15-minute level 6 uses five 2:1 cycles, keeping all blocks exact.

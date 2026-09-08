@@ -31,8 +31,12 @@ module Metrics
       end
       np = (fourth_power_sum / count)**0.25
       intensity = np / @ftp_watts
-      Result.new(duration_seconds: count, average_power_watts: power_sum / count,
-        estimated_np_watts: np, estimated_if: intensity, estimated_tss: count / 3600.0 * intensity**2 * 100,
+      Result.new(
+        duration_seconds: count,
+        average_power_watts: power_sum / count,
+        estimated_np_watts: np,
+        estimated_if: intensity,
+        estimated_tss: count / 3600.0 * intensity**2 * 100,
         estimated_work_kj: power_sum / 1000.0)
     end
   end

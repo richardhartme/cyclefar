@@ -55,8 +55,17 @@ RSpec.describe Planning::TimeOffPlanner, type: :service do
 
   it "keeps the target event and phase records while a taper-day opener is removed for time off" do
     event = create(:target_event, training_plan: plan, event_on: plan.ends_on)
-    opener = create(:planned_workout, training_plan: plan, plan_phase: phase, kind: :opener, intent: :intervals, subtype: :endurance,
-      duration_minutes: 30, scheduled_on: plan.ends_on - 1, name: "Event Opener", purpose: "Activation")
+    opener = create(
+      :planned_workout,
+      training_plan: plan,
+      plan_phase: phase,
+      kind: :opener,
+      intent: :intervals,
+      subtype: :endurance,
+      duration_minutes: 30,
+      scheduled_on: plan.ends_on - 1,
+      name: "Event Opener",
+      purpose: "Activation")
 
     described_class.new(plan: plan).add!(starts_on: plan.ends_on - 1, ends_on: plan.ends_on - 1, reason: :other)
 

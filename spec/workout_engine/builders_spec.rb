@@ -31,8 +31,12 @@ RSpec.describe "Warm-up, cool-down and exact-duration fitting" do
   it "uses five-minute cool-downs and eight minutes for long sessions" do
     short = Workouts::CoolDownBuilder.new(subtype: :threshold, duration_minutes: 60).call.fetch(0)
     long = Workouts::CoolDownBuilder.new(subtype: :threshold, duration_minutes: 120).call.fetch(0)
-    expect(short).to have_attributes(duration_seconds: 300, target_low_pct_ftp: 55, target_high_pct_ftp: 60,
-      end_target_low_pct_ftp: 40, end_target_high_pct_ftp: 50)
+    expect(short).to have_attributes(
+      duration_seconds: 300,
+      target_low_pct_ftp: 55,
+      target_high_pct_ftp: 60,
+      end_target_low_pct_ftp: 40,
+      end_target_high_pct_ftp: 50)
     expect(long.duration_seconds).to eq(480)
   end
 

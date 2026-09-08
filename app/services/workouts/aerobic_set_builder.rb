@@ -15,9 +15,15 @@ module Workouts
         if @variation_key == "a"
           [ steady(@duration, rules::TARGETS[:recovery]) ].freeze
         else
-          [ StepDefinition.new(kind: "ramp", label: "Gentle recovery progression", duration_seconds: @duration,
-            target_low_pct_ftp: rules::RECOVERY_RAMP_START[0], target_high_pct_ftp: rules::RECOVERY_RAMP_START[1],
-            end_target_low_pct_ftp: rules::RECOVERY_RAMP_END[0], end_target_high_pct_ftp: rules::RECOVERY_RAMP_END[1], group_key: "main") ].freeze
+          [ StepDefinition.new(
+            kind: "ramp",
+            label: "Gentle recovery progression",
+            duration_seconds: @duration,
+            target_low_pct_ftp: rules::RECOVERY_RAMP_START[0],
+            target_high_pct_ftp: rules::RECOVERY_RAMP_START[1],
+            end_target_low_pct_ftp: rules::RECOVERY_RAMP_END[0],
+            end_target_high_pct_ftp: rules::RECOVERY_RAMP_END[1],
+            group_key: "main") ].freeze
         end
       elsif @variation_key == "a"
         [ steady(@duration, rules::ENDURANCE_STEADY_TARGET) ].freeze
@@ -33,8 +39,13 @@ module Workouts
     private
 
     def steady(seconds, target, group = "main")
-      StepDefinition.new(kind: "steady", label: group == "main" ? Training::V1::Rules::SUBTYPE_NAMES.fetch(@subtype) : "Easy between blocks",
-        duration_seconds: seconds, target_low_pct_ftp: target[0], target_high_pct_ftp: target[1], group_key: group)
+      StepDefinition.new(
+        kind: "steady",
+        label: group == "main" ? Training::V1::Rules::SUBTYPE_NAMES.fetch(@subtype) : "Easy between blocks",
+        duration_seconds: seconds,
+        target_low_pct_ftp: target[0],
+        target_high_pct_ftp: target[1],
+        group_key: group)
     end
   end
 end

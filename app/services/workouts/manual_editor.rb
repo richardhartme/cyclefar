@@ -15,10 +15,17 @@ module Workouts
       material_change = material_change?(definition.subtype, metrics)
       @workout.transaction do
         @workout.workout_steps.destroy_all
-        @workout.assign_attributes(subtype: definition.subtype, duration_minutes: definition.duration_minutes,
-          progression_level: definition.progression_level, variation_key: definition.variation_key, name: definition.name,
-          purpose: definition.purpose, estimated_np_watts: metrics.estimated_np_watts, estimated_if: metrics.estimated_if,
-          estimated_tss: metrics.estimated_tss, estimated_work_kj: metrics.estimated_work_kj)
+        @workout.assign_attributes(
+          subtype: definition.subtype,
+          duration_minutes: definition.duration_minutes,
+          progression_level: definition.progression_level,
+          variation_key: definition.variation_key,
+          name: definition.name,
+          purpose: definition.purpose,
+          estimated_np_watts: metrics.estimated_np_watts,
+          estimated_if: metrics.estimated_if,
+          estimated_tss: metrics.estimated_tss,
+          estimated_work_kj: metrics.estimated_work_kj)
         definition.steps.each { |step| @workout.workout_steps.build(step.to_h) }
         @workout.save!
       end

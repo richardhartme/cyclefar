@@ -9,8 +9,13 @@ RSpec.describe IntervalsIcu::WorkoutSerializer do
     payload = described_class.new(workout: workout, ftp_watts: 260).payload(external_id: "cyclefar-workout-#{workout.id}")
 
     expect(payload).to include(
-      category: "WORKOUT", type: "Ride", indoor: true, start_date_local: "#{workout.scheduled_on}T00:00:00",
-      external_id: "cyclefar-workout-#{workout.id}", moving_time: 3600, icu_ftp: 260
+      category: "WORKOUT",
+      type: "Ride",
+      indoor: true,
+      start_date_local: "#{workout.scheduled_on}T00:00:00",
+      external_id: "cyclefar-workout-#{workout.id}",
+      moving_time: 3600,
+      icu_ftp: 260
     )
     expect(payload[:description]).to eq("- Build 1h ramp 50-70%")
     expect(payload[:description]).not_to match(/\\b\\d{3}W\\b/)

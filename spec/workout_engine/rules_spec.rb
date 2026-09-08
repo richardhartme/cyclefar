@@ -62,8 +62,12 @@ RSpec.describe "V1 workout prescriptions" do
   end
 
   it "keeps requested phase, goal and discipline as explicit context" do
-    workout = Workouts::Generator.new(subtype: :vo2_max, duration_minutes: 60,
-      phase: :speciality, goal: :event, discipline: :mtb).call
+    workout = Workouts::Generator.new(
+      subtype: :vo2_max,
+      duration_minutes: 60,
+      phase: :speciality,
+      goal: :event,
+      discipline: :mtb).call
     expect(workout).to have_attributes(phase: "speciality", goal: "event", discipline: "mtb")
     expect(workout.purpose).to include("Speciality phase", "aerobic-power")
   end

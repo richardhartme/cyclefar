@@ -62,9 +62,23 @@ class TrainingPlansController < ApplicationController
   end
 
   def plan_configuration_params
-    params.require(:plan_configuration).permit(:goal, :discipline, :starts_on, :duration_mode, :duration_months,
-      :custom_duration_weeks, :ftp_watts, :include_base, :progression_mode, :hard_weeks_before_recovery, :event_name,
-      :event_on, :event_discipline, :event_distance_km, :event_elevation_m, :event_expected_duration_minutes,
+    params.require(:plan_configuration).permit(
+      :goal,
+      :discipline,
+      :starts_on,
+      :duration_mode,
+      :duration_months,
+      :custom_duration_weeks,
+      :ftp_watts,
+      :include_base,
+      :progression_mode,
+      :hard_weeks_before_recovery,
+      :event_name,
+      :event_on,
+      :event_discipline,
+      :event_distance_km,
+      :event_elevation_m,
+      :event_expected_duration_minutes,
       availability: {}).to_h
   end
 end

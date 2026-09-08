@@ -49,9 +49,10 @@ RSpec.describe "Settings", type: :request do
     expect(response).to have_http_status(:see_other)
     expect(output.string).not_to include("never-log-this-key")
     expect(output.string).to include("[FILTERED]")
-    expect(ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters).filter(
-      "rider_profile" => { "intervals_icu_api_key" => "never-log-this-key" }
-    )).to eq("rider_profile" => { "intervals_icu_api_key" => "[FILTERED]" })
+    expect(
+      ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters).filter(
+        "rider_profile" => { "intervals_icu_api_key" => "never-log-this-key" }
+          )).to eq("rider_profile" => { "intervals_icu_api_key" => "[FILTERED]" })
   ensure
     Rails.logger = original_rails_logger
     ActiveRecord::Base.logger = original_ar_logger

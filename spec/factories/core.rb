@@ -88,7 +88,9 @@ FactoryBot.define do
         create(:workout_feedback, planned_workout: workout)
         # Fixed snapshot fixture; the completion service is a later milestone.
         workout.reload.update!(
-          status: :completed, completed_at: Time.zone.local(2026, 9, 8, 12), completed_ftp_watts: 260,
+          status: :completed,
+          completed_at: Time.zone.local(2026, 9, 8, 12),
+          completed_ftp_watts: 260,
           completed_target_snapshot: {
             steps: [ { position: 1, low_watts: 156, high_watts: 182 } ],
             estimated_np_watts: 169, estimated_if: 0.65, estimated_tss: 42.25, estimated_work_kj: 608.4

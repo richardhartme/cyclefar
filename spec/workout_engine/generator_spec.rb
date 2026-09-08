@@ -6,8 +6,11 @@ RSpec.describe Workouts::Generator do
 
   subtypes.product((1..7).to_a, durations, %w[a b]).each do |subtype, level, duration, variation|
     it "GEN-001 generates exact #{duration} min #{subtype} level #{level} variation #{variation}" do
-      workout = described_class.new(subtype: subtype, duration_minutes: duration,
-        progression_level: level, variation_key: variation).call
+      workout = described_class.new(
+        subtype: subtype,
+        duration_minutes: duration,
+        progression_level: level,
+        variation_key: variation).call
       expect(workout.steps.sum(&:duration_seconds)).to eq(duration * 60)
       expect(workout.steps.map(&:position)).to eq((1..workout.steps.length).to_a)
       if %i[recovery endurance].include?(subtype)

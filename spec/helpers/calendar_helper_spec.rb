@@ -14,8 +14,15 @@ RSpec.describe CalendarHelper, type: :helper do
   end
 
   def segment_at(percentage)
-    Workouts::ProfileBuilder::Segment.new(position: 1, label: "Test", kind: "steady", starts_at_seconds: 0,
-      ends_at_seconds: 60, start_low_pct_ftp: percentage, start_high_pct_ftp: percentage,
-      end_low_pct_ftp: percentage, end_high_pct_ftp: percentage)
+    Workouts::ProfileBuilder::Segment.new(
+      position: 1,
+      label: "Test",
+      kind: "steady",
+      starts_at_seconds: 0,
+      ends_at_seconds: 60,
+      start_low_pct_ftp: percentage,
+      start_high_pct_ftp: percentage,
+      end_low_pct_ftp: percentage,
+      end_high_pct_ftp: percentage)
   end
 end

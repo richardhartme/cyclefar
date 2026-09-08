@@ -39,8 +39,12 @@ module Workouts
         shift = rules::VARIATION_RECOVERY_SHIFT_SECONDS
         summary += "; first recovery #{shift} sec shorter, #{shift} sec easy after main set"
       end
-      Definition.new(steps: steps.freeze, name_suffix: "#{repetitions}x#{minutes}".freeze,
-        summary: summary.freeze, progression_level: @level, shortened: @shortened)
+      Definition.new(
+        steps: steps.freeze,
+        name_suffix: "#{repetitions}x#{minutes}".freeze,
+        summary: summary.freeze,
+        progression_level: @level,
+        shortened: @shortened)
     end
 
     private
@@ -73,8 +77,14 @@ module Workouts
     end
 
     def steady(label, seconds, target, group, iteration)
-      StepDefinition.new(kind: "steady", label: label, duration_seconds: seconds,
-        target_low_pct_ftp: target[0], target_high_pct_ftp: target[1], group_key: group, group_iteration: iteration)
+      StepDefinition.new(
+        kind: "steady",
+        label: label,
+        duration_seconds: seconds,
+        target_low_pct_ftp: target[0],
+        target_high_pct_ftp: target[1],
+        group_key: group,
+        group_iteration: iteration)
     end
   end
 end

@@ -37,8 +37,13 @@ module Workouts
 
         # Whole-minute requests and 30-second components cannot leave junk steps.
         filler = remaining.zero? ? [] : [ easy_filler(remaining) ]
-        return Result.new(steps: positioned(warm + main.steps + filler + cool), progression_level: main.progression_level,
-          name_suffix: main.name_suffix, summary: main.summary, shortened: main.shortened, compressed: compact)
+        return Result.new(
+          steps: positioned(warm + main.steps + filler + cool),
+          progression_level: main.progression_level,
+          name_suffix: main.name_suffix,
+          summary: main.summary,
+          shortened: main.shortened,
+          compressed: compact)
       end
       nil
     end
@@ -48,8 +53,13 @@ module Workouts
       cool = CoolDownBuilder.new(subtype: @subtype, duration_minutes: @duration_minutes).call
       remaining = @duration_minutes * 60 - (warm + cool).sum(&:duration_seconds)
       main = AerobicSetBuilder.new(subtype: @subtype, duration_seconds: remaining, variation_key: @variation_key).call
-      Result.new(steps: positioned(warm + main + cool), progression_level: nil,
-        name_suffix: "#{@duration_minutes} min".freeze, summary: aerobic_summary.freeze, shortened: false, compressed: false)
+      Result.new(
+        steps: positioned(warm + main + cool),
+        progression_level: nil,
+        name_suffix: "#{@duration_minutes} min".freeze,
+        summary: aerobic_summary.freeze,
+        shortened: false,
+        compressed: false)
     end
 
     def positioned(steps)
@@ -58,8 +68,13 @@ module Workouts
 
     def easy_filler(seconds)
       target = Training::V1::Rules::TARGETS[:easy]
-      StepDefinition.new(kind: "steady", label: "Easy aerobic riding", duration_seconds: seconds,
-        target_low_pct_ftp: target[0], target_high_pct_ftp: target[1], group_key: "filler")
+      StepDefinition.new(
+        kind: "steady",
+        label: "Easy aerobic riding",
+        duration_seconds: seconds,
+        target_low_pct_ftp: target[0],
+        target_high_pct_ftp: target[1],
+        group_key: "filler")
     end
 
     def aerobic_summary

@@ -14,10 +14,11 @@ RSpec.describe "Availability changes", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Change availability", "This week only", "From date onward")
 
-    post availability_change_path, params: {
-      scope: "from_date", effective_from: (Date.current + 7).iso8601,
-      slots: { "2" => { weekday: "2", enabled: "1", duration_minutes: "90", intent: "threshold" } }
-    }
+    post availability_change_path,
+      params: {
+            scope: "from_date", effective_from: (Date.current + 7).iso8601,
+            slots: { "2" => { weekday: "2", enabled: "1", duration_minutes: "90", intent: "threshold" } }
+          }
 
     expect(flash[:alert]).to be_nil
     expect(response).to redirect_to(root_path)

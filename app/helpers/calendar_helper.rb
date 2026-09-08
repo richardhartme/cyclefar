@@ -17,15 +17,29 @@ module CalendarHelper
     inset = detailed ? 12 : 4
     background = tag.rect(x: 0, y: 0, width: width, height: height, fill: "#f8fafc")
     grid = [ 50, 75, 100 ].map do |percentage|
-      tag.line(x1: 0, y1: y_position(percentage, height, inset), x2: width, y2: y_position(percentage, height, inset),
-        stroke: "#cbd5e1", "stroke-width": 1)
+      tag.line(
+        x1: 0,
+        y1: y_position(percentage, height, inset),
+        x2: width,
+        y2: y_position(percentage, height, inset),
+        stroke: "#cbd5e1",
+        "stroke-width": 1)
     end
     blocks = segments.map do |segment|
-      tag.polygon(points: block_points(segment, total, width, height, inset), fill: profile_zone_color(segment), stroke: "#ffffff",
-        "stroke-width": 1.5, "shape-rendering": "geometricPrecision")
+      tag.polygon(
+        points: block_points(segment, total, width, height, inset),
+        fill: profile_zone_color(segment),
+        stroke: "#ffffff",
+        "stroke-width": 1.5,
+        "shape-rendering": "geometricPrecision")
     end
-    content_tag(:svg, safe_join([ background ] + grid + blocks), viewBox: "0 0 #{width} #{height}", role: "img",
-      aria: { label: "Workout power profile, shown as percentage of FTP over time" }, class: "mt-2 #{detailed ? 'h-48' : 'h-11'} w-full")
+    content_tag(
+      :svg,
+      safe_join([ background ] + grid + blocks),
+      viewBox: "0 0 #{width} #{height}",
+      role: "img",
+      aria: { label: "Workout power profile, shown as percentage of FTP over time" },
+      class: "mt-2 #{detailed ? 'h-48' : 'h-11'} w-full")
   end
 
   private

@@ -63,8 +63,13 @@ RSpec.describe "Core persistence", type: :model do
   describe "PLN-020 phases" do
     it "requires non-overlapping, contiguous neighbours inside plan dates" do
       first = create(:plan_phase)
-      second = build(:plan_phase, training_plan: first.training_plan, kind: :build, position: 2,
-        starts_on: first.ends_on + 1, ends_on: first.ends_on + 28)
+      second = build(
+        :plan_phase,
+        training_plan: first.training_plan,
+        kind: :build,
+        position: 2,
+        starts_on: first.ends_on + 1,
+        ends_on: first.ends_on + 28)
       expect(second).to be_valid
       second.starts_on += 1
       expect(second).not_to be_valid

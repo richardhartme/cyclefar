@@ -11,9 +11,15 @@ module Planning
     def weeks
       (@plan.starts_on.beginning_of_week..@plan.ends_on.beginning_of_week).step(7).map do |starts_on|
         workouts = days_for(starts_on).flat_map { |date| @workouts_by_date.fetch(date, []) }
-        Week.new(starts_on: starts_on, ends_on: starts_on + 6, days: days_for(starts_on), phase_label: phase_label(starts_on),
-          recovery_week: recovery_week?(starts_on), duration_minutes: workouts.sum { |workout| workout.duration_minutes.to_i },
-          estimated_tss: workouts.sum { |workout| workout.estimated_tss.to_f }, estimated_work_kj: workouts.sum { |workout| workout.estimated_work_kj.to_f })
+        Week.new(
+          starts_on: starts_on,
+          ends_on: starts_on + 6,
+          days: days_for(starts_on),
+          phase_label: phase_label(starts_on),
+          recovery_week: recovery_week?(starts_on),
+          duration_minutes: workouts.sum { |workout| workout.duration_minutes.to_i },
+          estimated_tss: workouts.sum { |workout| workout.estimated_tss.to_f },
+          estimated_work_kj: workouts.sum { |workout| workout.estimated_work_kj.to_f })
       end
     end
 
