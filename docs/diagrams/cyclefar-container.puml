@@ -1,0 +1,22 @@
+@startuml CycleFar Container Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title CycleFar — Container Diagram
+
+LAYOUT_LEFT_RIGHT()
+
+Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
+
+System_Boundary(cyclefar_boundary, "CycleFar") {
+  Container(web_application, "Web application", "Ruby on Rails, Hotwire, Stimulus, Tailwind CSS", "Serves the desktop-first web interface, applies the deterministic training engine, manages plans, and performs manual Intervals.icu sync.")
+  ContainerDb(database, "Database", "PostgreSQL", "Stores rider settings, plans, calendar workouts, canonical workout steps, completion snapshots, adaptations, time off, and sync records.")
+}
+
+System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
+
+Rel(rider, web_application, "Uses", "HTTPS")
+Rel(web_application, database, "Reads and writes training data", "SQL / Active Record")
+Rel(web_application, intervals_icu, "Manually syncs the next two structured workouts; reconciles only CycleFar-owned events", "HTTPS / JSON")
+
+SHOW_LEGEND()
+@enduml

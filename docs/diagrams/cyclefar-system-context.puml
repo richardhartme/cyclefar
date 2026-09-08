@@ -1,0 +1,18 @@
+@startuml CycleFar System Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title CycleFar — System Context
+
+LAYOUT_LEFT_RIGHT()
+
+Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
+
+System(cyclefar, "CycleFar", "A local, single-rider cycling training planner. It generates deterministic workouts and maintains the training calendar.")
+
+System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
+
+Rel(rider, cyclefar, "Creates and manages plans; completes workouts; reviews adaptations", "Web browser")
+Rel(cyclefar, intervals_icu, "Manually syncs the next two structured workouts; reconciles only CycleFar-owned events", "HTTPS / JSON")
+
+SHOW_LEGEND()
+@enduml

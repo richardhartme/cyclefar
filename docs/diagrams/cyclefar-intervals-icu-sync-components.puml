@@ -1,0 +1,31 @@
+@startuml CycleFar Intervals ICU Sync Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title CycleFar — Intervals.icu Sync Components
+
+LAYOUT_LEFT_RIGHT()
+
+Person(rider, "Rider", "Starts an explicit manual sync from the CycleFar calendar.")
+System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
+ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's plans, workouts, settings and sync records.")
+
+Container_Boundary(web_application, "CycleFar web application") {
+  Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Starts sync and displays its outcome without exposing the API key.")
+  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Selects exactly the next two eligible structured workouts, reconciles stale CycleFar-owned records and persists successful sync results.")
+  Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Serializes canonical workout steps and FTP-derived values into the Intervals.icu event payload.")
+  Component(client, "Client", "IntervalsIcu HTTP client", "Authenticates requests, applies timeouts, parses JSON and maps HTTP errors to application errors.")
+  ComponentDb(models, "Plan, workout, settings and sync models", "Active Record", "Provides canonical steps, rider API-key access and CycleFar-owned external-ID sync records.")
+}
+
+Rel(rider, controller, "Starts manual sync", "HTTPS")
+Rel(controller, sync, "Synchronizes active plan")
+Rel(sync, models, "Selects eligible workouts and reads sync records")
+Rel(sync, serializer, "Builds event payloads")
+Rel(serializer, models, "Reads canonical steps and current FTP context")
+Rel(sync, client, "Upserts desired events and deletes stale owned events")
+Rel(client, intervals_icu, "Sends authenticated bulk event requests", "HTTPS / JSON")
+Rel(sync, models, "Updates or removes sync records after success")
+Rel(models, database, "Reads and writes", "SQL")
+
+SHOW_LEGEND()
+@enduml

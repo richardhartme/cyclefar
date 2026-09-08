@@ -1,0 +1,45 @@
+@startuml CycleFar Plan Change Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title CycleFar — Completion, Adaptation and Replanning Components
+
+LAYOUT_LEFT_RIGHT()
+
+Person(rider, "Rider", "Completes, edits, moves or misses workouts; changes availability; records time off; and updates FTP.")
+ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent training data.")
+
+Container_Boundary(web_application, "CycleFar web application") {
+  Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Handle workout actions, adaptation decisions, availability changes, time off and settings updates.")
+  Component(editor, "ManualEditor", "Workouts service", "Regenerates a future structured workout after a rider-directed change or accepted adaptation.")
+  Component(completion, "CompletionRecorder", "Adaptations service", "Records feedback, freezes completed-workout snapshots and requests adaptation evaluation atomically.")
+  Component(evaluator, "FeedbackEvaluator", "Adaptations service", "Uses feedback and progression rules to prepare an explicit adaptation proposal when appropriate.")
+  Component(proposals, "ProposalApplier", "Adaptations service", "Accepts or rejects an adaptation proposal atomically; accepted changes use ManualEditor.")
+  Component(schedule_changes, "Schedule-change services", "Planning services", "MissedWorkoutResolver, AvailabilityChanger and TimeOffPlanner preserve history while changing the future schedule.")
+  Component(prescriber, "FuturePrescriber", "Planning service", "Re-prescribes affected future dates, accounts for time off and return ramps, and materializes the near-term horizon.")
+  Component(ftp, "Settings::Update and FtpRecalculator", "Settings and Planning services", "Record FTP history and recalculate future structured-workout metrics without changing completed snapshots.")
+  Component(engine, "Workout engine", "Workouts and Metrics services", "Generates deterministic workout definitions and metrics for future workouts.")
+  ComponentDb(models, "Plan and workout models", "Active Record", "Enforce validations and completed-workout immutability while persisting plans, workouts, steps, feedback, proposals, settings and time off.")
+}
+
+Rel(rider, controllers, "Changes training and records feedback", "HTTPS")
+Rel(controllers, editor, "Edits future workouts")
+Rel(controllers, completion, "Records completion")
+Rel(completion, evaluator, "Evaluates feedback")
+Rel(completion, models, "Persists feedback and completion snapshot")
+Rel(evaluator, models, "Reads comparable workouts and feedback")
+Rel(evaluator, models, "Creates proposal when needed")
+Rel(controllers, proposals, "Accepts or rejects proposal")
+Rel(proposals, editor, "Applies accepted workout change")
+Rel(proposals, models, "Updates progression state and proposal")
+Rel(controllers, schedule_changes, "Resolves misses, availability and time off")
+Rel(schedule_changes, prescriber, "Re-prescribes affected future dates")
+Rel(prescriber, engine, "Generates future workout definitions and metrics")
+Rel(prescriber, models, "Replaces affected planned workouts")
+Rel(controllers, ftp, "Updates FTP")
+Rel(ftp, models, "Stores FTP reading and updates future metrics")
+Rel(editor, engine, "Regenerates canonical workout structure")
+Rel(editor, models, "Replaces future steps and metrics")
+Rel(models, database, "Reads and writes", "SQL")
+
+SHOW_LEGEND()
+@enduml
