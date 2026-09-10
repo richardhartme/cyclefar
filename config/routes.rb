@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       post :shuffle
       post :change
       post :move
+      post :copy
       post :complete
       post :complete_test
       post :miss

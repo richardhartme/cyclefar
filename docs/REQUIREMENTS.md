@@ -307,6 +307,10 @@ The rider may move a workout by opening it and choosing a new date. No drag-and-
 
 V1 assumes one cycling workout per date. The date picker should prevent moving onto a date that already contains another cycling workout; the rider can move that workout first.
 
+### WKO-007 Copy
+
+The rider may copy a planned structured workout to another empty date inside the plan. The copy retains the source's canonical percentage-based step structure and is calculated using the rider's current FTP. Copying does not alter the source workout or replan the rest of the calendar.
+
 ## 8. Completion and feedback
 
 ### FBK-001 Manual completion

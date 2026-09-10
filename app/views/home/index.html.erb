@@ -64,17 +64,19 @@
 
               <% @calendar.workouts_on(date).each do |workout| %>
                 <article class="mt-3 rounded border p-2">
-                  <% if workout.ftp_test? %>
-                    <strong><%= link_to "FTP Test", planned_workout_path(workout), class: "underline" %></strong>
-                    <p class="text-sm">Use your preferred assessment, then update Settings.</p>
-                  <% elsif workout.structured? %>
-                    <strong><%= link_to workout.name, planned_workout_path(workout), class: "underline" %></strong>
-                    <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.estimated_tss.round %> TSS · IF <%= format("%.2f", workout.estimated_if) %></p>
-                    <%= workout_profile_svg(workout) %>
-                  <% else %>
-                    <strong><%= link_to workout.name, planned_workout_path(workout), class: "underline" %></strong>
-                    <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.plan_phase.kind.humanize %></p>
-                  <% end %>
+                  <div class="<%= "opacity-50 grayscale" if workout.missed? %>">
+                    <% if workout.ftp_test? %>
+                      <strong><%= link_to "FTP Test", planned_workout_path(workout), class: "underline" %></strong>
+                      <p class="text-sm">Use your preferred assessment, then update Settings.</p>
+                    <% elsif workout.structured? %>
+                      <strong><%= link_to workout.name, planned_workout_path(workout), class: "underline" %></strong>
+                      <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.estimated_tss.round %> TSS · IF <%= format("%.2f", workout.estimated_if) %></p>
+                      <%= workout_profile_svg(workout) %>
+                    <% else %>
+                      <strong><%= link_to workout.name, planned_workout_path(workout), class: "underline" %></strong>
+                      <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.plan_phase.kind.humanize %></p>
+                    <% end %>
+                  </div>
 
                   <% if workout.completed? %>
                     <p class="mt-1 text-sm font-semibold text-teal-800">Completed</p>

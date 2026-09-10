@@ -32,6 +32,14 @@ class PlannedWorkoutsController < ApplicationController
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 
+  def copy
+    destination = Date.iso8601(params.require(:scheduled_on))
+    copy = Workouts::Copier.new(@workout).copy_to!(destination: destination)
+    redirect_to root_path, notice: "Workout copied to #{copy.scheduled_on.to_fs(:long)}."
+  rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to planned_workout_path(@workout), alert: error.message
+  end
+
   def complete
     proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality)).call
     redirect_to root_path, notice: proposal ? "Workout completed. An adaptation proposal is ready for review." : "Workout completed."

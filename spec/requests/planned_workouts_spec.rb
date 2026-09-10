@@ -8,7 +8,7 @@ RSpec.describe "Planned workouts", type: :request do
   it "WKO-001 renders detail without an individual-step editing endpoint" do
     get planned_workout_path(workout)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Move workout")
+    expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Move workout", "Copy workout")
     expect { Rails.application.routes.recognize_path("/planned_workouts/#{workout.id}", method: :patch) }.to raise_error(ActionController::RoutingError)
   end
 
@@ -56,6 +56,21 @@ RSpec.describe "Planned workouts", type: :request do
     post move_planned_workout_path(completed), params: { scheduled_on: (plan.starts_on + 6).iso8601 }
     expect(flash[:alert]).to include("Completed workouts cannot be moved")
     expect(completed.reload.scheduled_on).to eq(plan.starts_on + 5)
+  end
+
+  it "WKO-007 copies a structured workout to an empty date" do
+    destination = Date.current + 2
+    workout
+
+    expect do
+      post copy_planned_workout_path(workout), params: { scheduled_on: destination.iso8601 }
+    end.to change(PlannedWorkout, :count).by(1)
+
+    expect(response).to redirect_to(root_path)
+    copy = plan.planned_workouts.find_by!(scheduled_on: destination)
+    expect(copy).to be_structured
+    expect(copy.workout_steps.map(&:attributes)).not_to be_empty
+    expect(workout.reload.scheduled_on).to eq(plan.starts_on + 1)
   end
 
   it "MIS-001 retains a past workout with a missed calendar status after resolution" do
