@@ -1,9 +1,9 @@
 require "rails_helper"
 
 RSpec.describe Adaptations::CompletionRecorder, type: :service do
-  let(:plan) { create(:training_plan) }
+  let(:plan) { create(:training_plan, starts_on: Date.current, ends_on: Date.current + 83) }
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
-  let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, subtype: :threshold, intent: :threshold, progression_level: 3, scheduled_on: plan.starts_on + 1) }
+  let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, subtype: :threshold, intent: :threshold, progression_level: 3, scheduled_on: plan.starts_on) }
 
   it "FBK-001 atomically records feedback and an immutable completion snapshot" do
     create(:rider_profile, ftp_watts: 275)

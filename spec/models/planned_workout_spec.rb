@@ -41,6 +41,15 @@ RSpec.describe PlannedWorkout, type: :model do
     expect_database_rejection { workout.update_columns(status: "completed") }
   end
 
+  it "MIS-001 retains a missed workout without completion data" do
+    workout = create(:planned_workout, :structured)
+
+    expect(workout.update(status: :missed)).to be(true)
+    expect(workout).to be_missed
+    expect(workout.update(completed_at: Time.current)).to be(false)
+    expect { workout.update_columns(status: "missed") }.not_to raise_error
+  end
+
   describe "FBK-001 / SET-001 completed history" do
     let!(:workout) { create(:planned_workout, :completed) }
 

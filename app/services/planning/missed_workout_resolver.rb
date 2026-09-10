@@ -8,10 +8,10 @@ module Planning
     def resolve!(mode:, destination: nil)
       case mode.to_s
       when "leave_unchanged"
-        @workout.destroy!
+        mark_missed!
       when "replan"
         TrainingPlan.transaction do
-          @workout.destroy!
+          mark_missed!
           replan_upcoming_workouts!
         end
       when "move"
@@ -22,6 +22,10 @@ module Planning
     end
 
     private
+
+    def mark_missed!
+      @workout.update!(status: :missed)
+    end
 
     def move!(date)
       plan = @workout.training_plan

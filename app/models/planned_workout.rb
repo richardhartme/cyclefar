@@ -11,7 +11,7 @@ class PlannedWorkout < ApplicationRecord
   enum :intent, AvailabilitySlot::INTENTS.index_by(&:itself), prefix: true, validate: { allow_nil: true }
   enum :subtype, %w[recovery endurance tempo sweet_spot threshold vo2_max over_under].index_by(&:itself), prefix: true, validate: { allow_nil: true }
   enum :detail_status, %w[outline structured].index_by(&:itself), validate: true
-  enum :status, %w[planned completed].index_by(&:itself), validate: true
+  enum :status, %w[planned missed completed].index_by(&:itself), validate: true
 
   validates :scheduled_on, presence: true, uniqueness: { scope: :training_plan_id }
   validates :intent, presence: true, unless: :ftp_test?
@@ -20,7 +20,7 @@ class PlannedWorkout < ApplicationRecord
   validates(*METRICS, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true)
   validates :completed_at, presence: true, if: :completed?
   validates :completed_ftp_watts, numericality: { only_integer: true, greater_than: 0 }, if: -> { completed? && !ftp_test? }
-  validates :completed_at, :completed_ftp_watts, :completed_target_snapshot, absence: true, if: :planned?
+  validates :completed_at, :completed_ftp_watts, :completed_target_snapshot, absence: true, if: -> { planned? || missed? }
   validate :schedule_matches_plan
   validate :canonical_structure
   validate :completion_has_snapshot

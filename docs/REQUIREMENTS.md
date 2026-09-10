@@ -359,7 +359,7 @@ When the rider marks a workout missed, offer:
 
 `Replan upcoming workouts` changes only the near-term block (normally next 7–14 days), respecting fixed rider availability/intensity-day intent.
 
-A resolved missed workout is removed from the visible calendar.
+Workouts resolved by leaving the plan unchanged or replanning are retained on the calendar with a `Missed` status. A moved workout remains planned on its new date.
 
 ## 10. Schedule changes
 

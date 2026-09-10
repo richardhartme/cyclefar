@@ -58,13 +58,15 @@ RSpec.describe "Planned workouts", type: :request do
     expect(completed.reload.scheduled_on).to eq(plan.starts_on + 5)
   end
 
-  it "MIS-001 removes a past workout after the rider resolves it as missed" do
+  it "MIS-001 retains a past workout with a missed calendar status after resolution" do
     past = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1)
 
     post miss_planned_workout_path(past), params: { resolution: "leave_unchanged" }
 
     expect(response).to redirect_to(root_path)
-    expect { past.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    follow_redirect!
+    expect(past.reload).to be_missed
+    expect(response.body).to include("Missed")
   end
 
   it "FTP-001 presents an assessment action and records a completed FTP test" do

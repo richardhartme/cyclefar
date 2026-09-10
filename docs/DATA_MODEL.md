@@ -144,7 +144,7 @@ Fields:
 - `name: string`
 - `purpose: string`
 - `detail_status: enum` — `outline`, `structured`
-- `status: enum` — `planned`, `completed`
+- `status: enum` — `planned`, `missed`, `completed`
 - `progression_level: integer, nullable`
 - `variation_key: string, nullable` — lets Shuffle choose a different valid construction without randomness
 - `estimated_np_watts: decimal, nullable`

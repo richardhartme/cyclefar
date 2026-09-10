@@ -324,7 +324,7 @@ CREATE TABLE public.planned_workouts (
     completed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT planned_workouts_completion_snapshot CHECK (((((status)::text = 'planned'::text) AND (completed_at IS NULL) AND (completed_ftp_watts IS NULL) AND (completed_target_snapshot IS NULL)) OR (((status)::text = 'completed'::text) AND (completed_at IS NOT NULL) AND (((kind)::text = 'ftp_test'::text) OR (((detail_status)::text = 'structured'::text) AND (completed_ftp_watts IS NOT NULL) AND (completed_ftp_watts > 0) AND (completed_target_snapshot IS NOT NULL) AND (jsonb_typeof(completed_target_snapshot) = 'object'::text) AND (completed_target_snapshot <> '{}'::jsonb)))))),
+    CONSTRAINT planned_workouts_completion_snapshot CHECK (((((status)::text = ANY ((ARRAY['planned'::character varying, 'missed'::character varying])::text[])) AND (completed_at IS NULL) AND (completed_ftp_watts IS NULL) AND (completed_target_snapshot IS NULL)) OR (((status)::text = 'completed'::text) AND (completed_at IS NOT NULL) AND (((kind)::text = 'ftp_test'::text) OR (((detail_status)::text = 'structured'::text) AND (completed_ftp_watts IS NOT NULL) AND (completed_ftp_watts > 0) AND (completed_target_snapshot IS NOT NULL) AND (jsonb_typeof(completed_target_snapshot) = 'object'::text) AND (completed_target_snapshot <> '{}'::jsonb)))))),
     CONSTRAINT planned_workouts_detail_status_values CHECK (((detail_status)::text = ANY ((ARRAY['outline'::character varying, 'structured'::character varying])::text[]))),
     CONSTRAINT planned_workouts_ftp_test_no_protocol CHECK ((((kind)::text <> 'ftp_test'::text) OR ((estimated_np_watts IS NULL) AND (estimated_if IS NULL) AND (estimated_tss IS NULL) AND (estimated_work_kj IS NULL) AND (duration_minutes IS NULL) AND ((detail_status)::text = 'outline'::text)))),
     CONSTRAINT planned_workouts_intent_values CHECK (((intent)::text = ANY ((ARRAY['intervals'::character varying, 'endurance'::character varying, 'recovery'::character varying, 'vo2_max'::character varying, 'threshold'::character varying, 'sweet_spot'::character varying, 'tempo'::character varying])::text[]))),
@@ -332,7 +332,7 @@ CREATE TABLE public.planned_workouts (
     CONSTRAINT planned_workouts_minimum_duration CHECK ((((kind)::text = 'ftp_test'::text) OR ((duration_minutes IS NOT NULL) AND (duration_minutes >= 30) AND (intent IS NOT NULL)))),
     CONSTRAINT planned_workouts_nonnegative_metrics CHECK (((estimated_np_watts >= (0)::numeric) AND (estimated_if >= (0)::numeric) AND (estimated_tss >= (0)::numeric) AND (estimated_work_kj >= (0)::numeric))),
     CONSTRAINT planned_workouts_progression_level CHECK (((progression_level >= 1) AND (progression_level <= 7))),
-    CONSTRAINT planned_workouts_status_values CHECK (((status)::text = ANY ((ARRAY['planned'::character varying, 'completed'::character varying])::text[]))),
+    CONSTRAINT planned_workouts_status_values CHECK (((status)::text = ANY ((ARRAY['planned'::character varying, 'missed'::character varying, 'completed'::character varying])::text[]))),
     CONSTRAINT planned_workouts_subtype_values CHECK (((subtype)::text = ANY ((ARRAY['recovery'::character varying, 'endurance'::character varying, 'tempo'::character varying, 'sweet_spot'::character varying, 'threshold'::character varying, 'vo2_max'::character varying, 'over_under'::character varying])::text[])))
 );
 
@@ -1074,6 +1074,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260910000000'),
 ('20260906000001'),
 ('20260905000002'),
 ('20260905000001');

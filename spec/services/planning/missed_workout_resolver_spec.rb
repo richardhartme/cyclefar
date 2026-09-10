@@ -7,27 +7,29 @@ RSpec.describe Planning::MissedWorkoutResolver, type: :service do
   let!(:availability_slot) { create(:availability_slot, availability_template: availability_template) }
   let(:workout) { create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }
 
-  it "removes only the missed workout without stacking compensatory work" do
+  it "retains a missed workout without stacking compensatory work" do
     workout
-    expect { described_class.new(workout).resolve!(mode: :leave_unchanged) }.to change(PlannedWorkout, :count).by(-1)
+    expect { described_class.new(workout).resolve!(mode: :leave_unchanged) }.not_to change(PlannedWorkout, :count)
+    expect(workout.reload).to be_missed
   end
 
   it "moves to an empty date and protects completed workouts" do
     described_class.new(workout).resolve!(mode: :move, destination: (plan.starts_on + 3).iso8601)
     expect(workout.reload.scheduled_on).to eq(plan.starts_on + 3)
+    expect(workout).to be_planned
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 4)
     expect { described_class.new(completed) }.to raise_error(ArgumentError)
   end
 
-  it "removes a missed workout when replanning without adding training debt" do
+  it "retains a missed workout when replanning without adding training debt" do
     workout
     future_workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 3)
 
     expect do
       described_class.new(workout).resolve!(mode: :replan)
-    end.not_to change(PlannedWorkout, :count)
+    end.to change(PlannedWorkout, :count).by(1)
 
-    expect { workout.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    expect(workout.reload).to be_missed
     expect { future_workout.reload }.to raise_error(ActiveRecord::RecordNotFound)
     next_available_date = Date.current.beginning_of_week + availability_slot.weekday - 1
     next_available_date += 7 if next_available_date < Date.current
