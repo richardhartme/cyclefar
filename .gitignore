@@ -33,6 +33,21 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Terraform state, provider cache, plans and local variable files may contain
+# infrastructure details or secrets. The committed example is intentionally safe.
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+*.plan
+*.tfvars
+*.tfvars.json
+plan.out
+!infra/terraform.tfvars.example
+crash.log
+crash.*.log
+
 
 /app/assets/builds/*
 !/app/assets/builds/.keep

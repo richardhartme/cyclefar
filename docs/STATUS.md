@@ -24,6 +24,15 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 Milestone 11 is complete. The V1 implementation plan is complete.
 
+## Infrastructure
+
+2026-09-12: Initial AWS Terraform configuration added locally (not applied).
+
+- Added a small single-server VPC, EC2, Elastic IP and private encrypted RDS PostgreSQL design under `infra/`.
+- Restricted RDS PostgreSQL access to the application security group and added optional existing-hosted-zone Route 53 support for `cyclefar.com`.
+- Added Terraform state, plan and secret-variable ignore rules, plus safe variables and operations documentation for a later manual apply and Kamal configuration.
+- `terraform fmt -check` and `terraform validate` were not run because Terraform is not installed in the local workspace.
+
 ## Last completed
 
 2026-09-05: Milestones 0 and 1 implemented locally (not committed by Codex).

@@ -1,0 +1,33 @@
+# Copy this file to terraform.tfvars and replace placeholder values before
+# planning. terraform.tfvars is ignored by Git.
+
+aws_region   = "eu-west-2"
+project_name = "cyclefar"
+environment  = "production"
+
+ec2_instance_type = "t3a.small"
+rds_instance_class = "db.t4g.micro"
+
+# RDS database names cannot contain underscores. Align Rails's production
+# database configuration with this value when Kamal is configured later.
+database_name     = "cyclefarproduction"
+database_username = "cyclefar"
+
+# Set exactly one SSH input. Use a real key name or a real public key.
+ssh_key_name   = "replace-with-an-existing-ec2-key-pair"
+ssh_public_key = null
+
+# Replace with your public IP range before applying.
+ssh_allowed_cidrs = [ "203.0.113.10/32" ]
+
+# Supply the ID of an existing hosted zone to create cyclefar.com -> Elastic IP.
+# Leave null to manage DNS outside Terraform for now.
+route53_zone_id = null
+domain_name     = "cyclefar.com"
+
+# Omit database_password to generate one. If you supply it, use TF_VAR_database_password
+# or an ignored .tfvars file, never a committed file.
+database_password = null
+
+# Keep a final snapshot when destroying a database with data.
+rds_skip_final_snapshot = false
