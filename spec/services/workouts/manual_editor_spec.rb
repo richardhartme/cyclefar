@@ -46,4 +46,30 @@ RSpec.describe Workouts::ManualEditor, type: :service do
     expect(workout.reload.subtype).to eq("recovery")
     expect(plan.planned_workouts.where.not(id: workout.id).count).to eq(0)
   end
+
+  it "WKO-005 changes a regular workout to the canonical 30–45 minute opener" do
+    result = described_class.new(workout).apply!(
+      action: :change,
+      subtype: :opener,
+      duration_minutes: 45)
+
+    expect(result.material_change).to be(true)
+    expect(workout.reload).to have_attributes(
+      kind: "opener",
+      intent: "intervals",
+      subtype: "endurance",
+      duration_minutes: 45,
+      progression_level: nil,
+      name: "Event Opener")
+    expect(workout.workout_steps.map(&:label)).to include("Threshold activation", "VO2 activation")
+  end
+
+  it "WKO-005 rejects an opener longer than 45 minutes" do
+    expect do
+      described_class.new(workout).apply!(
+        action: :change,
+        subtype: :opener,
+        duration_minutes: 60)
+    end.to raise_error(ArgumentError, "opener duration must be 30 to 45 minutes")
+  end
 end

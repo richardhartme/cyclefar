@@ -7,8 +7,8 @@ RSpec.describe "Planned workouts", type: :request do
 
   it "WKO-001 renders detail without an individual-step editing endpoint" do
     get planned_workout_path(workout)
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Move workout", "Copy workout")
+    expect(response).to have_http_status(:ok), flash[:alert]
+    expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Opener", "Move workout", "Copy workout")
     expect { Rails.application.routes.recognize_path("/planned_workouts/#{workout.id}", method: :patch) }.to raise_error(ActionController::RoutingError)
   end
 
@@ -39,6 +39,16 @@ RSpec.describe "Planned workouts", type: :request do
     expect(response).to redirect_to(planned_workout_path(short))
     expect(flash[:alert]).to include("below 30")
     expect(short.reload.duration_minutes).to eq(30)
+  end
+
+  it "WKO-005 changes a workout to an opener through the detail page" do
+    post change_planned_workout_path(workout), params: { subtype: "opener", duration_minutes: 45 }
+
+    expect(response).to redirect_to(planned_workout_path(workout))
+    expect(workout.reload).to have_attributes(
+      kind: "opener",
+      duration_minutes: 45,
+      name: "Event Opener")
   end
 
   it "WKO-006 moves only to an empty date inside the plan" do

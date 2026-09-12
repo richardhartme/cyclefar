@@ -5,17 +5,18 @@ module Workouts
 
     def initialize(workout)
       @workout = workout
-      raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && workout.workout?
+      raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && (workout.workout? || workout.opener?)
     end
 
     def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
-      attributes = next_attributes(action, subtype, duration_minutes, progression_level)
-      definition = Generator.new(**attributes).call
+      kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
-      material_change = material_change?(definition.subtype, metrics)
+      material_change = material_change?(kind, definition.subtype, metrics)
       @workout.transaction do
         @workout.workout_steps.destroy_all
         @workout.assign_attributes(
+          kind: kind,
+          intent: kind == :opener ? :intervals : @workout.intent,
           subtype: definition.subtype,
           duration_minutes: definition.duration_minutes,
           progression_level: definition.progression_level,
@@ -33,6 +34,25 @@ module Workouts
     end
 
     private
+
+    def definition_for(action, subtype, duration_minutes, progression_level)
+      if action.to_s == "change" && subtype.to_s == "opener"
+        return [ :opener, opener_definition(duration_minutes) ]
+      end
+
+      raise ArgumentError, "Only a regular workout can be shuffled" unless @workout.workout? || action.to_s == "change"
+
+      attributes = next_attributes(action, subtype, duration_minutes, progression_level)
+      [ :workout, Generator.new(**attributes).call ]
+    end
+
+    def opener_definition(duration_minutes)
+      OpenerGenerator.new(
+        duration_minutes: Integer(duration_minutes),
+        phase: @workout.plan_phase.kind,
+        goal: @workout.training_plan.goal,
+        discipline: @workout.training_plan.discipline).call
+    end
 
     def next_attributes(action, subtype, duration_minutes, progression_level)
       current_level = @workout.progression_level || 1
@@ -57,8 +77,9 @@ module Workouts
       at_boundary ? Variations.next_key(@workout.variation_key || "a") : @workout.variation_key
     end
 
-    def material_change?(subtype, metrics)
-      intensity?(subtype) != intensity?(@workout.subtype) ||
+    def material_change?(kind, subtype, metrics)
+      kind.to_s != @workout.kind ||
+        intensity?(subtype) != intensity?(@workout.subtype) ||
         ((metrics.estimated_tss / @workout.estimated_tss) - 1).abs >= 0.15 ||
         (metrics.estimated_if - @workout.estimated_if).abs >= 0.08
     end

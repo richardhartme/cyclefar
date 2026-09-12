@@ -299,6 +299,8 @@ Shorter/Longer:
 
 The rider may choose a different workout type and/or duration.
 
+The workout type selector includes an **Opener**. An opener uses the canonical 30–45 minute event-activation structure.
+
 If this materially changes training load or changes between easy/intensity intent, show an optional `Replan upcoming workouts` proposal. The rider may dismiss it and keep the rest of the plan unchanged.
 
 ### WKO-006 Move
