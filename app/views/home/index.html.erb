@@ -40,10 +40,17 @@
     <div class="mt-8 overflow-x-auto rounded-lg border border-slate-200 bg-white">
       <% @calendar.weeks.each do |week| %>
         <section class="grid min-w-[1016px] divide-x border-b border-slate-200 last:border-b-0" style="grid-template-columns: repeat(7, minmax(120px, 1fr)) 11rem" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">
-          <% week.days.each_with_index do |date, index| %>
+          <% week.days.each do |date| %>
             <div class="min-h-48 p-3">
-              <strong><%= date.strftime("%a %-d") %></strong>
-              <% if date.day == 1 || index.zero? %>
+              <% can_add_workout = @calendar.workouts_on(date).empty? && !@calendar.event_on(date) && !@calendar.time_off_on(date) %>
+              <strong>
+                <% if can_add_workout %>
+                  <%= link_to date.strftime("%a %-d"), new_planned_workout_path(scheduled_on: date), class: "text-teal-800 underline", aria: { label: "Add workout on #{date.to_fs(:long)}" } %>
+                <% else %>
+                  <%= date.strftime("%a %-d") %>
+                <% end %>
+              </strong>
+              <% if date.day == 1 %>
                 <p class="text-xs font-semibold uppercase text-teal-700"><%= date.strftime("%B") %></p>
               <% end %>
 

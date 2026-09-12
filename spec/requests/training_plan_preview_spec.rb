@@ -58,7 +58,7 @@ RSpec.describe "Training plan preview", type: :request do
     }.to change(TrainingPlan, :count).by(1)
     expect(response).to redirect_to(root_path)
     follow_redirect!
-    expect(response.body).to include("Training calendar", "Training plan created.", "September", "November")
+    expect(response.body).to include("Training calendar", "Training plan created.", "November")
     expect(response.body).to include("FTP Test")
     expect(response.body).to include("Workout power profile")
     expect(Nokogiri::HTML(response.body).css("svg polygon")).not_to be_empty

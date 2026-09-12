@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   resource :training_plan, only: [ :new, :create, :destroy ] do
     post :preview
   end
-  resources :planned_workouts, only: [ :show ] do
+  resources :planned_workouts, only: [ :new, :create, :show ] do
     member do
       post :shuffle
       post :change

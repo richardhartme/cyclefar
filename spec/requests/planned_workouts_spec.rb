@@ -33,6 +33,37 @@ RSpec.describe "Planned workouts", type: :request do
     expect(response.body).not_to include("Adjust workout")
   end
 
+  it "WKO-008 links an empty calendar date to a form that adds a canonical workout" do
+    scheduled_on = Date.current + 2
+    plan
+    phase
+
+    get root_path
+    calendar_link = Nokogiri::HTML(response.body).css("a").find do |link|
+      link["href"] == new_planned_workout_path(scheduled_on: scheduled_on)
+    end
+    expect(calendar_link).to be_present
+
+    get new_planned_workout_path(scheduled_on: scheduled_on)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Add workout", scheduled_on.to_fs(:long), "Workout type")
+
+    expect do
+      post(
+        planned_workouts_path,
+        params: {
+          scheduled_on: scheduled_on,
+          subtype: "threshold",
+          duration_minutes: 60
+        })
+    end.to change(PlannedWorkout, :count).by(1)
+
+    expect(response).to redirect_to(root_path)
+    expect(plan.planned_workouts.find_by!(scheduled_on: scheduled_on)).to have_attributes(
+      subtype: "threshold",
+      detail_status: "structured")
+  end
+
   it "WKO-004 rejects shorter below 30 minutes through the action" do
     short = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, duration_minutes: 30, scheduled_on: plan.starts_on + 2)
     post shuffle_planned_workout_path(short), params: { action_kind: "shorter" }

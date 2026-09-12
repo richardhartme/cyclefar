@@ -1,0 +1,20 @@
+<section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6">
+  <%= link_to "Back to calendar", root_path, class: "font-semibold text-teal-800 underline" %>
+  <h1 class="mt-5 text-3xl font-semibold">Add workout</h1>
+  <p class="mt-2 text-slate-600"><%= @scheduled_on.to_fs(:long) %></p>
+
+  <%= form_with url: planned_workouts_path, method: :post, class: "mt-6 space-y-4" do %>
+    <%= hidden_field_tag :scheduled_on, @scheduled_on %>
+    <div>
+      <%= label_tag :subtype, "Workout type", class: "block font-semibold" %>
+      <% workout_types = Training::V1::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
+      <%= select_tag :subtype, options_for_select(workout_types, "endurance"), class: "mt-1 w-full rounded border-slate-300" %>
+    </div>
+    <div>
+      <%= label_tag :duration_minutes, "Duration (minutes)", class: "block font-semibold" %>
+      <%= number_field_tag :duration_minutes, 60, min: 30, required: true, class: "mt-1 w-full rounded border-slate-300" %>
+      <p class="mt-1 text-sm text-slate-600">Openers are 30–45 minute activation workouts for an event.</p>
+    </div>
+    <%= submit_tag "Add workout", class: "rounded bg-teal-800 px-4 py-2 font-semibold text-white" %>
+  <% end %>
+</section>

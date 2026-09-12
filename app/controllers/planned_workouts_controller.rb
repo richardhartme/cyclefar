@@ -1,5 +1,24 @@
 class PlannedWorkoutsController < ApplicationController
-  before_action :load_workout
+  before_action :load_workout, except: %i[new create]
+
+  def new
+    @plan = TrainingPlan.active.sole
+    @scheduled_on = Date.iso8601(params.require(:scheduled_on))
+    Workouts::Creator.new(@plan).validate_destination!(@scheduled_on)
+  rescue Date::Error, ArgumentError => error
+    redirect_to root_path, alert: error.message
+  end
+
+  def create
+    plan = TrainingPlan.active.sole
+    workout = Workouts::Creator.new(plan).create!(
+      scheduled_on: Date.iso8601(params.require(:scheduled_on)),
+      subtype: params.require(:subtype),
+      duration_minutes: params.require(:duration_minutes))
+    redirect_to root_path, notice: "#{workout.name} added to #{workout.scheduled_on.to_fs(:long)}."
+  rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to root_path, alert: error.message
+  end
 
   def show
   end
