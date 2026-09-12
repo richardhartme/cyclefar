@@ -451,9 +451,10 @@ CREATE TABLE public.time_off_periods (
     return_ramp_days integer,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    name character varying,
     CONSTRAINT time_off_periods_ordered_dates CHECK ((ends_on >= starts_on)),
-    CONSTRAINT time_off_periods_reason_values CHECK (((reason)::text = ANY ((ARRAY['holiday'::character varying, 'illness'::character varying, 'recovery'::character varying, 'other'::character varying])::text[]))),
-    CONSTRAINT time_off_periods_return_ramp CHECK (((((reason)::text = ANY ((ARRAY['illness'::character varying, 'recovery'::character varying])::text[])) AND (return_ramp_days IS NOT NULL) AND (return_ramp_days > 0)) OR (((reason)::text = ANY ((ARRAY['holiday'::character varying, 'other'::character varying])::text[])) AND (return_ramp_days IS NULL))))
+    CONSTRAINT time_off_periods_reason_values CHECK (((reason)::text = ANY ((ARRAY['holiday'::character varying, 'illness'::character varying, 'recovery'::character varying, 'event'::character varying, 'other'::character varying])::text[]))),
+    CONSTRAINT time_off_periods_return_ramp CHECK (((((reason)::text = ANY ((ARRAY['illness'::character varying, 'recovery'::character varying])::text[])) AND (return_ramp_days IS NOT NULL) AND (return_ramp_days > 0)) OR (((reason)::text = ANY ((ARRAY['holiday'::character varying, 'event'::character varying, 'other'::character varying])::text[])) AND (return_ramp_days IS NULL))))
 );
 
 
@@ -1074,6 +1075,8 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260912000001'),
+('20260912000000'),
 ('20260910000000'),
 ('20260906000001'),
 ('20260905000002'),

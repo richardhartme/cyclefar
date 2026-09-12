@@ -384,11 +384,12 @@ The rider can add a time-off period with:
 
 - start date;
 - end date;
-- reason: Holiday / Illness / Recovery / Other.
+- reason: Holiday / Illness / Recovery / Event / Other.
+- optional name, such as `France` for a Holiday.
 
 The plan removes/avoids workouts during that period and replans around it.
 
-For Illness or Recovery, the rider additionally chooses the duration of an easier return-to-training period. The engine ramps intensity/load back toward the normal plan across that user-selected period.
+For Illness or Recovery, the rider additionally chooses the duration of an easier return-to-training period. The engine ramps intensity/load back toward the normal plan across that user-selected period. Holiday, Event and Other time off resume without a return ramp.
 
 ## 12. FTP assessments
 

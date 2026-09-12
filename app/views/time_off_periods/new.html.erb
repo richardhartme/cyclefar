@@ -19,6 +19,10 @@
       <%= form.select :reason, TimeOffPeriod.reasons.keys.map { |reason| [reason.humanize, reason] }, {}, class: "mt-1 w-full rounded border-slate-300" %>
     </div>
     <div>
+      <%= form.label :name, "Name (optional)", class: "block font-semibold" %>
+      <%= form.text_field :name, placeholder: "e.g. France", class: "mt-1 w-full rounded border-slate-300" %>
+    </div>
+    <div>
       <%= form.label :return_ramp_days, "Easier return days (illness/recovery only)", class: "block font-semibold" %>
       <%= form.number_field :return_ramp_days, min: 1, class: "mt-1 w-full rounded border-slate-300" %>
     </div>

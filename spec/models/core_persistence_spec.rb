@@ -122,9 +122,12 @@ RSpec.describe "Core persistence", type: :model do
       end
     end
 
-    it "rejects ramps for holiday/other and overlapping or out-of-plan ranges" do
+    it "rejects ramps for holiday, event and other time off, and overlapping or out-of-plan ranges" do
       period = create(:time_off_period)
-      expect(build(:time_off_period, reason: :other, return_ramp_days: 2)).not_to be_valid
+      %i[holiday event other].each do |reason|
+        expect(build(:time_off_period, reason: reason, return_ramp_days: 2)).not_to be_valid
+        expect_database_rejection { build(:time_off_period, reason: reason, return_ramp_days: 2).save!(validate: false) }
+      end
       expect(build(:time_off_period, training_plan: period.training_plan)).not_to be_valid
       period.starts_on = period.training_plan.starts_on - 1
       expect(period).not_to be_valid

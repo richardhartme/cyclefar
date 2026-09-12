@@ -98,7 +98,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Optional adaptation proposals
 - Workout shuffle/change/move
 - Schedule changes for one week or from a date onward
-- Time off: holiday, illness, recovery, other
+- Time off: holiday, illness, recovery, event, other
 - Return-to-training ramp after illness/recovery
 - FTP assessment recommendations
 - Intervals.icu sync for next two workouts

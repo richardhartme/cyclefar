@@ -56,8 +56,10 @@
 
               <% if (time_off = @calendar.time_off_on(date)) %>
                 <article class="mt-3 rounded bg-slate-200 p-2">
-                  <strong>Time off</strong>
-                  <p class="text-sm"><%= time_off.reason.humanize %></p>
+                  <strong><%= time_off.name.presence || (time_off.event? ? "Time off" : time_off.reason.humanize) %></strong>
+                  <% if time_off.name.present? && !time_off.event? %>
+                    <p class="text-sm"><%= time_off.reason.humanize %></p>
+                  <% end %>
                   <%= button_to "Remove", time_off_period_path(time_off), method: :delete, form: { data: { turbo_confirm: "Remove this time-off period and restore its future training?" } }, class: "mt-1 text-sm underline" %>
                 </article>
               <% end %>

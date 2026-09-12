@@ -22,6 +22,6 @@ class TimeOffPeriodsController < ApplicationController
   private
 
   def time_off_attributes
-    params.require(:time_off_period).permit(:starts_on, :ends_on, :reason, :return_ramp_days)
+    params.require(:time_off_period).permit(:starts_on, :ends_on, :reason, :name, :return_ramp_days)
   end
 end

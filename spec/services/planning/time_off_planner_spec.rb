@@ -67,9 +67,11 @@ RSpec.describe Planning::TimeOffPlanner, type: :service do
       name: "Event Opener",
       purpose: "Activation")
 
-    described_class.new(plan: plan).add!(starts_on: plan.ends_on - 1, ends_on: plan.ends_on - 1, reason: :other)
+    period = described_class.new(plan: plan).add!(starts_on: plan.ends_on - 1, ends_on: plan.ends_on - 1, reason: :event)
 
     expect { opener.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    expect(period).to be_event
+    expect(period.return_ramp_days).to be_nil
     expect(plan.target_event).to eq(event)
     expect(plan.plan_phases).to contain_exactly(phase)
     expect(plan.ends_on).to eq(event.event_on)

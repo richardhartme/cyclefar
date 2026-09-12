@@ -1,7 +1,7 @@
 class TimeOffPeriod < ApplicationRecord
   belongs_to :training_plan
   include WithinPlanDates
-  enum :reason, %w[holiday illness recovery other].index_by(&:itself), validate: true
+  enum :reason, %w[holiday illness recovery event other].index_by(&:itself), validate: true
 
   validates :return_ramp_days, numericality: { only_integer: true, greater_than: 0 }, if: :return_ramp_required?
   validates :return_ramp_days, absence: true, unless: :return_ramp_required?

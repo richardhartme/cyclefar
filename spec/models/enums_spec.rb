@@ -7,7 +7,7 @@ RSpec.describe "Domain enums", type: :model do
     plan_phase: { kind: %w[base build speciality taper] },
     availability_template: { source: %w[initial one_week_override from_date_change] },
     availability_slot: { intent: %w[intervals endurance recovery vo2_max threshold sweet_spot tempo] },
-    time_off_period: { reason: %w[holiday illness recovery other] },
+    time_off_period: { reason: %w[holiday illness recovery event other] },
     planned_workout: { kind: %w[workout ftp_test opener], intent: %w[intervals endurance recovery vo2_max threshold sweet_spot tempo], subtype: %w[recovery endurance tempo sweet_spot threshold vo2_max over_under], status: %w[planned missed completed], detail_status: %w[outline structured] },
     workout_step: { kind: %w[steady ramp] },
     workout_feedback: { completion_quality: %w[as_planned struggled_completed could_not_complete] }

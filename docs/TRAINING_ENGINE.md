@@ -848,7 +848,7 @@ No normal workouts during time-off dates.
 
 Do not automatically extend plan end date in V1. Event date is always fixed; non-event plans also keep their original end date for predictable behaviour.
 
-### Holiday / Other
+### Holiday / Event / Other
 
 After the break:
 

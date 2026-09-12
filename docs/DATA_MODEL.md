@@ -121,11 +121,12 @@ Fields:
 
 - `starts_on: date`
 - `ends_on: date`
-- `reason: enum` — `holiday`, `illness`, `recovery`, `other`
+- `reason: enum` — `holiday`, `illness`, `recovery`, `event`, `other`
+- `name: string, nullable`
 - `return_ramp_days: integer, nullable`
 - timestamps
 
-`return_ramp_days` required for illness/recovery, absent for other reasons.
+`return_ramp_days` required for illness/recovery, absent for holiday, event and other reasons.
 
 ## PlannedWorkout
 
