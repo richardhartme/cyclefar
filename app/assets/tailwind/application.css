@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+@layer base {
+  input[type="text"],
+  input[type="number"],
+  input:not([type]) {
+    @apply rounded-md border border-slate-300 px-3 py-2;
+  }
+}

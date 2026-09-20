@@ -1,5 +1,5 @@
 <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6">
-  <%= link_to "Back to calendar", root_path, class: "font-semibold text-teal-800 underline" %>
+  <%= link_to "Back to calendar", root_path, class: "font-semibold text-blue-800 underline" %>
   <h1 class="mt-5 text-3xl font-semibold">Add time off</h1>
   <p class="mt-2 text-slate-600">Workouts during this period will be removed. Illness and recovery need an easier return period.</p>
 
@@ -26,6 +26,6 @@
       <%= form.label :return_ramp_days, "Easier return days (illness/recovery only)", class: "block font-semibold" %>
       <%= form.number_field :return_ramp_days, min: 1, class: "mt-1 w-full rounded border-slate-300" %>
     </div>
-    <%= form.submit "Add time off", class: "rounded bg-teal-800 px-4 py-2 font-semibold text-white" %>
+    <%= form.submit "Add time off", class: "rounded bg-blue-800 px-4 py-2 font-semibold text-white" %>
   <% end %>
 </section>

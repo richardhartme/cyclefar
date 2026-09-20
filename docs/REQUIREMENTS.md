@@ -43,7 +43,7 @@ Settings allow an optional Intervals.icu API key.
 
 ### PLN-001 Empty home
 
-When there is no active plan, `/` shows a clear `Create training plan` action rather than a blank calendar.
+When there is no active plan, `/` shows a calendar from Monday of the previous week through the end of the current month with a clear `Create training plan` action. The no-plan calendar has no workout, time-off or weekly-summary controls.
 
 ## 3. Plan setup
 
@@ -215,6 +215,8 @@ Each week displays totals for:
 - planned work.
 
 The overall plan must make weekly planned load progression easy to see.
+
+A full-width TSS chart above the calendar shows one bar per plan week, using the same totals as the weekly summaries and including empty weeks.
 
 ### CAL-004 Completed/overdue states
 

@@ -1,5 +1,5 @@
 <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6">
-  <%= link_to "Back to calendar", root_path, class: "font-semibold text-teal-800 underline" %>
+  <%= link_to "Back to calendar", root_path, class: "font-semibold text-blue-800 underline" %>
   <h1 class="mt-5 text-3xl font-semibold">Add workout</h1>
   <p class="mt-2 text-slate-600"><%= @scheduled_on.to_fs(:long) %></p>
 
@@ -15,6 +15,6 @@
       <%= number_field_tag :duration_minutes, 60, min: 30, required: true, class: "mt-1 w-full rounded border-slate-300" %>
       <p class="mt-1 text-sm text-slate-600">Openers are 30–45 minute activation workouts for an event.</p>
     </div>
-    <%= submit_tag "Add workout", class: "rounded bg-teal-800 px-4 py-2 font-semibold text-white" %>
+    <%= submit_tag "Add workout", class: "rounded bg-blue-800 px-4 py-2 font-semibold text-white" %>
   <% end %>
 </section>

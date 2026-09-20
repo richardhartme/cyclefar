@@ -1,4 +1,23 @@
 module CalendarHelper
+  WORKOUT_CARD_COLORS = {
+    recovery: "bg-slate-50 border-slate-300",
+    endurance: "bg-sky-50 border-sky-300",
+    tempo: "bg-teal-50 border-teal-300",
+    sweet_spot: "bg-green-50 border-green-300",
+    threshold: "bg-amber-50 border-amber-300",
+    vo2_max: "bg-orange-50 border-orange-300",
+    over_under: "bg-rose-50 border-rose-300",
+    opener: "bg-violet-50 border-violet-300",
+    ftp_test: "bg-indigo-50 border-indigo-300"
+  }.freeze
+
+  def workout_card_colors(workout)
+    return "bg-slate-100 border-slate-300" if workout.missed?
+
+    type = workout.workout? ? workout.subtype : workout.kind
+    WORKOUT_CARD_COLORS.fetch(type.to_sym, WORKOUT_CARD_COLORS[:recovery])
+  end
+
   PROFILE_ZONE_COLORS = {
     recovery: "#94A3B8",
     endurance: "#38BDF8",
