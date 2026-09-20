@@ -13,6 +13,43 @@ RSpec.describe Planning::TimeOffPlanner, type: :service do
     create(:availability_slot, availability_template: template, weekday: 6, duration_minutes: 90, intent: :intervals)
   end
 
+  context "before the plan starts" do
+    let(:plan) { create(:training_plan, starts_on: Date.current.next_occurring(:monday), ends_on: Date.current + 90) }
+    let(:starts_on) { plan.starts_on + 1 }
+
+    it "adds and removes time off using the future initial availability" do
+      planner = described_class.new(plan: plan)
+      period = planner.add!(starts_on: starts_on, ends_on: ends_on, reason: :holiday)
+
+      expect(period).to be_persisted
+      expect(plan.planned_workouts.where(scheduled_on: starts_on..ends_on)).to be_empty
+      expect(plan.planned_workouts.where("scheduled_on > ?", ends_on)).to exist
+
+      planner.remove!(period)
+      expect(plan.planned_workouts.find_by!(scheduled_on: starts_on).duration_minutes).to eq(60)
+    end
+
+    it "preserves future schedule changes and temporary overrides when adding and removing time off" do
+      change_on = plan.starts_on + 14
+      template.update!(effective_until: change_on - 1)
+      future = create(:availability_template, training_plan: plan, effective_from: change_on, source: :from_date_change)
+      create(:availability_slot, availability_template: future, weekday: 3, duration_minutes: 75, intent: :endurance)
+      override = create(:availability_template, training_plan: plan, effective_from: change_on + 7, effective_until: change_on + 13, source: :one_week_override)
+      create(:availability_slot, availability_template: override, weekday: 5, duration_minutes: 45, intent: :endurance)
+
+      planner = described_class.new(plan: plan)
+      period = planner.add!(starts_on: starts_on, ends_on: ends_on, reason: :holiday)
+
+      2.times do |iteration|
+        planner.remove!(period) if iteration == 1
+        expect(plan.planned_workouts.find_by!(scheduled_on: change_on + 2).duration_minutes).to eq(75)
+        expect(plan.planned_workouts.where(scheduled_on: change_on + 9)).to be_empty
+        expect(plan.planned_workouts.find_by!(scheduled_on: change_on + 11)).to be_present
+        expect(plan.planned_workouts.find_by!(scheduled_on: change_on + 16)).to be_present
+      end
+    end
+  end
+
   it "removes planned workouts during illness and builds deterministic short and long re-entry stages" do
     in_break = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: starts_on)
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: starts_on + 1)

@@ -7,7 +7,7 @@ module Planning
     def add!(attributes)
       TrainingPlan.transaction do
         period = @plan.time_off_periods.create!(attributes)
-        FuturePrescriber.new(plan: @plan, slots: active_slots).replace!(period.starts_on..@plan.ends_on)
+        re_prescribe!(period.starts_on)
         period
       end
     end
@@ -18,19 +18,27 @@ module Planning
       TrainingPlan.transaction do
         starts_on = period.starts_on
         period.destroy!
-        FuturePrescriber.new(plan: @plan, slots: active_slots).replace!(starts_on..@plan.ends_on)
+        re_prescribe!(starts_on)
       end
     end
 
     private
 
-    def active_slots
-      template = @plan.availability_templates.includes(:availability_slots).select do |candidate|
-        candidate.effective_from <= Date.current && (candidate.effective_until.nil? || candidate.effective_until >= Date.current)
-      end.max_by { |candidate| [ candidate.one_week_override? ? 1 : 0, candidate.effective_from ] }
-      raise ArgumentError, "No availability template applies today" unless template
+    def re_prescribe!(starts_on)
+      templates = @plan.availability_templates.includes(:availability_slots).to_a
+      dates = ([ starts_on, @plan.starts_on, Date.current ].max..@plan.ends_on).to_a
+      dates_by_template = dates.group_by do |date|
+        template = templates.select do |candidate|
+          candidate.effective_from <= date && (candidate.effective_until.nil? || candidate.effective_until >= date)
+        end.max_by { |candidate| [ candidate.one_week_override? ? 1 : 0, candidate.effective_from ] }
+        raise ArgumentError, "No availability template applies on #{date.to_fs(:long)}" unless template
 
-      template.availability_slots
+        template
+      end
+
+      dates_by_template.each do |template, scheduled_dates|
+        FuturePrescriber.new(plan: @plan, slots: template.availability_slots).replace!(scheduled_dates)
+      end
     end
   end
 end
