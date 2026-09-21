@@ -1,12 +1,12 @@
 require "rails_helper"
 
 RSpec.describe Planning::HorizonMaterializer do
-  %w[a b c].each do |key|
+  %w[sustained alternating undulating].each do |key|
     it "persists randomly selected endurance profile #{key} and never redraws it on later requests" do
       plan = create(:training_plan, starts_on: Date.current, ends_on: Date.current + 70)
       phase = create(:plan_phase, training_plan: plan)
       workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current)
-      allow(Workouts::Variations).to receive(:random_key).with(:endurance).and_return(key)
+      allow(Workouts::Variations).to receive(:for_generation).with("endurance", current_key: nil).and_return(key)
 
       described_class.new(plan).call
       expect(workout.reload.variation_key).to eq(key)
@@ -16,7 +16,7 @@ RSpec.describe Planning::HorizonMaterializer do
       snapshot = workout.workout_steps.map(&:attributes)
       described_class.new(plan).call
       expect(workout.reload.workout_steps.map(&:attributes)).to eq(snapshot)
-      expect(Workouts::Variations).to have_received(:random_key).once
+      expect(Workouts::Variations).to have_received(:for_generation).once
     end
   end
 end

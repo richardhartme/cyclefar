@@ -29,7 +29,7 @@ module Workouts
         duration_minutes: @duration_minutes,
         requested_progression_level: nil,
         progression_level: nil,
-        variation_key: "a",
+        variation_key: "activation",
         phase: @phase,
         goal: @goal,
         discipline: @discipline,

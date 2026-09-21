@@ -5,15 +5,15 @@ require_relative "variations"
 
 module Workouts
   class Generator
-    def initialize(subtype:, duration_minutes:, progression_level: 1, variation_key: "a",
+    def initialize(subtype:, duration_minutes:, progression_level: 1, variation_key: nil,
       phase: :base, goal: :general_fitness, discipline: :road)
       rules = Training::V1::Rules
-      @subtype = member!(subtype, rules::SUBTYPE_NAMES.keys.map(&:to_s), "subtype")
+      @subtype = member!(subtype, rules::SUBTYPE_NAMES.keys.map(&:to_s), "subtype").to_sym
       @phase = member!(phase, rules::PHASES, "phase")
       @goal = member!(goal, rules::GOALS, "goal")
       @discipline = member!(discipline, rules::DISCIPLINES, "discipline")
-      keys = @subtype == "endurance" ? rules::ENDURANCE_VARIATION_KEYS : rules::VARIATION_KEYS
-      @variation_key = member!(variation_key, keys, "variation key")
+      keys = Variations.keys_for(@subtype)
+      @variation_key = member!(variation_key || Variations.default_key(@subtype), keys, "variation key")
       unless duration_minutes.is_a?(Integer) && duration_minutes >= rules::MINIMUM_DURATION_MINUTES
         raise ArgumentError, "duration_minutes must be a whole number of at least #{rules::MINIMUM_DURATION_MINUTES}"
       end
@@ -37,7 +37,7 @@ module Workouts
       reason_codes << "compressed_warm_up" if fit.compressed
       WorkoutDefinition.new(
         engine_version: rules::ENGINE_VERSION,
-        subtype: @subtype,
+        subtype: @subtype.to_s,
         duration_minutes: @duration_minutes,
         requested_progression_level: @level,
         progression_level: fit.progression_level,
@@ -45,8 +45,8 @@ module Workouts
         phase: @phase,
         goal: @goal,
         discipline: @discipline,
-        name: "#{rules::SUBTYPE_NAMES.fetch(@subtype.to_sym)} #{fit.name_suffix}",
-        purpose: "#{@phase.capitalize} phase. #{rules::PURPOSES.fetch(@subtype.to_sym)}",
+        name: "#{rules::SUBTYPE_NAMES.fetch(@subtype)} #{fit.name_suffix}",
+        purpose: "#{@phase.capitalize} phase. #{rules::PURPOSES.fetch(@subtype)}",
         main_set_summary: fit.summary,
         steps: fit.steps,
         reason_codes: reason_codes)

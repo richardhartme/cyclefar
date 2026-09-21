@@ -48,8 +48,9 @@ module Workouts
     private
 
     def definition_for(scheduled_on, subtype, duration_minutes)
+      subtype = subtype.to_sym
       phase = phase_for(scheduled_on)
-      if subtype.to_s == "opener"
+      if subtype == :opener
         return [ :opener, OpenerGenerator.new(
           duration_minutes: Integer(duration_minutes),
           phase: phase.kind,
@@ -61,14 +62,14 @@ module Workouts
         subtype: subtype,
         duration_minutes: Integer(duration_minutes),
         progression_level: DEFAULT_PROGRESSION_LEVEL,
-        variation_key: Variations.random_key(subtype),
+        variation_key: Variations.for_generation(subtype),
         phase: phase.kind,
         goal: @plan.goal,
         discipline: @plan.discipline).call ]
     end
 
     def intent_for(kind, subtype)
-      return :intervals if kind == :opener || subtype == "over_under"
+      return :intervals if kind == :opener || subtype.to_sym == :over_under
 
       subtype
     end

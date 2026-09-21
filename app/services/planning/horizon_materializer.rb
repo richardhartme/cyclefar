@@ -7,8 +7,7 @@ module Planning
 
     def call
       @plan.planned_workouts.planned.where(kind: %w[workout opener], detail_status: :outline, scheduled_on: @date..@date + 13).find_each do |workout|
-        variation = workout.subtype_endurance? && workout.workout? ? Workouts::Variations.random_key(:endurance) : workout.variation_key || "a"
-        definition = workout.opener? ? Workouts::OpenerGenerator.new(duration_minutes: workout.duration_minutes, phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call : Workouts::Generator.new(subtype: workout.subtype, duration_minutes: workout.duration_minutes, progression_level: workout.progression_level || 1, variation_key: variation, phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call
+        definition = definition_for(workout)
         metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
         workout.assign_attributes(
           detail_status: :structured,
@@ -25,6 +24,22 @@ module Planning
     end
 
     private
+
+    def definition_for(workout)
+      attributes = {
+        duration_minutes: workout.duration_minutes,
+        phase: workout.plan_phase.kind,
+        goal: @plan.goal,
+        discipline: @plan.discipline
+      }
+      return Workouts::OpenerGenerator.new(**attributes).call if workout.opener?
+
+      Workouts::Generator.new(
+        **attributes,
+        subtype: workout.subtype,
+        progression_level: workout.progression_level || 1,
+        variation_key: Workouts::Variations.for_generation(workout.subtype, current_key: workout.variation_key)).call
+    end
 
     def current_ftp_watts
       RiderProfile.current.ftp_watts || @plan.initial_ftp_watts

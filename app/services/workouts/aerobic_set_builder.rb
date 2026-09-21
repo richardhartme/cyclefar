@@ -12,7 +12,7 @@ module Workouts
     def call
       rules = Training::V1::Rules
       if @subtype == :recovery
-        if @variation_key == "a"
+        if @variation_key == "steady"
           [ steady(@duration, rules::TARGETS[:recovery]) ].freeze
         else
           [ StepDefinition.new(
@@ -25,7 +25,7 @@ module Workouts
             end_target_high_pct_ftp: rules::RECOVERY_RAMP_END[1],
             group_key: "main") ].freeze
         end
-      elsif @variation_key == "a"
+      elsif @variation_key == "sustained"
         [ steady(@duration, rules::ENDURANCE_STEADY_TARGET) ].freeze
       else
         count = [ @duration / (2 * rules::ENDURANCE_BLOCK_SECONDS), 1 ].max * 2
@@ -35,7 +35,7 @@ module Workouts
           low = rules::ENDURANCE_LOW_TARGET
           high = rules::ENDURANCE_HIGH_TARGET
           start_target, end_target = index.even? ? [ low, high ] : [ high, low ]
-          if @variation_key == "b"
+          if @variation_key == "alternating"
             steady(seconds, start_target).with(label: index.even? ? "Low endurance" : "High endurance")
           else
             steady(seconds, start_target).with(

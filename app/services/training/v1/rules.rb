@@ -14,7 +14,8 @@ module Training
       MINIMUM_STEP_SECONDS = 30
       PROGRESSION_LEVELS = (1..7).freeze
       MAXIMUM_TARGET_PCT = 120
-      VARIATION_KEYS = %w[a b].map(&:freeze).freeze
+      INTENSITY_VARIATION_KEYS = %w[standard redistributed_recovery].freeze
+      RECOVERY_VARIATION_KEYS = %w[steady gentle_ramp].freeze
       VARIATION_RECOVERY_SHIFT_SECONDS = 30
       SAME_TSS_TOLERANCE = 0.05
       SAME_IF_TOLERANCE = 0.03
@@ -98,7 +99,7 @@ module Training
       RECOVERY_COOL_DOWN_START = [ 50, 55 ].freeze
       RECOVERY_COOL_DOWN_END = [ 40, 45 ].freeze
       ENDURANCE_STEADY_TARGET = [ 65, 72 ].freeze
-      ENDURANCE_VARIATION_KEYS = %w[a b c].freeze
+      ENDURANCE_VARIATION_KEYS = %w[sustained alternating undulating].freeze
       ENDURANCE_LOW_TARGET = [ 64, 68 ].freeze
       ENDURANCE_HIGH_TARGET = [ 70, 74 ].freeze
       ENDURANCE_BLOCK_SECONDS = 300

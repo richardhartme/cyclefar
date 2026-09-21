@@ -41,7 +41,7 @@ RSpec.describe "Warm-up, cool-down and exact-duration fitting" do
   end
 
   it "compresses preparation before reducing the prescribed main-set level" do
-    fit = Workouts::ExactDurationFitter.new(subtype: :threshold, duration_minutes: 75, progression_level: 7, variation_key: "a").call
+    fit = Workouts::ExactDurationFitter.new(subtype: :threshold, duration_minutes: 75, progression_level: 7, variation_key: "standard").call
     expect(fit.progression_level).to eq(7)
     expect(fit.compressed).to be(true)
     expect(fit.name_suffix).to eq("3x15")
@@ -49,7 +49,7 @@ RSpec.describe "Warm-up, cool-down and exact-duration fitting" do
   end
 
   it "steps down the ladder before using a short fallback and records the effective level" do
-    fit = Workouts::ExactDurationFitter.new(subtype: :threshold, duration_minutes: 60, progression_level: 7, variation_key: "a").call
+    fit = Workouts::ExactDurationFitter.new(subtype: :threshold, duration_minutes: 60, progression_level: 7, variation_key: "standard").call
     expect(fit.progression_level).to eq(6)
     expect(fit.shortened).to be(false)
     expect(fit.name_suffix).to eq("2x20")

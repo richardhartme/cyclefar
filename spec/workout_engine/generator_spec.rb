@@ -4,7 +4,7 @@ RSpec.describe Workouts::Generator do
   subtypes = %i[recovery endurance tempo sweet_spot threshold vo2_max over_under]
   durations = [ 30, 45, 60, 75, 90, 120 ]
 
-  subtypes.product((1..7).to_a, durations, %w[a b]).each do |subtype, level, duration, variation|
+  subtypes.flat_map { |subtype| [ subtype ].product((1..7).to_a, durations, Workouts::Variations.keys_for(subtype)) }.each do |subtype, level, duration, variation|
     it "GEN-001 generates exact #{duration} min #{subtype} level #{level} variation #{variation}" do
       workout = described_class.new(
         subtype: subtype,

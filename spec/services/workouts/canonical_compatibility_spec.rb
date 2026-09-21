@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Generated canonical definitions", type: :model do
   %i[recovery endurance tempo sweet_spot threshold vo2_max over_under].each do |subtype|
     it "GEN-001 / LOAD-001 round-trips #{subtype} through WorkoutStep without changing structure or metrics" do
-      definition = Workouts::Generator.new(subtype: subtype, duration_minutes: 60, progression_level: 5, variation_key: "b").call
+      definition = Workouts::Generator.new(subtype: subtype, duration_minutes: 60, progression_level: 5, variation_key: Workouts::Variations.keys_for(subtype).last).call
       workout = build(
         :planned_workout,
         subtype: subtype,

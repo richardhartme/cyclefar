@@ -291,7 +291,7 @@ module Planning
           subtype: prescription.subtype,
           duration_minutes: prescription.duration_minutes,
           progression_level: prescription.progression_level || 1,
-          variation_key: "a",
+          variation_key: Workouts::Variations.default_key(prescription.subtype),
           phase: prescription.phase,
           goal: @configuration.goal,
           discipline: @configuration.discipline).call

@@ -81,13 +81,13 @@ module Workouts
       rules = Training::V1::Rules
       if @subtype == :recovery
         band = rules::TARGETS[:recovery].join("–")
-        @variation_key == "a" ? "Easy steady riding at #{band}% FTP" : "Gentle recovery ramp within #{band}% FTP"
+        @variation_key == "steady" ? "Easy steady riding at #{band}% FTP" : "Gentle recovery ramp within #{band}% FTP"
       else
         band = rules::ENDURANCE_STEADY_TARGET.join("–")
         case @variation_key
-        when "a" then "Steady endurance at #{band}% FTP"
-        when "b" then "Alternating low/high endurance at #{rules::ENDURANCE_LOW_TARGET.join('–')} / #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
-        when "c" then "Undulating endurance between #{rules::ENDURANCE_LOW_TARGET.join('–')} and #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
+        when "sustained" then "Steady endurance at #{band}% FTP"
+        when "alternating" then "Alternating low/high endurance at #{rules::ENDURANCE_LOW_TARGET.join('–')} / #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
+        when "undulating" then "Undulating endurance between #{rules::ENDURANCE_LOW_TARGET.join('–')} and #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
         end
       end
     end

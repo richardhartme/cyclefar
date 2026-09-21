@@ -25,7 +25,7 @@ RSpec.describe "V1 workout prescriptions" do
 
   %i[recovery endurance tempo sweet_spot threshold vo2_max over_under].each do |subtype|
     it "keeps all #{subtype} work within its prescribed power band at every level and fit" do
-      (1..7).to_a.product([ 30, 45, 60, 75, 90, 120 ], %w[a b]).each do |level, duration, key|
+      (1..7).to_a.product([ 30, 45, 60, 75, 90, 120 ], Workouts::Variations.keys_for(subtype)).each do |level, duration, key|
         workout = Workouts::Generator.new(subtype: subtype, progression_level: level, duration_minutes: duration, variation_key: key).call
         main = workout.steps.select { |step| step.group_key == "main" }
         main.each do |step|

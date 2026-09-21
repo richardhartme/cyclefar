@@ -9,6 +9,7 @@ module Workouts
     end
 
     def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
+      subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
       material_change = material_change?(kind, definition.subtype, metrics)
@@ -36,7 +37,7 @@ module Workouts
     private
 
     def definition_for(action, subtype, duration_minutes, progression_level)
-      if action.to_s == "change" && subtype.to_s == "opener"
+      if action.to_s == "change" && subtype == :opener
         return [ :opener, opener_definition(duration_minutes) ]
       end
 
@@ -57,24 +58,24 @@ module Workouts
     def next_attributes(action, subtype, duration_minutes, progression_level)
       current_level = @workout.progression_level || 1
       level, variation, duration, chosen_subtype = case action.to_s
-      when "same" then [ current_level, Variations.next_key(@workout.variation_key || "a", subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
+      when "same" then [ current_level, Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
       when "easier" then [ [ current_level - 1, 1 ].max, boundary_variation(current_level == 1), @workout.duration_minutes, @workout.subtype ]
       when "harder" then [ [ current_level + 1, 7 ].min, boundary_variation(current_level == 7), @workout.duration_minutes, @workout.subtype ]
       when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
       when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
-      when "change" then [ current_level, Variations.random_key(subtype), Integer(duration_minutes), subtype.to_s ]
+      when "change" then [ current_level, Variations.for_generation(subtype), Integer(duration_minutes), subtype.to_s ]
       when "adapt" then [ Integer(progression_level), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
       end
       raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::V1::Rules::MINIMUM_DURATION_MINUTES
       raise ArgumentError, "Unsupported workout subtype" unless Training::V1::Rules::SUBTYPE_NAMES.key?(chosen_subtype.to_sym)
 
-      { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || "a",
+      { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || Variations.default_key(chosen_subtype),
         phase: @workout.plan_phase.kind, goal: @workout.training_plan.goal, discipline: @workout.training_plan.discipline }
     end
 
     def boundary_variation(at_boundary)
-      at_boundary ? Variations.next_key(@workout.variation_key || "a", subtype: @workout.subtype) : @workout.variation_key
+      at_boundary ? Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype) : @workout.variation_key
     end
 
     def material_change?(kind, subtype, metrics)

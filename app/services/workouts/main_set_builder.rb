@@ -20,14 +20,14 @@ module Workouts
         steps.concat(work_steps(minutes, index + 1))
         if index < repetitions - 1
           seconds = recovery * 60
-          seconds -= rules::VARIATION_RECOVERY_SHIFT_SECONDS if @variation_key == "b" && index.zero?
+          seconds -= rules::VARIATION_RECOVERY_SHIFT_SECONDS if @variation_key == "redistributed_recovery" && index.zero?
           steps << recovery_step(seconds)
         end
       end
-      # Variation b moves 30 seconds from the first recovery to after the final
+      # The redistributed recovery variation moves 30 seconds from the first recovery to after the final
       # effort. Work duration, work targets and total easy time remain identical.
       # It changes recovery distribution without a duration-boundary level jump.
-      if @variation_key == "b"
+      if @variation_key == "redistributed_recovery"
         steps << recovery_step(rules::VARIATION_RECOVERY_SHIFT_SECONDS).with(label: "Easy after main set")
       end
       summary = "#{repetitions} x #{minutes} min, #{recovery} min recovery between blocks"
@@ -35,7 +35,7 @@ module Workouts
         under, over = cycle
         summary += " (#{under} min under / #{over} min over)"
       end
-      if @variation_key == "b"
+      if @variation_key == "redistributed_recovery"
         shift = rules::VARIATION_RECOVERY_SHIFT_SECONDS
         summary += "; first recovery #{shift} sec shorter, #{shift} sec easy after main set"
       end

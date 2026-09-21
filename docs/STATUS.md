@@ -26,6 +26,10 @@ Milestone 11 is complete. The V1 implementation plan is complete.
 
 2026-09-21: Added randomly selected endurance profiles (sustained, alternating low/high, and undulating). Selection is persisted during generation; forecasts remain deterministic and saved workouts remain stable. Added duration, zone, load and materialisation regression coverage. Also corrected fractional return-to-training stage calculation exposed by the full suite. Validation: 1,170 examples passed, Zeitwerk passed, RuboCop passed.
 
+2026-09-21: Renamed endurance profiles to `sustained`, `alternating`, and `undulating` throughout generation, forecasting, editing and tests. Migrated uncompleted workouts; immutable completed records retain historical keys. Validation: 1,212 examples passed, Zeitwerk passed, RuboCop passed.
+
+2026-09-21: Replaced remaining recovery/intensity/opener letter keys with descriptive variation names and migrated uncompleted records. Completed history remains immutable. Validation: 1,212 examples passed, Zeitwerk passed, RuboCop passed.
+
 ## Infrastructure
 
 2026-09-12: Initial AWS Terraform configuration added locally (not applied).

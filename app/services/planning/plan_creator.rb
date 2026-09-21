@@ -41,7 +41,7 @@ module Planning
             subtype: item.subtype,
             duration_minutes: item.duration_minutes,
             progression_level: item.progression_level,
-            variation_key: "a",
+            variation_key: item.kind == "workout" ? Workouts::Variations.default_key(item.subtype) : item.kind == "opener" ? "activation" : nil,
             name: item.name,
             purpose: item.purpose,
             detail_status: :outline,

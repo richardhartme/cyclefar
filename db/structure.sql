@@ -1075,6 +1075,8 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260921000001'),
+('20260921000000'),
 ('20260912000001'),
 ('20260912000000'),
 ('20260910000000'),

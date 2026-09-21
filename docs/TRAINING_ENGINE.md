@@ -443,13 +443,13 @@ Normal structure:
 
 When a new endurance workout is materialised, manually added, or explicitly selected with Change workout, randomly choose one of three profiles with equal probability:
 
-- `a`: one sustained block at 65–72% FTP;
-- `b`: alternating low (64–68%) and high (70–74%) endurance blocks;
-- `c`: undulating ramps rising from the low band to the high band and falling back again.
+- `sustained`: one sustained block at 65–72% FTP;
+- `alternating`: alternating low (64–68%) and high (70–74%) endurance blocks;
+- `undulating`: undulating ramps rising from the low band to the high band and falling back again.
 
 Alternating and undulating profiles use an even number of roughly five-minute blocks, distributing the available main-set duration in 30-second increments. All profiles retain the usual warm-up, cool-down and exact total duration.
 
-This is an explicit exception to deterministic workout selection. Persist the chosen variation and canonical steps; ordinary requests must not redraw structured or completed workouts. Forecasts use the sustained profile deterministically and actual metrics are recalculated on materialisation. Same shuffle cycles a → b → c → a; duration changes retain the chosen profile. Copying retains the original structure.
+This is an explicit exception to deterministic workout selection. Persist the chosen variation and canonical steps; ordinary requests must not redraw structured or completed workouts. Forecasts use the sustained profile deterministically and actual metrics are recalculated on materialisation. Same shuffle cycles sustained → alternating → undulating → sustained; duration changes retain the chosen profile. Copying retains the original structure.
 
 Do not turn Endurance into Tempo simply to increase TSS.
 
@@ -549,6 +549,8 @@ Threshold level 3 could include:
 Variations should target roughly similar time-in-zone and estimated TSS/IF.
 
 Store/derive a `variation_key` and rotate to the next key on each Same shuffle.
+
+Variation keys describe the profile: recovery uses `steady` / `gentle_ramp`; intensity workouts use `standard` / `redistributed_recovery`; endurance uses `sustained` / `alternating` / `undulating`; openers use `activation`. Redistributed recovery moves 30 seconds from the first recovery to after the final effort. Legacy letter keys remain only in immutable completed history and the data migrations that rename uncompleted workouts.
 
 Target tolerance for Same shuffle:
 

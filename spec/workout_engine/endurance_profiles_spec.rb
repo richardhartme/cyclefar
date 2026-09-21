@@ -3,7 +3,7 @@ require "engine_helper"
 RSpec.describe "Endurance profiles" do
   [ 30, 31, 45, 60, 90, 120, 240 ].each do |duration|
     it "fits three distinct endurance profiles into #{duration} minutes with comparable load" do
-      workouts = %w[a b c].map do |key|
+      workouts = %w[sustained alternating undulating].map do |key|
         Workouts::Generator.new(subtype: :endurance, duration_minutes: duration, variation_key: key).call
       end
       main_sets = workouts.map { |workout| workout.steps.select { |step| step.group_key == "main" } }
@@ -31,8 +31,8 @@ RSpec.describe "Endurance profiles" do
   end
 
   it "cycles all endurance profiles for an explicit Same shuffle" do
-    expect(Workouts::Variations.next_key("a", subtype: :endurance)).to eq("b")
-    expect(Workouts::Variations.next_key("b", subtype: :endurance)).to eq("c")
-    expect(Workouts::Variations.next_key("c", subtype: :endurance)).to eq("a")
+    expect(Workouts::Variations.next_key("sustained", subtype: :endurance)).to eq("alternating")
+    expect(Workouts::Variations.next_key("alternating", subtype: :endurance)).to eq("undulating")
+    expect(Workouts::Variations.next_key("undulating", subtype: :endurance)).to eq("sustained")
   end
 end
