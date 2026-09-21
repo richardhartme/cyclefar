@@ -28,6 +28,10 @@ module CalendarHelper
     anaerobic: "#EF4444"
   }.freeze
 
+  def workout_step_color(step)
+    zone_color(target_midpoint(step.target_low_pct_ftp, step.target_high_pct_ftp))
+  end
+
   def workout_profile_svg(workout, detailed: false)
     segments = Workouts::ProfileBuilder.new(steps: workout.workout_steps).call.segments
     total = workout.duration_minutes * 60.0
@@ -80,8 +84,10 @@ module CalendarHelper
   end
 
   def profile_zone_color(segment)
-    percentage = target_midpoint(segment.start_low_pct_ftp, segment.start_high_pct_ftp)
+    zone_color(target_midpoint(segment.start_low_pct_ftp, segment.start_high_pct_ftp))
+  end
 
+  def zone_color(percentage)
     case percentage
     when ..55 then PROFILE_ZONE_COLORS[:recovery]
     when ..75 then PROFILE_ZONE_COLORS[:endurance]

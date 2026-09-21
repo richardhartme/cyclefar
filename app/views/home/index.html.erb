@@ -6,13 +6,13 @@
     <div class="mt-3 flex flex-wrap items-center gap-4">
       <%= link_to "Change availability", new_availability_change_path, class: "font-semibold text-blue-800 underline" %>
       <%= link_to "Add time off", new_time_off_period_path, class: "font-semibold text-blue-800 underline" %>
-      <%= button_to "Sync next 2 to Intervals.icu", intervals_icu_sync_path, class: "font-semibold text-blue-800 underline" %>
+      <%= button_to "Sync next 2 to Intervals.icu", intervals_icu_sync_path, class: "cursor-pointer font-semibold text-blue-800 underline transition-colors enabled:hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50" %>
       <%= button_to(
         @has_completed_workouts ? "Archive plan" : "Delete plan",
         training_plan_path,
         method: :delete,
         form: { data: { turbo_confirm: @has_completed_workouts ? "Archive this plan? Completed workouts will remain available in the archived plan." : "Delete this plan and all of its planned workouts?" } },
-        class: "font-semibold text-red-700 underline") %>
+        class: "cursor-pointer font-semibold text-red-700 underline transition-colors enabled:hover:text-red-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50") %>
     </div>
     <% if last_intervals_sync %>
       <p class="mt-2 text-sm text-slate-600">Last synced to Intervals.icu <%= time_ago_in_words(last_intervals_sync) %> ago.</p>
