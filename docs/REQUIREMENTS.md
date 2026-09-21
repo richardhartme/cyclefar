@@ -263,6 +263,10 @@ Actions:
 
 Names are descriptive, not fanciful, e.g. `Threshold 3x12`, `VO2 Max 5x4`, `Endurance 90 min`.
 
+### WKO-009 Endurance profiles
+
+New endurance workouts randomly select sustained, alternating low/high, or undulating endurance profiles. The selected profile is saved with the workout and remains stable when viewed again. All three fit the requested duration and keep their main sets within endurance power ranges. Forecasts remain deterministic.
+
 ### WKO-003 No step editing
 
 The rider cannot manually edit individual interval steps in V1.

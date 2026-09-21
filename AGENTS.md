@@ -73,7 +73,7 @@ Do not add React/Vue/Svelte, a CSS component framework, GraphQL, Sidekiq, Redis,
 The engine is a first-class domain component.
 
 - Training decisions must be deterministic.
-- No `rand`, random shuffling or time-dependent workout choice beyond explicit calendar date inputs.
+- No random or time-dependent workout choice beyond explicit calendar date inputs, except the user-requested initial endurance profile selection (WKO-009). Save that selection; previews and regeneration with an explicit variation remain deterministic.
 - Keep rule constants grouped/versioned under an engine namespace, e.g. `Training::V1` or `Planning::V1`.
 - Do not bury percentages or progression thresholds across controllers/models.
 - Pure calculations should be pure Ruby objects with fast unit specs.

@@ -57,12 +57,12 @@ module Workouts
     def next_attributes(action, subtype, duration_minutes, progression_level)
       current_level = @workout.progression_level || 1
       level, variation, duration, chosen_subtype = case action.to_s
-      when "same" then [ current_level, Variations.next_key(@workout.variation_key || "a"), @workout.duration_minutes, @workout.subtype ]
+      when "same" then [ current_level, Variations.next_key(@workout.variation_key || "a", subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
       when "easier" then [ [ current_level - 1, 1 ].max, boundary_variation(current_level == 1), @workout.duration_minutes, @workout.subtype ]
       when "harder" then [ [ current_level + 1, 7 ].min, boundary_variation(current_level == 7), @workout.duration_minutes, @workout.subtype ]
       when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
       when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
-      when "change" then [ current_level, @workout.variation_key, Integer(duration_minutes), subtype.to_s ]
+      when "change" then [ current_level, Variations.random_key(subtype), Integer(duration_minutes), subtype.to_s ]
       when "adapt" then [ Integer(progression_level), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
       end
@@ -74,7 +74,7 @@ module Workouts
     end
 
     def boundary_variation(at_boundary)
-      at_boundary ? Variations.next_key(@workout.variation_key || "a") : @workout.variation_key
+      at_boundary ? Variations.next_key(@workout.variation_key || "a", subtype: @workout.subtype) : @workout.variation_key
     end
 
     def material_change?(kind, subtype, metrics)

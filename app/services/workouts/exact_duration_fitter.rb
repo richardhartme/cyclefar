@@ -84,8 +84,11 @@ module Workouts
         @variation_key == "a" ? "Easy steady riding at #{band}% FTP" : "Gentle recovery ramp within #{band}% FTP"
       else
         band = rules::ENDURANCE_STEADY_TARGET.join("–")
-        rest = rules::ENDURANCE_BREAK_SECONDS / 60
-        @variation_key == "a" ? "Steady endurance at #{band}% FTP" : "Two endurance blocks at #{band}% FTP with #{rest} min easy between"
+        case @variation_key
+        when "a" then "Steady endurance at #{band}% FTP"
+        when "b" then "Alternating low/high endurance at #{rules::ENDURANCE_LOW_TARGET.join('–')} / #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
+        when "c" then "Undulating endurance between #{rules::ENDURANCE_LOW_TARGET.join('–')} and #{rules::ENDURANCE_HIGH_TARGET.join('–')}% FTP"
+        end
       end
     end
   end

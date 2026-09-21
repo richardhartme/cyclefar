@@ -12,7 +12,8 @@ module Workouts
       @phase = member!(phase, rules::PHASES, "phase")
       @goal = member!(goal, rules::GOALS, "goal")
       @discipline = member!(discipline, rules::DISCIPLINES, "discipline")
-      @variation_key = member!(variation_key, rules::VARIATION_KEYS, "variation key")
+      keys = @subtype == "endurance" ? rules::ENDURANCE_VARIATION_KEYS : rules::VARIATION_KEYS
+      @variation_key = member!(variation_key, keys, "variation key")
       unless duration_minutes.is_a?(Integer) && duration_minutes >= rules::MINIMUM_DURATION_MINUTES
         raise ArgumentError, "duration_minutes must be a whole number of at least #{rules::MINIMUM_DURATION_MINUTES}"
       end

@@ -24,6 +24,8 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 
 Milestone 11 is complete. The V1 implementation plan is complete.
 
+2026-09-21: Added randomly selected endurance profiles (sustained, alternating low/high, and undulating). Selection is persisted during generation; forecasts remain deterministic and saved workouts remain stable. Added duration, zone, load and materialisation regression coverage. Also corrected fractional return-to-training stage calculation exposed by the full suite. Validation: 1,170 examples passed, Zeitwerk passed, RuboCop passed.
+
 ## Infrastructure
 
 2026-09-12: Initial AWS Terraform configuration added locally (not applied).

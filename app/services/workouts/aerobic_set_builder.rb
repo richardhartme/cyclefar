@@ -28,11 +28,23 @@ module Workouts
       elsif @variation_key == "a"
         [ steady(@duration, rules::ENDURANCE_STEADY_TARGET) ].freeze
       else
-        work = @duration - rules::ENDURANCE_BREAK_SECONDS
-        first = work / (2 * rules::MINIMUM_STEP_SECONDS) * rules::MINIMUM_STEP_SECONDS
-        [ steady(first, rules::ENDURANCE_STEADY_TARGET),
-          steady(rules::ENDURANCE_BREAK_SECONDS, rules::ENDURANCE_BREAK_TARGET, "recovery"),
-          steady(work - first, rules::ENDURANCE_STEADY_TARGET) ].freeze
+        count = [ @duration / (2 * rules::ENDURANCE_BLOCK_SECONDS), 1 ].max * 2
+        units, remainder = (@duration / rules::MINIMUM_STEP_SECONDS).divmod(count)
+        Array.new(count) do |index|
+          seconds = (units + (index < remainder ? 1 : 0)) * rules::MINIMUM_STEP_SECONDS
+          low = rules::ENDURANCE_LOW_TARGET
+          high = rules::ENDURANCE_HIGH_TARGET
+          start_target, end_target = index.even? ? [ low, high ] : [ high, low ]
+          if @variation_key == "b"
+            steady(seconds, start_target).with(label: index.even? ? "Low endurance" : "High endurance")
+          else
+            steady(seconds, start_target).with(
+              kind: "ramp",
+              label: index.even? ? "Rising endurance" : "Falling endurance",
+              end_target_low_pct_ftp: end_target[0],
+              end_target_high_pct_ftp: end_target[1])
+          end
+        end.freeze
       end
     end
 

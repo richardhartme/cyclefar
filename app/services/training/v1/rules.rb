@@ -98,6 +98,10 @@ module Training
       RECOVERY_COOL_DOWN_START = [ 50, 55 ].freeze
       RECOVERY_COOL_DOWN_END = [ 40, 45 ].freeze
       ENDURANCE_STEADY_TARGET = [ 65, 72 ].freeze
+      ENDURANCE_VARIATION_KEYS = %w[a b c].freeze
+      ENDURANCE_LOW_TARGET = [ 64, 68 ].freeze
+      ENDURANCE_HIGH_TARGET = [ 70, 74 ].freeze
+      ENDURANCE_BLOCK_SECONDS = 300
       ENDURANCE_BREAK_TARGET = [ 55, 60 ].freeze
       ENDURANCE_BREAK_SECONDS = 60
       RECOVERY_RAMP_START = [ 45, 50 ].freeze

@@ -441,11 +441,15 @@ Normal structure:
 - optional subtle progressive/ramped blocks later in Build/Speciality, staying <=75%;
 - simple cool-down.
 
-For variety, deterministic variations may use:
+When a new endurance workout is materialised, manually added, or explicitly selected with Change workout, randomly choose one of three profiles with equal probability:
 
-- steady 65–72%;
-- 2–3 long blocks at 62–70% separated by brief 55–60%;
-- gentle progression from 60–65% toward 68–72%.
+- `a`: one sustained block at 65–72% FTP;
+- `b`: alternating low (64–68%) and high (70–74%) endurance blocks;
+- `c`: undulating ramps rising from the low band to the high band and falling back again.
+
+Alternating and undulating profiles use an even number of roughly five-minute blocks, distributing the available main-set duration in 30-second increments. All profiles retain the usual warm-up, cool-down and exact total duration.
+
+This is an explicit exception to deterministic workout selection. Persist the chosen variation and canonical steps; ordinary requests must not redraw structured or completed workouts. Forecasts use the sustained profile deterministically and actual metrics are recalculated on materialisation. Same shuffle cycles a → b → c → a; duration changes retain the chosen profile. Copying retains the original structure.
 
 Do not turn Endurance into Tempo simply to increase TSS.
 

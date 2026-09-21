@@ -61,6 +61,7 @@ module Workouts
         subtype: subtype,
         duration_minutes: Integer(duration_minutes),
         progression_level: DEFAULT_PROGRESSION_LEVEL,
+        variation_key: Variations.random_key(subtype),
         phase: phase.kind,
         goal: @plan.goal,
         discipline: @plan.discipline).call ]

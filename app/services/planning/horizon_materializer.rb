@@ -7,10 +7,12 @@ module Planning
 
     def call
       @plan.planned_workouts.planned.where(kind: %w[workout opener], detail_status: :outline, scheduled_on: @date..@date + 13).find_each do |workout|
-        definition = workout.opener? ? Workouts::OpenerGenerator.new(duration_minutes: workout.duration_minutes, phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call : Workouts::Generator.new(subtype: workout.subtype, duration_minutes: workout.duration_minutes, progression_level: workout.progression_level || 1, variation_key: workout.variation_key || "a", phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call
+        variation = workout.subtype_endurance? && workout.workout? ? Workouts::Variations.random_key(:endurance) : workout.variation_key || "a"
+        definition = workout.opener? ? Workouts::OpenerGenerator.new(duration_minutes: workout.duration_minutes, phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call : Workouts::Generator.new(subtype: workout.subtype, duration_minutes: workout.duration_minutes, progression_level: workout.progression_level || 1, variation_key: variation, phase: workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline).call
         metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
         workout.assign_attributes(
           detail_status: :structured,
+          variation_key: definition.variation_key,
           name: definition.name,
           purpose: definition.purpose,
           estimated_np_watts: metrics.estimated_np_watts,
