@@ -86,7 +86,7 @@ module Planning
     end
 
     def illness_reentry(item, period)
-      stage = [ ((item.scheduled_on - period.ends_on - 1) * 4 / period.return_ramp_days), 3 ].min
+      stage = [ ((item.scheduled_on - period.ends_on - 1) * 4 / period.return_ramp_days).floor, 3 ].min
       subtype, duration_factor, level = case stage
       when 0 then [ :recovery, 0.60, nil ]
       when 1 then [ :endurance, 0.70, nil ]
