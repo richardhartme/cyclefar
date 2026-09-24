@@ -32,6 +32,8 @@ Milestone 11 is complete. The V1 implementation plan is complete.
 
 ## Infrastructure
 
+2026-09-24: Added a CloudFormation alternative under `infra/cloudformation/` for the single-server AWS architecture, with generated Secrets Manager database credentials and optional existing/new Route 53 hosted zones. Added safe example parameters and manual change-set/deployment/cleanup instructions. Application deployment remains a separate Kamal step. Validated locally with cfn-lint 1.57.0 for eu-west-2; no AWS validation API calls, change sets, stacks or resources were created.
+
 2026-09-12: Initial AWS Terraform configuration added locally (not applied).
 
 - Added a small single-server VPC, EC2, Elastic IP and private encrypted RDS PostgreSQL design under `infra/`.

@@ -45,6 +45,7 @@
 *.tfvars.json
 plan.out
 !infra/terraform.tfvars.example
+/infra/cloudformation/parameters.local.json
 crash.log
 crash.*.log
 

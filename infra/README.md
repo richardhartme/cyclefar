@@ -1,5 +1,7 @@
 # CycleFar AWS infrastructure
 
+For an AWS-native alternative, see the [CloudFormation template and deployment guide](cloudformation/README.md). Choose one tool to manage an environment; do not deploy both configurations for the same application.
+
 This directory contains the initial Terraform configuration for a small, single-server CycleFar production deployment. Terraform provisions AWS infrastructure only; it does not build or deploy the Rails application.
 
 ## What it creates

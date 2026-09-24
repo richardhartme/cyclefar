@@ -1,0 +1,7 @@
+[
+  {"ParameterKey": "ProjectName", "ParameterValue": "cyclefar"},
+  {"ParameterKey": "Environment", "ParameterValue": "production"},
+  {"ParameterKey": "KeyPairName", "ParameterValue": "replace-with-your-key-pair"},
+  {"ParameterKey": "SSHAllowedCIDR", "ParameterValue": "203.0.113.10/32"},
+  {"ParameterKey": "DNSMode", "ParameterValue": "Disabled"}
+]

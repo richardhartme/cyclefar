@@ -1,0 +1,339 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CycleFar single-server infrastructure for a separate Docker/Kamal deployment.
+Parameters:
+  ProjectName:
+    Type: String
+    Default: cyclefar
+    AllowedPattern: '[a-z][a-z0-9-]{0,24}'
+  Environment:
+    Type: String
+    Default: production
+    AllowedPattern: '[a-z][a-z0-9-]{0,19}'
+  InstanceType:
+    Type: String
+    Default: t3a.small
+    AllowedValues: [t3a.micro, t3a.small, t3a.medium, t3.micro, t3.small, t3.medium]
+    Description: AMD64 instance type matching the Ubuntu image and Docker build.
+  UbuntuImage:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing SSH key pair in the stack region. Keep its private key locally.
+  SSHAllowedCIDR:
+    Type: String
+    AllowedPattern: '(\d{1,3}\.){3}\d{1,3}/(\d|[12]\d|3[0-2])'
+    Description: Your trusted public IPv4 CIDR, normally your current IP followed by /32.
+  DatabaseClass:
+    Type: String
+    Default: db.t4g.micro
+  DatabaseName:
+    Type: String
+    Default: cyclefarproduction
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]{0,62}'
+  DatabaseUsername:
+    Type: String
+    Default: cyclefar
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]{0,15}'
+  DatabaseEngineVersion:
+    Type: String
+    Default: ''
+    Description: Optional PostgreSQL engine version; blank uses the regional default.
+  DNSMode:
+    Type: String
+    Default: Disabled
+    AllowedValues: [Disabled, Existing, Create]
+  HostedZoneId:
+    Type: String
+    Default: ''
+    Description: Required only for DNSMode Existing.
+  DomainName:
+    Type: String
+    Default: cyclefar.com
+    Description: DNS record name; also the public hosted-zone name in Create mode.
+Rules:
+  ExistingZoneRequired:
+    RuleCondition: !Equals [!Ref DNSMode, Existing]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref HostedZoneId, '']]
+        AssertDescription: Supply HostedZoneId when DNSMode is Existing.
+Conditions:
+  CreateZone: !Equals [!Ref DNSMode, Create]
+  EnableDNS: !Not [!Equals [!Ref DNSMode, Disabled]]
+  HasEngineVersion: !Not [!Equals [!Ref DatabaseEngineVersion, '']]
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-vpc'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  ApplicationSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.20.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  InternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  ApplicationRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ApplicationSubnet
+      RouteTableId: !Ref PublicRouteTable
+  DatabaseSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+  DatabaseSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.20.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  DatabaseRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref DatabaseSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+  DatabaseRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref DatabaseSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH from a trusted network and public HTTP/HTTPS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHAllowedCIDR
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL only from the application server security group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ApplicationSecurityGroup
+      # Explicit inert egress prevents EC2's default allow-all egress rule.
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 1
+          ToPort: 1
+          CidrIp: 127.0.0.1/32
+  ApplicationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  ApplicationProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref ApplicationRole]
+  ApplicationServer:
+    Type: AWS::EC2::Instance
+    DependsOn: ApplicationRouteAssociation
+    Properties:
+      ImageId: !Ref UbuntuImage
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref ApplicationSubnet
+      SecurityGroupIds: [!Ref ApplicationSecurityGroup]
+      IamInstanceProfile: !Ref ApplicationProfile
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-application'
+  ApplicationIP:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachment
+    Properties:
+      Domain: vpc
+  ApplicationIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ApplicationIP.AllocationId
+      InstanceId: !Ref ApplicationServer
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: CycleFar database credentials; retained for snapshot recovery
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username":"${DatabaseUsername}"}'
+        GenerateStringKey: password
+        PasswordLength: 32
+        ExcludePunctuation: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private database subnets in two availability zones
+      SubnetIds: [!Ref DatabaseSubnetA, !Ref DatabaseSubnetB]
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      EngineVersion: !If [HasEngineVersion, !Ref DatabaseEngineVersion, !Ref 'AWS::NoValue']
+      DBInstanceClass: !Ref DatabaseClass
+      DBName: !Ref DatabaseName
+      MasterUsername: !Ref DatabaseUsername
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseSecret}:SecretString:password}}'
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups: [!Ref DatabaseSecurityGroup]
+      PubliclyAccessible: false
+      MultiAZ: false
+      StorageEncrypted: true
+      StorageType: gp3
+      AllocatedStorage: '20'
+      MaxAllocatedStorage: 50
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  DatabaseSecretAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref DatabaseSecret
+      TargetId: !Ref Database
+      TargetType: AWS::RDS::DBInstance
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Condition: CreateZone
+    Properties:
+      Name: !Ref DomainName
+  ApplicationDNS:
+    Type: AWS::Route53::RecordSet
+    Condition: EnableDNS
+    Properties:
+      HostedZoneId: !If [CreateZone, !Ref HostedZone, !Ref HostedZoneId]
+      Name: !Ref DomainName
+      Type: A
+      TTL: '300'
+      ResourceRecords: [!Ref ApplicationIP]
+Outputs:
+  ApplicationPublicIP:
+    Value: !Ref ApplicationIP
+  ApplicationPublicDNS:
+    Description: EC2 public DNS; use ApplicationPublicIP as the stable Kamal host
+    Value: !GetAtt ApplicationServer.PublicDnsName
+  ApplicationInstanceId:
+    Value: !Ref ApplicationServer
+  SSHUser:
+    Value: ubuntu
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  DatabasePort:
+    Value: !GetAtt Database.Endpoint.Port
+  InitialDatabaseName:
+    Value: !Ref DatabaseName
+  DatabaseUsername:
+    Value: !Ref DatabaseUsername
+  DatabaseSecretArn:
+    Description: Retrieve securely for deployment; no password is exposed in stack outputs
+    Value: !Ref DatabaseSecret
+  ApplicationHostname:
+    Condition: EnableDNS
+    Value: !Ref DomainName
+  HostedZoneNameServers:
+    Condition: CreateZone
+    Description: Set these nameservers at your domain registrar
+    Value: !Join [', ', !GetAtt HostedZone.NameServers]
