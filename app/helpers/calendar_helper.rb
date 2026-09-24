@@ -52,8 +52,7 @@ module CalendarHelper
       tag.polygon(
         points: block_points(segment, total, width, height, inset),
         fill: profile_zone_color(segment),
-        stroke: "#ffffff",
-        "stroke-width": 1.5,
+        stroke: "none",
         "shape-rendering": "geometricPrecision")
     end
     content_tag(
