@@ -87,14 +87,14 @@
               <% end %>
 
               <% if (time_off = @calendar.time_off_on(date)) %>
-                <article class="card bg-neutral text-neutral-content mt-3 shadow-sm">
+                <article class="card bg-info text-info-content mt-3 shadow-sm">
                   <div class="card-body gap-1 p-3">
                     <strong><%= time_off.name.presence || (time_off.event? ? "Time off" : time_off.reason.humanize) %></strong>
                     <% if time_off.name.present? && !time_off.event? %>
                       <p class="text-sm"><%= time_off.reason.humanize %></p>
                     <% end %>
                     <div class="card-actions">
-                      <%= button_to "Remove", time_off_period_path(time_off), method: :delete, form: { data: { turbo_confirm: "Remove this time-off period and restore its future training?" } }, class: "btn btn-ghost btn-xs" %>
+                      <%= button_to "Remove", time_off_period_path(time_off), method: :delete, form: { data: { turbo_confirm: "Remove this time-off period and restore its future training?" } }, class: "btn btn-xs border-base-300 bg-base-100 text-base-content shadow-none hover:bg-base-200" %>
                     </div>
                   </div>
                 </article>
@@ -133,7 +133,7 @@
         <% if @plan %>
           <aside class="p-4 <%= week.recovery_week ? "bg-info/15" : "bg-base-200" %>" aria-label="Weekly summary for <%= week.starts_on.to_fs(:long) %>">
             <strong class="block"><%= week.starts_on.to_fs(:long) %></strong>
-            <p class="badge badge-primary badge-sm mt-2"><%= week.phase_label %><%= " · Recovery week" if week.recovery_week %></p>
+            <p class="badge badge-primary badge-sm mt-2"><%= week.recovery_week ? "Recovery Week" : week.phase_label %></p>
             <dl class="stats stats-vertical mt-3 w-full bg-transparent shadow-none">
               <div class="stat px-0 py-2">
                 <dt class="stat-title text-xs">Duration</dt>

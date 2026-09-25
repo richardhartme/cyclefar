@@ -47,6 +47,20 @@ RSpec.describe "Home", type: :request do
     expect(response.body).not_to include("NaN", "Infinity")
   end
 
+  it "CAL-003 labels recovery weeks without also displaying the plan phase" do
+    plan = create(:training_plan)
+    create(:plan_phase, training_plan: plan)
+
+    get root_path
+
+    html = Nokogiri::HTML(response.body)
+    normal_summary = html.at_css('aside[aria-label="Weekly summary for September 07, 2026"]')
+    recovery_summary = html.at_css('aside[aria-label="Weekly summary for September 28, 2026"]')
+
+    expect(normal_summary.at_css(".badge").text).to eq("Base")
+    expect(recovery_summary.at_css(".badge").text).to eq("Recovery Week")
+  end
+
   it "provides keyboard navigation and confirmed plan deletion for an active plan" do
     plan = create(:training_plan)
     create(:plan_phase, training_plan: plan)
