@@ -11,7 +11,7 @@ Parameters:
     AllowedPattern: '[a-z][a-z0-9-]{0,19}'
   InstanceType:
     Type: String
-    Default: t3a.small
+    Default: t3.small
     AllowedValues: [t3a.micro, t3a.small, t3a.medium, t3.micro, t3.small, t3.medium]
     Description: AMD64 instance type matching the Ubuntu image and Docker build.
   UbuntuImage:
@@ -278,7 +278,7 @@ Resources:
       StorageType: gp3
       AllocatedStorage: '20'
       MaxAllocatedStorage: 50
-      BackupRetentionPeriod: 7
+      BackupRetentionPeriod: 0
       CopyTagsToSnapshot: true
       AutoMinorVersionUpgrade: true
       Tags:
