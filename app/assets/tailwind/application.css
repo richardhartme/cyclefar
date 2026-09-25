@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
+@source not "./daisyui{,*}.mjs";
+
+/* Vendored from https://github.com/saadeghi/daisyui/releases/download/v5.7.8/daisyui.mjs. */
+@plugin "./daisyui.mjs" {
+  themes: light;
+}
+
 @layer base {
+  html,
+  body {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
   input[type="text"],
   input[type="number"],
   input:not([type]) {

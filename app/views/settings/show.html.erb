@@ -1,39 +1,54 @@
 <% content_for :title, "Settings · CycleFar" %>
-<section class="max-w-2xl">
-  <h1 class="mb-3 text-3xl font-semibold">Rider settings</h1>
-  <p class="mb-8 text-slate-600">Set your current fitness and optional Intervals.icu connection.</p>
-
-  <% if @profile.errors.any? %>
-    <div role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-      <h2 class="font-semibold">Settings could not be saved</h2>
-      <ul class="mt-2 list-inside list-disc">
-        <% @profile.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <%= form_with model: @profile, url: settings_path, method: :patch, class: "space-y-8 rounded-xl border border-slate-200 bg-white p-8" do |form| %>
+<section class="card bg-base-100 mx-auto max-w-3xl shadow-sm">
+  <div class="card-body gap-6">
     <div>
-      <%= form.label :ftp_watts, "Current FTP (watts)", class: "mb-2 block font-semibold" %>
-      <%= form.number_field :ftp_watts, min: 1, step: 1, required: true, aria: { describedby: "ftp-help" }, class: "w-40 rounded-md border border-slate-400 px-3 py-2" %>
-      <p id="ftp-help" class="mt-2 text-sm text-slate-600">FTP sets your planned power targets. Changes apply to future targets; completed workouts keep their original targets.</p>
+      <div class="badge badge-primary badge-outline mb-3">Preferences</div>
+      <h1 class="card-title text-3xl">Rider settings</h1>
+      <p class="text-base-content/70 mt-2">Set your current fitness and optional Intervals.icu connection.</p>
     </div>
 
-    <div>
-      <%= form.label :intervals_icu_api_key, "Intervals.icu API key (optional)", class: "mb-2 block font-semibold" %>
-      <% if @profile.persisted? && @profile.attribute_in_database(:intervals_icu_api_key).present? %>
-        <p class="mb-2 text-sm" aria-label="Saved API key">Saved API key: ••••••••</p>
-      <% end %>
-      <%= form.password_field :intervals_icu_api_key, value: nil, autocomplete: "new-password", aria: { describedby: "api-key-help" }, class: "w-full rounded-md border border-slate-400 px-3 py-2" %>
-      <p id="api-key-help" class="mt-2 text-sm text-slate-600">Stored encrypted. Leave blank to keep your saved key, or enter a replacement.</p>
-      <div class="mt-4 flex items-center gap-2">
-        <%= check_box_tag "rider_profile[clear_intervals_icu_api_key]", "1", false, id: "clear-api-key" %>
-        <%= label_tag "clear-api-key", "Remove saved API key" %>
+    <% if @profile.errors.any? %>
+      <div role="alert" class="alert alert-error alert-soft items-start">
+        <div>
+          <h2 class="font-semibold">Settings could not be saved</h2>
+          <ul class="mt-2 list-inside list-disc">
+            <% @profile.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
       </div>
-    </div>
+    <% end %>
 
-    <%= form.submit "Save settings", class: "cursor-pointer rounded-lg bg-blue-800 px-5 py-3 font-semibold text-white hover:bg-blue-900" %>
-  <% end %>
+    <%= form_with model: @profile, url: settings_path, method: :patch, class: "space-y-6" do |form| %>
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
+        <legend class="fieldset-legend px-2 text-base">Training</legend>
+        <%= form.label :ftp_watts, "Current FTP (watts)", class: "label font-semibold" %>
+        <%= form.number_field :ftp_watts, min: 1, step: 1, required: true, aria: { describedby: "ftp-help" }, class: "input w-full sm:w-48" %>
+        <p id="ftp-help" class="label text-base-content/60 max-w-2xl leading-relaxed">FTP sets your planned power targets. Changes apply to future targets; completed workouts keep their original targets.</p>
+      </fieldset>
+
+      <fieldset class="fieldset border-base-300 rounded-box border p-5">
+        <legend class="fieldset-legend px-2 text-base">Intervals.icu connection</legend>
+        <%= form.label :intervals_icu_api_key, "Intervals.icu API key (optional)", class: "label font-semibold" %>
+        <% if @profile.persisted? && @profile.attribute_in_database(:intervals_icu_api_key).present? %>
+          <div class="alert alert-success alert-soft mb-2 py-3" aria-label="Saved API key">
+            <span>Saved API key: ••••••••</span>
+          </div>
+        <% end %>
+        <%= form.password_field :intervals_icu_api_key, value: nil, autocomplete: "new-password", aria: { describedby: "api-key-help" }, class: "input w-full" %>
+        <p id="api-key-help" class="label text-base-content/60 leading-relaxed">Stored encrypted. Leave blank to keep your saved key, or enter a replacement.</p>
+
+        <label class="label mt-3 w-fit cursor-pointer gap-3" for="clear-api-key">
+          <%= check_box_tag "rider_profile[clear_intervals_icu_api_key]", "1", false, id: "clear-api-key", class: "checkbox checkbox-error" %>
+          <span>Remove saved API key</span>
+        </label>
+      </fieldset>
+
+      <div class="card-actions justify-end">
+        <%= link_to "Cancel", root_path, class: "btn btn-ghost" %>
+        <%= form.submit "Save settings", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
 </section>
