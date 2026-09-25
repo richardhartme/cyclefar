@@ -14,7 +14,7 @@ System_Boundary(cyclefar_boundary, "CycleFar") {
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 
-Rel(rider, web_application, "Uses", "HTTPS")
+Rel(rider, web_application, "Uses", "HTTP (local)")
 Rel(web_application, database, "Reads and writes training data", "SQL / Active Record")
 Rel(web_application, intervals_icu, "Manually syncs the next two structured workouts; reconciles only CycleFar-owned events", "HTTPS / JSON")
 

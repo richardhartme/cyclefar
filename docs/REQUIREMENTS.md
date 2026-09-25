@@ -1,6 +1,6 @@
 # CycleFar Functional Requirements
 
-Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits.
+Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. See [STATUS.md](STATUS.md) and the [2026-09-24 implementation review](REVIEW.md) for verified behaviour and outstanding gaps.
 
 ## 0. Product identity
 
@@ -12,7 +12,7 @@ Acceptance criteria:
 
 - User-facing application chrome and primary product references use `CycleFar`.
 - The Rails application/project identifier is `cycle_far` and application module is `CycleFar`.
-- `cyclefar.com` is recorded only as the owned future domain; V1 must not add deployment behaviour around it.
+- `cyclefar.com` is the owned future domain. The V1 application remains local; the separately added AWS infrastructure templates are documented in [infra/](../infra/README.md) and do not establish a deployed service.
 - Core domain model/table names remain brand-neutral.
 - External ownership identifiers created by CycleFar, such as Intervals.icu `external_id`, use a stable `cyclefar-` namespace.
 
@@ -223,7 +223,7 @@ A full-width TSS chart above the calendar shows one bar per plan week, using the
 - Completed workouts remain visible with a clear completed indicator.
 - A planned workout whose date is in the past remains visible and actionable as `Awaiting status`.
 - It is not automatically marked missed.
-- Missed/skipped workouts are removed once the rider explicitly resolves them as missed.
+- Workouts explicitly resolved as missed remain visible with a `Missed` indicator (see MIS-001); moving a workout keeps it planned on the destination date.
 
 ## 6. Rolling 14-day horizon
 

@@ -1,5 +1,7 @@
 # CycleFar Implementation Plan
 
+This is the original milestone sequence, retained as the implementation and acceptance checklist. Milestones 0–11 were delivered in September 2026, followed by additional features. The 2026-09-24 documentation review reopened milestone 11 for outstanding acceptance gaps; see [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md).
+
 Build vertical slices. Do not attempt the adaptive engine, calendar UI and external integration in one pass.
 
 ## Milestone 0 — Bootstrap and guardrails
@@ -15,7 +17,7 @@ Tasks:
 - Configure Monday-start calendar helpers as application conventions.
 - Add basic CycleFar-branded application layout/nav.
 - Establish CI-like local command/script if useful.
-- Copy this specification folder into the repo under `docs/spec/` or retain it at repo root; `AGENTS.md` must be available to Codex.
+- Keep the specification in `docs/` and implementation instructions in repository-root `AGENTS.md`.
 
 Exit criteria:
 
@@ -152,7 +154,7 @@ Implement:
 Tests:
 
 - preview and persisted plan are equivalent;
-- only 14-day horizon stores steps;
+- automatic generation only structures the 14-day horizon (later Add/Copy actions can explicitly create detail outside it);
 - weekly totals;
 - continuous calendar renders plan start/end.
 
@@ -352,7 +354,19 @@ Review:
 
 Run full regression suite and manually exercise all requirements.
 
-## Suggested first Codex task
+## Later additions already delivered
+
+- No-plan calendar and full-width weekly TSS chart.
+- Retained Missed calendar status (MIS-001).
+- Copy and Add Workout (WKO-007/008), plus manual Opener selection.
+- Event time-off reason and optional time-off names.
+- Saved random endurance profiles (WKO-009) and descriptive variation keys.
+- Calendar/profile styling and time-off replanning across availability versions.
+- Separate AWS infrastructure templates and production database environment configuration.
+
+These additions are documented in the current requirements and status; they do not introduce new milestone numbers.
+
+## Historical first Codex task
 
 Do not ask Codex to “build the app”. Start with:
 

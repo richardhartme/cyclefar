@@ -1,10 +1,12 @@
-# CycleFar — Suggested Rails Data Model
+# CycleFar — Rails Data Model
 
-This is a strong starting model, not a demand that every field name be copied literally. Prefer normalised relational data for durable product concepts and JSONB only for ephemeral proposals/external payload snapshots.
+Reviewed against the models, migrations and `db/structure.sql` on 2026-09-24. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+
+This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
 
 ## RiderProfile
 
-Singleton in V1.
+Singleton in V1, enforced with `id = 1` in model validation and a database constraint. `RiderProfile.current` returns an unsaved profile when Settings have not been entered.
 
 Fields:
 
@@ -20,7 +22,7 @@ Future: attach a `User`/`Rider` owner without redesigning training records.
 
 ## FtpReading
 
-Lightweight history; no V1 UI.
+Lightweight history; no V1 UI. `belongs_to :rider_profile` via required `rider_profile_id`.
 
 Fields:
 
@@ -43,7 +45,7 @@ Fields:
 - `progression_mode: enum` — `continuous`, `hard_recovery_cycle`
 - `hard_weeks_before_recovery: integer, nullable`
 - `initial_ftp_watts: integer`
-- `progression_state: jsonb, default: {}` — small deterministic per-subtype progression levels/biases; versioned schema
+- `progression_state: jsonb, default: {}` — currently stores the accepted global `intensity_bias` (-2..+2); generation does not yet consume it (see REVIEW.md)
 - `engine_version: string` — e.g. `v1`
 - timestamps
 
@@ -51,7 +53,7 @@ Constraints:
 
 - partial unique index ensuring at most one `active` plan.
 
-Do not destroy archived plans that have completed workouts.
+Do not destroy archived plans that have completed workouts. The current archive action removes planned records and retains completed and missed records; a plan without completed workouts is deleted.
 
 ## TargetEvent
 
@@ -106,7 +108,7 @@ This model supports both one-week changes and changes from a date onward while p
 
 Fields:
 
-- `weekday: integer` — Rails convention or explicit Monday=1...Sunday=7; document choice and use consistently
+- `weekday: integer` — ISO `Date#cwday`, Monday=1...Sunday=7
 - `duration_minutes: integer`
 - `intent: enum` — `intervals`, `endurance`, `recovery`, `vo2_max`, `threshold`, `sweet_spot`, `tempo`
 - timestamps
@@ -147,7 +149,7 @@ Fields:
 - `detail_status: enum` — `outline`, `structured`
 - `status: enum` — `planned`, `missed`, `completed`
 - `progression_level: integer, nullable`
-- `variation_key: string, nullable` — lets Shuffle choose a different valid construction without randomness
+- `variation_key: string, nullable` — persisted descriptive profile key; Same shuffle rotates deterministically, while initial endurance generation randomly selects a profile (TRAINING_ENGINE.md §15)
 - `estimated_np_watts: decimal, nullable`
 - `estimated_if: decimal, nullable`
 - `estimated_tss: decimal, nullable`
@@ -166,6 +168,8 @@ Important:
 
 - Do not store planned target watts as the source of truth. Store percentage targets in steps and derive watts from current FTP.
 - On completion, snapshot watts/metrics so later FTP changes do not alter history.
+- Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes.
+- Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them; see REVIEW.md for the reporting decision still needed.
 
 ## WorkoutStep
 
@@ -228,8 +232,9 @@ Fields:
 - `expires_at: datetime`
 - timestamps
 
-On accept: validate/recompute if necessary, apply atomically, then destroy proposal.
-On reject: destroy proposal.
+Current payload: `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Completion creates proposals with a seven-day `expires_at`.
+
+On accept: check target workouts are still planned/structured, apply atomically, then destroy the proposal. On reject: destroy the proposal. Expiry, full stale-content checks and before/after values are not yet implemented; see REVIEW.md.
 
 No long-term proposal history is required.
 
@@ -237,7 +242,7 @@ No long-term proposal history is required.
 
 Track only events created by CycleFar.
 
-`belongs_to :planned_workout`
+`belongs_to :planned_workout, optional: true` via nullable `planned_workout_id`. Deleting a workout nullifies this foreign key so the sync record survives for remote cleanup. Model updates cannot reassign its external identity.
 
 Fields:
 

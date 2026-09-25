@@ -17,7 +17,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   ComponentDb(models, "Plan, workout, settings and sync models", "Active Record", "Provides canonical steps, rider API-key access and CycleFar-owned external-ID sync records.")
 }
 
-Rel(rider, controller, "Starts manual sync", "HTTPS")
+Rel(rider, controller, "Starts manual sync", "HTTP (local)")
 Rel(controller, sync, "Synchronizes active plan")
 Rel(sync, models, "Selects eligible workouts and reads sync records")
 Rel(sync, serializer, "Builds event payloads")

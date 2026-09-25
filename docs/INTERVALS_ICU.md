@@ -6,9 +6,11 @@ On explicit rider action, sync the next two upcoming structured cycling workouts
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
+The request details below describe the implemented adapter as reviewed on 2026-09-24, not a new live-API certification. Local specs stub HTTP. See [REVIEW.md](REVIEW.md) for reconciliation gaps.
+
 ## Authentication
 
-Use the rider's personal API key from Intervals.icu Settings.
+Use the rider's personal API key from Intervals.icu Settings. The client uses HTTP Basic auth with username `API_KEY` and the key as password.
 
 Intervals.icu documents API-key authentication and allows athlete id `0` to mean the authenticated athlete. Keep athlete-id assumptions isolated in the client so OAuth/multi-rider support can be added later.
 
@@ -20,11 +22,11 @@ https://intervals.icu/api/v1
 
 Never expose the API key in logs, rendered HTML, exception messages or source control.
 
-## Recommended calendar API approach
+## Implemented calendar API approach
 
 Use bulk calendar-event upsert with stable `external_id` values owned by CycleFar.
 
-Conceptual endpoint:
+Upsert endpoint:
 
 ```text
 POST /api/v1/athlete/0/events/bulk?upsert=true
@@ -32,16 +34,16 @@ POST /api/v1/athlete/0/events/bulk?upsert=true
 
 The Intervals.icu guide describes `external_id` as a way for external applications to upsert their own calendar events without duplicating them.
 
-When deleting a CycleFar-owned event that no longer belongs in the next-two sync set, use the documented bulk-delete operation or event DELETE by known event id/external id.
+The client deletes by external ID using `PUT /api/v1/athlete/0/events/bulk-delete` with a JSON array such as `[{"external_id":"cyclefar-workout-123"}]`. It does not list or search unrelated remote events.
 
 Never delete/update calendar events that lack CycleFar's ownership marker/sync record.
 
 ## External ID
 
-Generate once per `PlannedWorkout`, e.g.:
+Use the existing sync record's external ID, or derive it from the durable workout database ID:
 
 ```text
-cyclefar-workout-<uuid-or-durable-id>
+cyclefar-workout-<planned_workout.id>
 ```
 
 Do not use date alone; workouts can move.
@@ -86,20 +88,20 @@ Send at least:
 
 Treat optional metric fields as convenience metadata. The structured description is the key executable representation.
 
-If the live API schema differs from this example when implementation begins, adapt the serializer/client to the official API rather than changing the Rails domain model.
+When changing the adapter, verify the upstream API schema and adapt this boundary rather than changing the Rails domain model. The payload above matches the current serializer; its metric units have not been revalidated against the live API in this documentation review.
 
 ## Structured workout serialization
 
 Intervals.icu supports text-based workout steps with percentage-of-FTP targets and ranges, e.g.:
 
 ```text
-- Warm-up 8m ramp 45%-70%
+- Warm-up 8m ramp 50-68%
 
 3x
 - Threshold 12m 95-100%
 - Recovery 5m 50-60%
 
-- Cool-down 7m ramp 55%-40%
+- Cool-down 7m ramp 55-40%
 ```
 
 Supported constructs documented by Intervals.icu include:
@@ -110,7 +112,7 @@ Supported constructs documented by Intervals.icu include:
 - repeat blocks;
 - cue text.
 
-The Rails domain stores expanded canonical steps. `IntervalsIcu::WorkoutSerializer` may compress obvious repeated groups into repeat syntax for readability, but correctness matters more than compression. A flat list of valid steps is acceptable if the parser supports it.
+The Rails domain stores expanded canonical steps. `IntervalsIcu::WorkoutSerializer` currently emits one flat text line per step, without repeat compression. Steady steps export FTP ranges; ramps export the rounded midpoint of each endpoint range as `ramp start-end%`. The repeat block above illustrates the notation, not the current serializer output.
 
 Do not send cadence targets because V1 does not prescribe cadence.
 
@@ -122,22 +124,17 @@ Send `icu_ftp`/current FTP where supported so Intervals.icu has the correct cont
 
 ## Sync reconciliation
 
-Before sending:
+Current call order:
 
-1. Resolve current next-two set.
-2. Load `IntervalsIcuSync` records currently associated with CycleFar-owned future workouts.
-3. Build payloads and digests for next-two.
-4. Upsert both.
-5. Update local sync records only after successful response.
-6. Remove CycleFar-owned synced calendar events that were previously in scope but have since been deleted/moved/replanned out of the next-two set, if doing so is necessary to keep Intervals.icu faithful to the explicit sync result.
+1. Resolve the active plan's next-two eligible set (or fewer when fewer exist).
+2. Build payloads with stable external IDs and bulk-upsert the set.
+3. Find stale local sync records: detached records, plus records for still-planned future workouts in this plan that are no longer in the selected set.
+4. Bulk-delete those stale external IDs.
+5. After both remote operations succeed, transactionally save returned event IDs, digests and timestamps, then destroy stale local sync records.
 
-A simpler acceptable V1 policy is:
+Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable foreign key, allowing later cleanup.
 
-- the Sync button makes Intervals.icu's *CycleFar-owned upcoming set* equal to the local next-two set;
-- CycleFar-owned future events outside that set are removed;
-- unrelated user events are untouched.
-
-This makes the button's behaviour predictable.
+The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open in REVIEW.md.
 
 ## Partial failure
 
@@ -154,9 +151,9 @@ If reconciliation requires delete + upsert calls and one part fails:
 
 For manual V1 sync:
 
-- use short connect/read timeouts;
+- use five-second connect/read timeouts;
 - no endless retries;
-- one safe retry for clearly transient network errors is acceptable;
+- retry once for network errors/timeouts and 5xx responses;
 - idempotency comes from `external_id` upsert.
 
 ## Testing

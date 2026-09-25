@@ -19,7 +19,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   ComponentDb(models, "Plan and workout models", "Active Record", "Represents plans, phases, availability, events, planned workouts and canonical workout steps.")
 }
 
-Rel(rider, controller, "Creates, previews and confirms a plan", "HTTPS")
+Rel(rider, controller, "Creates, previews and confirms a plan", "HTTP (local)")
 Rel(controller, configuration, "Builds from submitted inputs")
 Rel(controller, builder, "Requests preview")
 Rel(builder, configuration, "Reads normalized inputs")

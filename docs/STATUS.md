@@ -1,7 +1,7 @@
 # CycleFar Build Status
 
-Current milestone: 11 — Polish and hardening
-Status: Complete; V1 implementation plan finished
+Current milestone: 11 — Polish and hardening (acceptance follow-up)
+Status: Reopened after the 2026-09-24 documentation review; known V1 acceptance gaps remain
 
 ## Milestones
 
@@ -18,11 +18,30 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 8 — Time off and return to training
 - [x] Milestone 9 — FTP lifecycle
 - [x] Milestone 10 — Intervals.icu sync
-- [x] Milestone 11 — Polish and hardening
+- [ ] Milestone 11 — Polish and hardening (original delivery complete; acceptance follow-up reopened)
 
 ## Current work
 
-Milestone 11 is complete. The V1 implementation plan is complete.
+The original milestone slices were delivered, but the repository does not yet satisfy every documented acceptance criterion. Earlier completion entries below are historical reports, not a current certification of full V1 acceptance.
+
+2026-09-24: Reviewed all supporting documents and architecture diagram sources against the current application at `a3a2310`. Updated implemented features, service names, routes, persistence details, missed-workout behaviour, endurance-profile determinism and infrastructure scope. Retained the original bootstrap prompt as historical context.
+
+The [implementation review](REVIEW.md) records open gaps, including material-change replanning, adaptation before/after summaries, unused accepted progression bias, proposal bounds/expiry, move/time-off handling, completion paths, load-cap enforcement and sync cleanup. Current work remains milestone 11; no new milestone or product scope was introduced.
+
+Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 files); Brakeman reported no warnings/errors; Bundler Audit and importmap audit reported no vulnerabilities. No live API, browser or deployment acceptance claim is made.
+
+2026-09-25: CYF-1 (PLN-013) restores the last valid plan preview configuration when returning to edit. Added request coverage for custom and event fields, weekly availability, repeated edit visits, invalid correction, revised confirmation and draft consumption. Validation: 1,217 RSpec examples passed; Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit clear. Milestone 11 remains open for other acceptance gaps.
+
+## Later feature changes
+
+After the original milestone delivery, the repository added:
+
+- no-plan calendar, full-width weekly TSS chart and revised graph/card/step styling;
+- retained missed-workout cards (MIS-001);
+- Copy and Add Workout (WKO-007/008), including manual Opener selection;
+- Event time-off reason and optional time-off names;
+- time-off replanning that respects later availability changes and one-week overrides;
+- the endurance-profile and variation-key changes recorded below.
 
 2026-09-21: Added randomly selected endurance profiles (sustained, alternating low/high, and undulating). Selection is persisted during generation; forecasts remain deterministic and saved workouts remain stable. Added duration, zone, load and materialisation regression coverage. Also corrected fractional return-to-training stage calculation exposed by the full suite. Validation: 1,170 examples passed, Zeitwerk passed, RuboCop passed.
 
@@ -41,7 +60,7 @@ Milestone 11 is complete. The V1 implementation plan is complete.
 - Added Terraform state, plan and secret-variable ignore rules, plus safe variables and operations documentation for a later manual apply and Kamal configuration.
 - `terraform fmt -check` and `terraform validate` were not run because Terraform is not installed in the local workspace.
 
-## Last completed
+## Original milestone delivery history
 
 2026-09-05: Milestones 0 and 1 implemented locally (not committed by Codex).
 

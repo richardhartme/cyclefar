@@ -1,364 +1,125 @@
 # CycleFar Application Architecture
 
-## Application identity
+Reviewed against the repository on 2026-09-24. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
 
-The Rails application is **CycleFar**. Use `cycle_far` as the project identifier and `CycleFar` as the application module. This is UI/application identity only; domain services and persistence should use generic training-domain names.
+## Application identity and stack
 
-## Architecture goals
+The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS and plain Ruby domain services. Stimulus is installed, but only the generated example controller is present. There is no authentication or automatic Intervals.icu sync.
 
-1. Keep Rails conventional.
-2. Keep training logic out of controllers/models where possible.
-3. Make plan/workout generation deterministic and exhaustively testable.
-4. Keep external integrations behind adapters.
-5. Preserve a clean seam for future multi-user support and AI assistance.
-
-## Rails application style
-
-Use standard Rails MVC with a small service/domain layer.
-
-Recommended folders in addition to normal Rails structure:
+Services and presenters currently live under `app/services/`:
 
 ```text
-app/
-  controllers/
-  models/
-  views/
-  javascript/controllers/
-  services/
-    planning/
-    workouts/
-    metrics/
-    adaptations/
-    intervals_icu/
-  queries/
-  presenters/
+app/services/
+  planning/       # configuration, previews, persistence, calendar and replanning
+    v1/rules.rb  # plan constants and interval-selection cycles
+  training/
+    v1/rules.rb  # workout constants, power bands and progression ladders
+  workouts/      # canonical definitions, generators, editing, adding and copying
+  metrics/       # calculations over canonical steps
+  adaptations/   # completion and explicit proposal acceptance/rejection
+  settings/      # transactional profile and FTP changes
+  intervals_icu/ # serializer, HTTP client and next-two reconciliation
 ```
 
-Do not introduce a repository layer, command bus, event sourcing, GraphQL or a front-end SPA for V1.
+Avoid repository layers, command buses, event sourcing, GraphQL and front-end SPAs.
 
-## Key domain services
+## Plan creation and calendar
 
-### Planning::PlanBuilder
+- `Planning::PlanConfiguration` validates setup inputs and `Planning::Availability` represents weekly slots using ISO weekdays (Monday=1).
+- `Planning::PlanBuilder#preview` builds in-memory phases, prescriptions, recovery/taper treatment, FTP tests, forecast metrics and load warnings. It delegates phase allocation and subtype selection to `PhaseAllocator` and `IntervalSelector`.
+- `Planning::PreviewPresenter` formats that preview for the view.
+- `Planning::PlanCreator#create!` rebuilds the same preview, then persists the plan, phases, template, optional target event and outlines in a transaction before materialising the horizon. There is no `PlanBuilder#create!` or separate `PrescriptionBuilder` class.
+- `Planning::HorizonMaterializer#call` structures planned executable outlines in `date..date+13`, defaulting to `Date.current`. It runs after creation, on home/calendar load, and after future re-prescription. It leaves existing structured, completed and missed records alone.
+- `Planning::CalendarPresenter` loads steps/phases with workouts, groups by date and derives week summaries. With no plan, it renders Monday of the previous week through the current month end. The weekly TSS chart uses the same summaries as the calendar, including empty weeks.
 
-Input: validated plan configuration value object/hash.
+Forecast generation always passes an explicit variation. Initial endurance materialisation selects and saves a random profile under WKO-009. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
-Responsibilities:
+## Workout generation and editing
 
-- calculate plan dates;
-- create phase layout;
-- insert recovery weeks where configured;
-- create/version the initial availability template;
-- create high-level daily prescriptions;
-- create target event;
-- place taper/opener;
-- place FTP tests;
-- generate structures for the first 14 days;
-- calculate weekly load;
-- enforce load-growth constraints;
-- return a preview representation or persist via an explicit mode/collaborator.
+`Workouts::Generator` takes subtype, duration, progression level, variation key and phase/goal/discipline context. It composes warm-up, main/aerobic set, cool-down and exact-duration fitting into a `WorkoutDefinition` with expanded `StepDefinition` values. `OpenerGenerator` builds the separate 30–45 minute activation structure.
 
-Important: preview and create must use the same planning logic. Do not implement separate algorithms that can drift.
+`Workouts::Variations` centralises descriptive keys, deterministic Same rotation and initial random endurance selection. Explicit variations regenerate deterministically. No generator calls an LLM or an external API.
 
-A good shape is:
+`Metrics::WorkoutCalculator` calculates representative one-second power, NP, IF, TSS and work from canonical steps plus FTP. `Workouts::ProfileBuilder` supplies percentage-based graph data. `CalendarHelper` renders inline SVG with power-zone colours; the detail graph uses the same canonical data at a larger size.
+
+`Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
+
+Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure. Destination regeneration and other remaining requirements are listed in REVIEW.md.
+
+## Completion, adaptations and schedule changes
+
+- `Adaptations::CompletionRecorder` saves feedback and immutable FTP/target/metric snapshots in a transaction, then persists a proposal if `FeedbackEvaluator` returns one. FTP tests have a separate protocol-free completion action.
+- `Adaptations::FeedbackEvaluator` reads persisted feedback and upcoming workouts; it is not a pure calculation object. It currently proposes a change to the next structured workout of the same subtype and can propose a global intensity bias.
+- `Adaptations::ProposalApplier` applies accepted changes through `ManualEditor`, clamps saved `intensity_bias` to -2..+2, and destroys the proposal in one transaction. Reject only destroys it. Full expiry/staleness checks and consumption of the saved bias are outstanding.
+- `Planning::MissedWorkoutResolver` supports `leave_unchanged`, `move` and `replan`. Leave/replan retain a missed record; replan replaces upcoming planned training through `FuturePrescriber`.
+- `Planning::AvailabilityChanger` versions weekly templates and re-prescribes affected future dates. `ExistingPlanConfiguration` feeds the existing plan back through the preview engine.
+- `Planning::TimeOffPlanner` adds/removes time off and selects the applicable availability template for each future date, respecting one-week overrides and later schedule changes.
+- `Planning::FuturePrescriber` replaces future planned prescriptions, accounts for time off and return ramps, preserves completed/missed records and materialises the horizon.
+- `Settings::Update` saves rider settings and FTP history transactionally. `Planning::FtpRecalculator` refreshes future structured metrics without changing percentage steps or completed snapshots.
+
+## Integration
+
+`IntervalsIcu::WorkoutSerializer` turns expanded canonical steps into a flat workout-builder description and current-FTP event metadata. `IntervalsIcu::Client` isolates Basic auth, JSON, timeouts and one transient retry. `IntervalsIcu::SyncNextTwo` upserts the next eligible set, deletes stale owned events and persists sync metadata after success. Nullable workout foreign keys retain sync records after local deletion for later remote cleanup.
+
+See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the implemented request contract and reconciliation limits. Remote calls are stubbed in specs.
+
+## Routes and UI boundaries
+
+The authoritative route definitions are in [`config/routes.rb`](../config/routes.rb):
 
 ```ruby
-Planning::PlanBuilder.new(configuration).preview
-Planning::PlanBuilder.new(configuration).create!
-```
-
-where `preview` returns immutable plain data and `create!` persists the same computed plan inside a transaction.
-
-### Planning::PhaseAllocator
-
-Deterministically calculates Base/Build/Speciality/Taper date ranges from:
-
-- total plan duration;
-- include-base flag;
-- event/non-event;
-- event characteristics where available.
-
-### Planning::PrescriptionBuilder
-
-Creates high-level `PlannedWorkout` records from phase + date + active availability slot.
-
-For broad `Intervals`, delegates subtype selection to `Planning::IntervalSelector`.
-
-### Planning::IntervalSelector
-
-Chooses Tempo/Sweet Spot/Threshold/VO2/Over-Under for a broad interval day using:
-
-- goal;
-- discipline;
-- phase;
-- deterministic rotation/index;
-- progression state;
-- recent feedback state.
-
-No randomness. If variation is desired, use a deterministic `variation_key` sequence.
-
-### Planning::HorizonMaterializer
-
-Ensures all eligible workouts inside `Date.current..Date.current+13` are structured.
-
-Call it:
-
-- after plan creation;
-- on calendar load through an idempotent service (acceptable for local V1);
-- after FTP/schedule/time-off changes when needed.
-
-Do not regenerate already structured workouts unless an explicit action requires it.
-
-Future production deployment can move routine horizon materialisation to a scheduled job without changing domain logic.
-
-### Workouts::Generator
-
-Input:
-
-- subtype;
-- duration;
-- progression level;
-- phase;
-- goal/discipline context;
-- variation key;
-- modifier (`normal`, `easier`, `harder`);
-
-Output: a `WorkoutDefinition` value object containing:
-
-- descriptive name;
-- purpose;
-- ordered canonical step definitions;
-- main-set summary;
-- progression metadata.
-
-The generator never queries the web, calls an LLM or reads Intervals.icu.
-
-### Workouts::ExactDurationFitter
-
-Ensures generated workout steps sum exactly to requested duration.
-
-Rules:
-
-- preserve the main training stimulus first;
-- adjust easy warm-up/cool-down/endurance filler within defined bounds;
-- if the intended main set cannot safely fit, select the next lower progression level;
-- never silently exceed the requested duration except when the rider explicitly chooses Longer.
-
-### Metrics::WorkoutCalculator
-
-Pure service over canonical steps + FTP.
-
-Returns:
-
-- average power estimate;
-- estimated Normalized Power;
-- IF;
-- TSS;
-- work kJ.
-
-See `TRAINING_ENGINE.md` for formulas.
-
-### Workouts::ProfileBuilder
-
-Turns canonical steps into compact graph data.
-
-- Use percentage of FTP as the y value so the shape is stable across FTP changes.
-- Calendar mini graph: SVG generated server-side or lightweight Stimulus/SVG rendering.
-- Detail graph: larger version from the same data.
-- Do not add a charting framework unless plain SVG becomes genuinely burdensome.
-
-### Workouts::Shuffler
-
-Handles `same`, `easier`, `harder`, `shorter`, `longer`.
-
-- `same`: next deterministic variation at similar load;
-- `easier/harder`: progression adjustment for this workout only;
-- duration changes: ±15 minutes, minimum 30 minutes.
-
-### Adaptations::FeedbackEvaluator
-
-Pure rules engine that decides whether feedback warrants a proposal.
-
-Input:
-
-- completed workout + feedback;
-- recent comparable feedback;
-- current progression state;
-- upcoming prescriptions.
-
-Output:
-
-- no proposal; or
-- an `AdaptationProposal` payload.
-
-### Adaptations::ProposalApplier
-
-Applies an accepted proposal atomically in a database transaction.
-
-Never apply adaptation merely because feedback was submitted.
-
-### Planning::MissedWorkoutResolver
-
-Modes:
-
-- `leave_unchanged`
-- `move`
-- `replan`
-
-For replan, only rewrite the near-term block required to restore sensible sequencing.
-
-### Planning::AvailabilityChanger
-
-Creates a new versioned availability template for:
-
-- one week; or
-- from date onward.
-
-Then re-prescribes affected future dates, preserving completed workouts.
-
-### Planning::TimeOffPlanner
-
-Adds time off, removes/conflicts future workouts, and reconstructs affected schedule.
-
-Illness/recovery may add a deterministic re-entry load/intensity ramp over user-selected days.
-
-### IntervalsIcu::Client
-
-HTTP wrapper only.
-
-Responsibilities:
-
-- authentication;
-- request/response handling;
-- timeouts;
-- JSON parsing;
-- mapping API errors to application-specific errors.
-
-Do not put domain decisions here.
-
-### IntervalsIcu::WorkoutSerializer
-
-Turns canonical steps into valid Intervals.icu workout-builder text.
-
-### IntervalsIcu::SyncNextTwo
-
-Finds the next two eligible structured planned workouts and upserts exactly those app-owned events, updating/deleting prior app-owned sync records as necessary.
-
-## Controllers
-
-Keep controllers orchestration-only. Suggested resources/actions:
-
-```text
-root -> calendar#index
-
+root "home#index"
 resource :settings, only: [:show, :update]
-
 resource :training_plan, only: [:new, :create, :destroy] do
   post :preview
-  get  :preview_result # only if needed by chosen form flow
 end
-
-resource :calendar, only: [:show]
-
-resources :planned_workouts, only: [:show, :update] do
+resources :planned_workouts, only: [:new, :create, :show] do
   member do
     post :shuffle
-    post :complete
-    post :miss
-    post :move
     post :change
+    post :move
+    post :copy
+    post :complete
+    post :complete_test
+    post :miss
   end
 end
-
 resources :adaptation_proposals, only: [] do
   member do
     post :accept
     delete :reject
   end
 end
-
+resource :availability_change, only: [:new, :create]
 resources :time_off_periods, only: [:new, :create, :destroy]
-resource  :availability_change, only: [:new, :create]
-resource  :intervals_icu_sync, only: [:create]
+resource :intervals_icu_sync, only: :create
 ```
 
-Exact route names may differ, but avoid giant controllers with branching action parameters when distinct operations deserve explicit endpoints.
+`/up` is the Rails health endpoint. Workout detail currently uses a full page with inline forms and redirect responses, not a Turbo Frame modal. Turbo supplies navigation/forms and destructive confirmations. Modal and preview recommendations in UX.md are not evidence that those interactions exist.
 
-## Turbo/Stimulus usage
+## Persistence, dates and invariants
 
-Use Turbo Frames/Streams for:
+Use transactions for multi-record mutations. Database constraints enforce the singleton rider, one active plan, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. The SQL schema dump is `db/structure.sql`.
 
-- workout detail modal;
-- shuffle/change previews;
-- completion feedback and adaptation proposal transition;
-- calendar card/weekly total replacement after edits;
-- Intervals.icu sync status.
+Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`.
 
-Use Stimulus for:
+API keys use Active Record Encryption and filtered parameters. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
 
-- conditional plan configuration fields;
-- duration increment controls;
-- modal behaviour if necessary;
-- workout profile rendering if not server-rendered SVG;
-- confirmation UI.
+## Deployment preparation
 
-Do not use Stimulus as a client-side domain engine. All training rules live in Ruby.
+The application remains a local single-rider app. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. No deployed environment is recorded; choose one infrastructure owner per environment.
 
-## Transactions and invariants
+Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` remains a Kamal placeholder; infrastructure provisioning does not deploy the app.
 
-Use transactions for:
+## Architecture diagrams
 
-- plan confirmation/creation;
-- accepted adaptation;
-- availability replan;
-- time-off replan;
-- archiving a plan;
-- moving/change operations that affect multiple workouts.
+PlantUML sources describe the logical application, not an already deployed AWS environment:
 
-Important invariants:
+- [System context](diagrams/cyclefar-system-context.puml)
+- [Containers](diagrams/cyclefar-container.puml)
+- [Application components](diagrams/cyclefar-component.puml)
+- [Plan generation](diagrams/cyclefar-plan-generation-components.puml)
+- [Plan changes](diagrams/cyclefar-plan-change-components.puml)
+- [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
 
-- max one active plan;
-- max one cycling workout per plan/date;
-- completed workouts are never mutated by plan operations;
-- detailed step duration equals workout duration;
-- every structured normal/opener workout has at least one step;
-- every future target is percentage-based internally;
-- external sync operations never delete non-app-owned Intervals.icu events.
-
-## Date handling
-
-This product is date-centric, not time-centric.
-
-- Persist scheduling with `date`, not `datetime`, whenever possible.
-- Use `Date.current` consistently.
-- Weeks begin Monday.
-- Intervals.icu serialization may require a local datetime; serialize date-only workout calendar events at local midnight without adding workout-time semantics to the domain.
-
-## Error handling
-
-User-visible errors should be useful and recoverable.
-
-Examples:
-
-- invalid plan configuration -> field errors;
-- impossible workout fit -> generator steps down progression and records why; only raise if no safe 30-minute structure exists;
-- Intervals.icu auth failure -> show `API key rejected` without exposing key;
-- HTTP timeout -> show sync failed; leave local plan untouched;
-- stale adaptation proposal -> refuse apply and regenerate a proposal rather than applying stale changes.
-
-## Logging
-
-Log high-level generation decisions in development for debugging, e.g.:
-
-```text
-plan_engine goal=increase_ftp phase=build date=2026-10-06 intent=intervals subtype=threshold level=3
-```
-
-Never log secrets. Avoid logging full Intervals.icu request headers.
-
-## Versioning training rules
-
-Persist `TrainingPlan#engine_version`.
-
-All initial rules are `v1`. This allows later training-engine revisions without silently reinterpreting historical plans.
-
-A future AI layer should call the deterministic engine or propose changes to it; it should not replace the canonical workout/plan model.
+Rendering requires the external C4-PlantUML includes referenced by those files.

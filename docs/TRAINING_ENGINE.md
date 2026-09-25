@@ -6,10 +6,12 @@ This document defines a pragmatic, deterministic V1 training engine for indoor E
 
 These rules are not a claim that there is one scientifically perfect training plan. They combine established power-training conventions with product heuristics suitable for a first implementation. Persist `engine_version = "v1"` so future versions can change rules deliberately.
 
+These remain the intended rules. The [implementation review](REVIEW.md) records gaps in load-cap enforcement, feedback, materialisation and schedule handling without redefining those rules.
+
 ## 2. Non-negotiable engine constraints
 
 1. No AI/LLM calls.
-2. No randomness in plan-critical decisions.
+2. No randomness in plan-critical decisions except the explicitly requested initial endurance profile selection in section 15; persist that choice and keep forecasts deterministic.
 3. Power prescriptions are ranges of FTP, not single watt targets.
 4. Normal workouts are at least 30 minutes.
 5. Generated structured workouts sum exactly to requested duration.
@@ -346,7 +348,7 @@ Cap intensity-workout replacement level at 1 and normally replace it with Recove
 
 ### Return from illness/recovery
 
-See section 27; cap progression during the re-entry period.
+See section 39; cap progression during the re-entry period.
 
 ### TSS cap
 
@@ -802,7 +804,7 @@ If an older workout is completed late:
 
 ## 34. Missed workout: leave unchanged
 
-- remove the missed workout from visible plan;
+- retain the workout on its original date with `status = missed`, as required by MIS-001;
 - do not add compensatory work;
 - preserve future prescriptions.
 
@@ -986,7 +988,7 @@ Detailed horizon is:
 Date.current..(Date.current + 13.days)
 ```
 
-A workout in that range must be structured if it is an executable workout and not already completed.
+A planned executable workout in that range must be structured. Completed and missed records are not materialised. Explicit Add and Copy actions can create structured workouts outside this automatic horizon; moving an already structured workout can also retain its steps outside it.
 
 High-level outline outside range stores:
 
@@ -1123,7 +1125,7 @@ For each subtype, levels 1–7 and representative durations 30/45/60/75/90/120 m
 
 ### Horizon
 
-- only next 14 days persist steps;
+- automatic materialisation persists steps only in the next 14 days; explicit Add/Copy and retained moved structures are exceptions;
 - day entering horizon materialises;
 - existing structured workout remains stable.
 

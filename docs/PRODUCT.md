@@ -81,6 +81,8 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 ### Included
 
+This describes intended V1 scope, including later additions. See [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md) for implementation gaps.
+
 - Single-user local app
 - Settings with FTP and Intervals.icu API key
 - One active training plan
@@ -96,7 +98,8 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Weekly totals and weekly load progression
 - Manual workout completion + RPE + completion quality
 - Optional adaptation proposals
-- Workout shuffle/change/move
+- Workout shuffle/change/move/copy and adding a workout to an empty date
+- Persistent missed-workout calendar status and a weekly TSS chart
 - Schedule changes for one week or from a date onward
 - Time off: holiday, illness, recovery, event, other
 - Return-to-training ramp after illness/recovery
@@ -124,7 +127,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Multiple active plans
 - Multiple target events
 - AI-generated plans or workouts
-- Web deployment concerns
+- Hosted-service operation (separate infrastructure preparation is described below)
 
 ## Future-friendly seams
 
@@ -144,6 +147,6 @@ Do not implement these now, but avoid architecture that blocks them:
 ## Brand / naming
 
 - Canonical product name: **CycleFar**.
-- Domain owned by the project: `cyclefar.com`. Deployment is out of scope for V1.
+- Domain owned by the project: `cyclefar.com`. The V1 application remains local. Separate Terraform and CloudFormation templates now prepare a possible AWS deployment; no deployed service is recorded. See [infrastructure documentation](../infra/README.md).
 - User-facing copy should call the application **CycleFar**, not generic names such as “Cycling Trainer App”.
 - Do not couple persistence/domain classes to the brand name; concepts should remain `TrainingPlan`, `PlannedWorkout`, etc.

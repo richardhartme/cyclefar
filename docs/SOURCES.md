@@ -1,15 +1,15 @@
 # CycleFar — External References
 
-These references informed the initial V1 rules and integration design. They are not runtime dependencies.
+These references informed the initial V1 rules and integration design. They are not runtime dependencies or a current upstream-version/API verification record. The 2026-09-24 review checked repository behaviour and local tests; it did not revalidate external sources. Ruby/Rails versions below are repository pins, not claims about the latest available releases.
 
 ## Rails / Ruby
 
 - Ruby on Rails releases: https://rubyonrails.org/releases
-  - As checked 5 September 2026, Rails 8.1.3.1 is the latest listed 8.1 security patch release.
+  - Repository pin: Rails 8.1.3.1 (`Gemfile.lock`).
 - Rails maintenance policy: https://rubyonrails.org/maintenance
 - Rails 8.1 release notes: https://guides.rubyonrails.org/8_1_release_notes.html
 - Ruby downloads/releases: https://www.ruby-lang.org/en/downloads/
-  - As checked 5 September 2026, Ruby 4.0.6 is the current stable release shown by ruby-lang.org.
+  - Repository pin: Ruby 4.0.6 (`.ruby-version` and `Dockerfile`).
 
 ## Intervals.icu
 

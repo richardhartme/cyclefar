@@ -1,5 +1,7 @@
 # CycleFar UX Specification
 
+This document combines the intended interaction design with current implementation notes from the 2026-09-24 review. Outstanding acceptance gaps are tracked in [REVIEW.md](REVIEW.md); proposed controls below must not be assumed to exist.
+
 ## Branding
 
 - Display the product name as **CycleFar** in the application shell/header.
@@ -146,6 +148,10 @@ Include:
 - `Add time off`;
 - destructive `Delete plan` in a secondary menu/action area.
 
+### Weekly load chart
+
+A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts; REVIEW.md records the reporting question this raises.
+
 ### Phase bands
 
 Visually label Base / Build / Speciality / Taper ranges. Recovery weeks should be distinguishable without needing a legend/filter.
@@ -169,7 +175,9 @@ Show enough to understand it without opening:
 - power target range;
 - mini skyline/profile graph;
 - TSS / IF / kJ in compact form;
-- completed or awaiting-status badge when applicable.
+- completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details.
+
+Current cards show name, duration, TSS, IF and a profile graph. Main-set summary, watt range and work kJ remain detail-view information rather than card fields; see REVIEW.md.
 
 ### High-level workout card (>14 days)
 
@@ -196,11 +204,13 @@ FTP Test:
 
 Time off:
 
-- clearly spans/marks affected dates with reason.
+- marks affected dates, using the optional name as the heading; unnamed Event time off is labelled `Time off`. Named non-event periods also display their reason.
 
-## 6. Workout detail modal
+Empty date headings offer Add Workout. The form accepts type (including Opener) and duration. The service rejects occupied dates, dates outside the plan, target-event dates and time-off dates.
 
-Use a Turbo Frame modal if practical so the rider maintains calendar context.
+## 6. Workout detail
+
+Current implementation: a full page with Back to calendar, a large graph, zone-coloured step cards and inline action forms. A Turbo Frame modal remains a design preference for preserving calendar context; it is not currently implemented.
 
 Sections:
 
@@ -216,10 +226,13 @@ Actions:
 - Shuffle
 - Change workout
 - Move
+- Copy (planned structured regular workouts only)
 - Complete
 - Missed (when relevant)
 
-## 7. Shuffle dialog
+Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form (see REVIEW.md).
+
+## 7. Shuffle controls
 
 Options displayed as explicit choices:
 
@@ -231,14 +244,14 @@ Options displayed as explicit choices:
 
 Shorter can be repeated down to a 30-minute minimum. Longer can be repeated without a hard maximum.
 
-Before applying, show the new duration/TSS/IF and a compact replacement profile when feasible.
+A replacement preview is desirable before applying. Current buttons apply immediately and redirect to the updated detail page; there is no replacement preview.
 
 ## 8. Change-workout dialog
 
 Allow:
 
-- new type;
-- new duration.
+- new type, including Opener;
+- new duration (regular workouts at least 30 minutes; openers 30–45 minutes).
 
 Generate the new structure rather than exposing interval-step editing.
 
@@ -250,6 +263,8 @@ Buttons:
 
 - Keep rest of plan unchanged
 - Replan upcoming workouts
+
+Current limitation: a material Change shows only a notice saying replanning will be available in a later milestone. The two replan choices above are not implemented (WKO-005).
 
 ## 9. Completion flow
 
@@ -267,6 +282,8 @@ If adaptation is warranted, next show an adaptation proposal:
 - before/after summary;
 - Accept all / Reject all.
 
+Current proposals appear on the calendar with a reason and Accept all / Reject all buttons. Per-workout before/after summaries are outstanding (FBK-002).
+
 ## 10. Awaiting-status flow
 
 Past uncompleted cards show `Awaiting status`.
@@ -282,6 +299,8 @@ Mark missed then offers:
 - Move workout
 - Replan upcoming workouts
 
+Leave unchanged and Replan retain the source card as `Missed`; Move keeps it planned on its new date. No automatic missed resolution occurs.
+
 ## 11. Availability changes
 
 A form based on the same weekly grid as setup.
@@ -291,7 +310,7 @@ Scope choice:
 - This week only
 - From [date] onward
 
-Preview affected future workouts before applying when the change causes significant replanning.
+Previewing significant changes remains a design goal. Current submission applies the availability change transactionally and redirects to the calendar.
 
 ## 12. Time off
 
@@ -299,10 +318,11 @@ Form:
 
 - Start date
 - End date
-- Reason
+- Reason: Holiday / Illness / Recovery / Event / Other
+- Optional name, for example `France`
 
 If reason = Illness or Recovery:
 
 - additional field for user-selected return-to-training duration (days/weeks; normalise internally to days).
 
-After save, show a concise summary of workouts removed/replanned.
+After save, the app confirms that time off was added and future training replanned. It does not yet show a per-workout change summary. Holiday, Event and Other do not use a return ramp.

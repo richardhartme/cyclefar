@@ -1,6 +1,6 @@
 # CycleFar Codex Task 01 — Bootstrap + Core Persistence
 
-Use this as the first implementation prompt after placing this specification in the application repository.
+Historical bootstrap prompt, completed in September 2026. Retained for provenance; do not execute it against the existing application. Read [STATUS.md](STATUS.md) for current work. Specification paths below are relative to `docs/`; `AGENTS.md` is at the repository root.
 
 ## Prompt
 
