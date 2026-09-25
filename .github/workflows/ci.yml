@@ -28,6 +28,8 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v7
+      - name: Install image processing library
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips-dev
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
