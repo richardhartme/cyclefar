@@ -25,6 +25,7 @@ Avoid repository layers, command buses, event sourcing, GraphQL and front-end SP
 
 ## Plan creation and calendar
 
+- `TrainingPlansController` saves valid preview inputs in the Rails session, restores them on Back to edit, and consumes the draft on confirmation (CYF-1, 2026-09-25). Preview does not persist a plan.
 - `Planning::PlanConfiguration` validates setup inputs and `Planning::Availability` represents weekly slots using ISO weekdays (Monday=1).
 - `Planning::PlanBuilder#preview` builds in-memory phases, prescriptions, recovery/taper treatment, FTP tests, forecast metrics and load warnings. It delegates phase allocation and subtype selection to `PhaseAllocator` and `IntervalSelector`.
 - `Planning::PreviewPresenter` formats that preview for the view.
@@ -122,4 +123,4 @@ PlantUML sources describe the logical application, not an already deployed AWS e
 - [Plan changes](diagrams/cyclefar-plan-change-components.puml)
 - [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
 
-Rendering requires the external C4-PlantUML includes referenced by those files.
+The diagrams were reviewed again on 2026-09-25. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.

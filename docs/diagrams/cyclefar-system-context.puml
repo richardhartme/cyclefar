@@ -1,4 +1,5 @@
 @startuml CycleFar System Context
+' Reviewed against application source on 2026-09-25; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 title CycleFar — System Context
@@ -12,7 +13,7 @@ System(cyclefar, "CycleFar", "A local, single-rider cycling training planner. It
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 
 Rel(rider, cyclefar, "Creates and manages plans; completes workouts; reviews adaptations", "Web browser")
-Rel(cyclefar, intervals_icu, "Manually syncs the next two structured workouts; reconciles only CycleFar-owned events", "HTTPS / JSON")
+Rel(cyclefar, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 
 SHOW_LEGEND()
 @enduml

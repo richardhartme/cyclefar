@@ -32,6 +32,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-25: CYF-1 (PLN-013) restores the last valid plan preview configuration when returning to edit. Added request coverage for custom and event fields, weekly availability, repeated edit visits, invalid correction, revised confirmation and draft consumption. Validation: 1,217 RSpec examples passed; Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit clear. Milestone 11 remains open for other acceptance gaps.
 
+2026-09-25: Reviewed all six C4 diagrams against controllers, services and persistence boundaries. Added the preview session draft, home-request materialisation, presentation boundary and replanning dependencies; clarified up-to-two sync selection, cleanup gaps and proposal limitations. Added a diagram guide. Documentation-only validation: document markers, relationship references, relative Markdown links and `git diff --check` passed. PlantUML is not installed, so visual rendering was not performed. Milestone 11 remains open.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

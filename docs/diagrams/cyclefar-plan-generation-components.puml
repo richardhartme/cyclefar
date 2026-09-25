@@ -1,4 +1,5 @@
 @startuml CycleFar Plan Generation Components
+' Reviewed against application source on 2026-09-25; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Plan Generation Components
@@ -10,22 +11,27 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "TrainingPlansController", "Ruby on Rails controller", "Accepts the plan configuration, renders the preview and confirms creation.")
+  Component(session, "Preview configuration draft", "Rails session", "Saves the last valid configuration, restores Back to edit and is consumed on confirmation; no plan is persisted by preview.")
+  Component(home, "HomeController", "Ruby on Rails controller", "Materializes the rolling horizon on calendar requests.")
   Component(configuration, "PlanConfiguration", "Planning value object", "Validates and normalizes plan inputs and the weekly availability template.")
   Component(builder, "PlanBuilder", "Planning service", "Calculates phases, recovery and taper treatment, prescriptions, FTP-test placement, workload metrics and warnings for a deterministic preview.")
+  Component(allocation, "PhaseAllocator and IntervalSelector", "Planning services", "Allocate phase dates and select broad interval subtypes using versioned V1 rules.")
   Component(presenter, "PreviewPresenter", "Planning presenter", "Formats a preview for the plan-creation interface.")
   Component(creator, "PlanCreator", "Planning service", "Persists a confirmed preview in one transaction.")
-  Component(materializer, "HorizonMaterializer", "Planning service", "Materializes canonical structured steps for workouts in the next 14 days.")
+  Component(materializer, "HorizonMaterializer", "Planning service", "Structures planned executable outlines for today through today + 13; saves initial endurance profile choices and preserves existing structures.")
   Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical percentage-of-FTP steps, opener structures and estimated workout metrics.")
-  ComponentDb(models, "Plan and workout models", "Active Record", "Represents plans, phases, availability, events, planned workouts and canonical workout steps.")
+  Component(models, "Plan and workout models", "Active Record", "Represents plans, phases, availability, events, planned workouts and canonical workout steps.")
 }
 
 Rel(rider, controller, "Creates, previews and confirms a plan", "HTTP (local)")
-Rel(controller, configuration, "Builds from submitted inputs")
+Rel(controller, session, "Saves valid preview inputs; restores or consumes draft")
+Rel(controller, configuration, "Builds from submitted inputs or saved draft")
+Rel(home, materializer, "Runs before calendar presentation")
+Rel(builder, allocation, "Allocates phases and selects interval subtypes")
 Rel(controller, builder, "Requests preview")
 Rel(builder, configuration, "Reads normalized inputs")
 Rel(builder, engine, "Generates prospective workout definitions and metrics")
-Rel(builder, presenter, "Produces preview data for")
-Rel(controller, presenter, "Renders preview")
+Rel(controller, presenter, "Wraps builder preview data for rendering")
 Rel(controller, creator, "Creates confirmed plan")
 Rel(creator, builder, "Rebuilds deterministic preview")
 Rel(creator, models, "Creates plan, phase, availability, event and workout records")

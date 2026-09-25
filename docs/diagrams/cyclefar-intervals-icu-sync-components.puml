@@ -1,4 +1,5 @@
 @startuml CycleFar Intervals ICU Sync Components
+' Reviewed against application source on 2026-09-25; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Intervals.icu Sync Components
@@ -11,10 +12,10 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Starts sync and displays its outcome without exposing the API key.")
-  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Selects exactly the next two eligible structured workouts, reconciles stale CycleFar-owned records and persists successful sync results.")
+  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Selects up to two upcoming planned structured workouts/openers outside time off; upserts, deletes stale tracked events, then persists success.")
   Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Serializes canonical workout steps and FTP-derived values into the Intervals.icu event payload.")
-  Component(client, "Client", "IntervalsIcu HTTP client", "Authenticates requests, applies timeouts, parses JSON and maps HTTP errors to application errors.")
-  ComponentDb(models, "Plan, workout, settings and sync models", "Active Record", "Provides canonical steps, rider API-key access and CycleFar-owned external-ID sync records.")
+  Component(client, "Client", "IntervalsIcu HTTP client", "Uses API-key Basic auth, five-second connect/read timeouts and one transient retry; parses JSON and maps errors.")
+  Component(models, "Plan, workout, settings and sync models", "Active Record", "Provides canonical steps, rider API-key access and CycleFar-owned external-ID sync records.")
 }
 
 Rel(rider, controller, "Starts manual sync", "HTTP (local)")
@@ -22,10 +23,18 @@ Rel(controller, sync, "Synchronizes active plan")
 Rel(sync, models, "Selects eligible workouts and reads sync records")
 Rel(sync, serializer, "Builds event payloads")
 Rel(serializer, models, "Reads canonical steps and current FTP context")
-Rel(sync, client, "Upserts desired events and deletes stale owned events")
+Rel(sync, client, "Bulk-upserts desired set, then bulk-deletes stale external IDs")
 Rel(client, intervals_icu, "Sends authenticated bulk event requests", "HTTPS / JSON")
-Rel(sync, models, "Updates or removes sync records after success")
+Rel(sync, models, "Transactionally saves IDs, digests and timestamps after remote success")
 Rel(models, database, "Reads and writes", "SQL")
+
+note bottom of sync
+  Stable external IDs: cyclefar-workout-<id>.
+  Cleanup covers detached records and linked planned
+  future workouts outside the selected set. Linked
+  missed/completed/past workouts are not yet cleaned up.
+  No remote listing, automatic sync or activity import.
+end note
 
 SHOW_LEGEND()
 @enduml

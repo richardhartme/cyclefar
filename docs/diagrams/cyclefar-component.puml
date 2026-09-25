@@ -1,4 +1,5 @@
 @startuml CycleFar Component Diagram
+' Reviewed against application source on 2026-09-25; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Web Application Component Diagram
@@ -11,30 +12,35 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Rails controllers", "Ruby on Rails", "Handle HTTP requests for settings, plan creation, calendar actions, completions, adaptations, time off, availability and sync.")
+  Component(views, "Views and graph helpers", "ERB, Turbo, CalendarHelper", "Render full-page forms, calendar totals, weekly TSS chart and canonical-step SVG profiles.")
   Component(calendar, "Calendar presenter", "Planning::CalendarPresenter", "Builds the continuous calendar view from plans, workouts, phases and time off.")
   Component(plan_management, "Plan management services", "Planning services", "Validate configurations, build previews, create plans, prescribe future workouts and materialise the structured-workout horizon.")
   Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical workout steps with saved endurance-profile choices, calculate metrics, add/copy/edit workouts and build graph profiles.")
   Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record completion feedback, evaluate and apply proposals, resolve missed workouts, change availability, manage time off and recalculate future FTP targets.")
   Component(settings, "Settings service", "Settings::Update", "Updates rider settings and FTP history atomically.")
-  Component(sync, "Intervals.icu sync service", "IntervalsIcu::SyncNextTwo and WorkoutSerializer", "Selects and serializes the next two eligible structured workouts and reconciles CycleFar-owned sync records.")
+  Component(sync, "Intervals.icu sync service", "IntervalsIcu::SyncNextTwo and WorkoutSerializer", "Selects and serializes up to two eligible structured workouts and reconciles CycleFar-owned sync records.")
   Component(client, "Intervals.icu API client", "IntervalsIcu::Client", "Performs authenticated HTTP requests, timeouts, JSON handling and API-error mapping.")
-  ComponentDb(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, adaptations, settings and sync records.")
+  Component(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, adaptations, settings and sync records.")
 }
 
 Rel(rider, controllers, "Uses CycleFar", "HTTP (local)")
 Rel(controllers, calendar, "Builds calendar views")
-Rel(controllers, plan_management, "Creates and changes plans")
+Rel(controllers, plan_management, "Previews/creates plans; materializes horizon on home load")
 Rel(controllers, workouts, "Views and changes workouts")
 Rel(controllers, adaptations, "Records feedback and schedule changes")
 Rel(controllers, settings, "Updates settings")
 Rel(controllers, sync, "Starts manual sync")
-Rel(controllers, workouts, "Views use CalendarHelper to render workout profiles")
+Rel(controllers, views, "Renders pages with presenter data")
+Rel(views, workouts, "Builds graph data through ProfileBuilder")
+Rel(controllers, models, "Loads records; moves workouts, records FTP tests and archives/deletes plans")
 Rel(calendar, models, "Reads calendar data")
 Rel(plan_management, workouts, "Generates workout structures and metrics")
 Rel(plan_management, models, "Creates and updates plans")
-Rel(workouts, models, "Reads and updates future workouts")
+Rel(workouts, models, "Reads and updates planned workouts")
 Rel(adaptations, plan_management, "Re-prescribes affected future training")
 Rel(adaptations, models, "Records completions and schedule changes")
+Rel(settings, adaptations, "Recalculates future metrics after FTP changes")
+Rel(adaptations, workouts, "Applies accepted edits and calculates FTP metrics")
 Rel(settings, models, "Updates rider profile and FTP readings")
 Rel(sync, models, "Selects workouts and updates sync records")
 Rel(sync, client, "Sends serialized events")
