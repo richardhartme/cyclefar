@@ -1,20 +1,36 @@
-<section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6">
-  <%= link_to "Back to calendar", root_path, class: "font-semibold text-blue-800 underline" %>
-  <h1 class="mt-5 text-3xl font-semibold">Add workout</h1>
-  <p class="mt-2 text-slate-600"><%= @scheduled_on.to_fs(:long) %></p>
+<section class="card bg-base-100 mx-auto max-w-2xl shadow-sm">
+  <div class="card-body gap-6">
+    <div>
+      <%= link_to "← Back to calendar", root_path, class: "link link-primary font-semibold" %>
+      <h1 class="card-title mt-5 text-3xl">Add workout</h1>
+      <div class="badge badge-primary badge-outline mt-3"><%= @scheduled_on.to_fs(:long) %></div>
+    </div>
 
-  <%= form_with url: planned_workouts_path, method: :post, class: "mt-6 space-y-4" do %>
-    <%= hidden_field_tag :scheduled_on, @scheduled_on %>
-    <div>
-      <%= label_tag :subtype, "Workout type", class: "block font-semibold" %>
-      <% workout_types = Training::V1::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
-      <%= select_tag :subtype, options_for_select(workout_types, "endurance"), class: "mt-1 w-full rounded border-slate-300" %>
-    </div>
-    <div>
-      <%= label_tag :duration_minutes, "Duration (minutes)", class: "block font-semibold" %>
-      <%= number_field_tag :duration_minutes, 60, min: 30, required: true, class: "mt-1 w-full rounded border-slate-300" %>
-      <p class="mt-1 text-sm text-slate-600">Openers are 30–45 minute activation workouts for an event.</p>
-    </div>
-    <%= submit_tag "Add workout", class: "rounded bg-blue-800 px-4 py-2 font-semibold text-white" %>
-  <% end %>
+    <%= form_with url: planned_workouts_path, method: :post, class: "space-y-6" do %>
+      <%= hidden_field_tag :scheduled_on, @scheduled_on %>
+
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
+        <legend class="fieldset-legend px-2 text-base">Workout details</legend>
+
+        <%= label_tag :subtype, "Workout type", class: "fieldset-label font-semibold" %>
+        <% workout_types = Training::V1::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
+        <%= select_tag :subtype, options_for_select(workout_types, "endurance"), class: "select w-full" %>
+
+        <%= label_tag :duration_minutes, "Duration (minutes)", class: "fieldset-label mt-3 font-semibold" %>
+        <%= number_field_tag :duration_minutes, 60, min: 30, required: true, class: "input w-full" %>
+      </fieldset>
+
+      <div role="note" class="alert alert-info alert-soft">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="size-5 shrink-0" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span>Openers are 30–45 minute activation workouts for an event.</span>
+      </div>
+
+      <div class="card-actions justify-end">
+        <%= link_to "Cancel", root_path, class: "btn btn-ghost" %>
+        <%= submit_tag "Add workout", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
 </section>
