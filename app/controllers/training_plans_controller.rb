@@ -1,6 +1,6 @@
 class TrainingPlansController < ApplicationController
   def new
-    @configuration = Planning::PlanConfiguration.new(default_configuration)
+    @configuration = Planning::PlanConfiguration.new(session[:plan_configuration] || default_configuration)
   end
 
   def preview
