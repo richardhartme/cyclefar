@@ -232,9 +232,9 @@ Fields:
 - `expires_at: datetime`
 - timestamps
 
-Current payload: `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Completion creates proposals with a seven-day `expires_at`.
+Feedback-proposal payloads contain `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
 
-On accept: check target workouts are still planned/structured, apply atomically, then destroy the proposal. On reject: destroy the proposal. Expiry, full stale-content checks and before/after values are not yet implemented; see REVIEW.md.
+On accept: check target/source workouts are still planned/structured, apply atomically, then destroy the proposal. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal. Expiry, full stale-content checks and before/after values are not yet implemented; see REVIEW.md.
 
 No long-term proposal history is required.
 

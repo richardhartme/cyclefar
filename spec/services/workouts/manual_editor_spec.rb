@@ -43,8 +43,21 @@ RSpec.describe Workouts::ManualEditor, type: :service do
   it "WKO-005 changes subtype and exposes material changes without a replan" do
     result = described_class.new(workout).apply!(action: :change, subtype: :recovery, duration_minutes: 60)
     expect(result.material_change).to be(true)
+    expect(result.before).to have_attributes(kind: "workout", subtype: "threshold")
+    expect(result.after).to have_attributes(kind: "workout", subtype: "recovery")
     expect(workout.reload.subtype).to eq("recovery")
     expect(plan.planned_workouts.where.not(id: workout.id).count).to eq(0)
+  end
+
+  it "WKO-005 uses the documented material-change thresholds" do
+    editor = described_class.new(workout)
+    before = described_class::Snapshot.new(
+      kind: "workout", subtype: "threshold", duration_minutes: 60, estimated_if: "0.80".to_d, estimated_tss: 100.to_d)
+
+    expect(editor.send(:material_change?, before, before.with(estimated_tss: 115.to_d))).to be(true)
+    expect(editor.send(:material_change?, before, before.with(estimated_if: "0.88".to_d))).to be(true)
+    expect(editor.send(:material_change?, before, before.with(subtype: "endurance"))).to be(true)
+    expect(editor.send(:material_change?, before, before.with(estimated_tss: "114.9".to_d, estimated_if: "0.879".to_d))).to be(false)
   end
 
   it "WKO-005 changes a regular workout to the canonical 30–45 minute opener" do

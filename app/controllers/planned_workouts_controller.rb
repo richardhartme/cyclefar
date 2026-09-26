@@ -21,6 +21,7 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def show
+    @material_change_proposal = material_change_proposal
   end
 
   def shuffle
@@ -31,8 +32,12 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def change
-    result = Workouts::ManualEditor.new(@workout).apply!(action: :change, subtype: params.require(:subtype), duration_minutes: params.require(:duration_minutes))
-    redirect_to planned_workout_path(@workout), notice: result.material_change ? "Workout changed. Replanning is optional and will be available in a later milestone." : "Workout changed."
+    proposal = nil
+    PlannedWorkout.transaction do
+      result = Workouts::ManualEditor.new(@workout).apply!(action: :change, subtype: params.require(:subtype), duration_minutes: params.require(:duration_minutes))
+      proposal = Planning::MaterialChangeProposal.new(@workout).replace!(material_change: result.material_change)
+    end
+    redirect_to planned_workout_path(@workout), notice: proposal ? "Workout changed. Review the optional upcoming replan below." : "Workout changed."
   rescue ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to planned_workout_path(@workout), alert: error.message
   end
@@ -86,5 +91,11 @@ class PlannedWorkoutsController < ApplicationController
 
   def load_workout
     @workout = PlannedWorkout.includes(:workout_steps, :plan_phase, training_plan: :plan_phases).find(params[:id])
+  end
+
+  def material_change_proposal
+    @workout.training_plan.adaptation_proposals.find do |proposal|
+      proposal.material_change_replan? && proposal.source_workout_id == @workout.id
+    end
   end
 end

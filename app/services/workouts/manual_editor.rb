@@ -1,6 +1,7 @@
 module Workouts
   class ManualEditor
-    Result = Data.define(:workout, :material_change)
+    Snapshot = Data.define(:kind, :subtype, :duration_minutes, :estimated_if, :estimated_tss)
+    Result = Data.define(:workout, :material_change, :before, :after)
     INTENSITY_SUBTYPES = %w[tempo sweet_spot threshold vo2_max over_under].freeze
 
     def initialize(workout)
@@ -9,10 +10,17 @@ module Workouts
     end
 
     def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
+      before = snapshot_for(@workout)
       subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
-      material_change = material_change?(kind, definition.subtype, metrics)
+      after = Snapshot.new(
+        kind: kind.to_s,
+        subtype: definition.subtype.to_s,
+        duration_minutes: definition.duration_minutes,
+        estimated_if: metrics.estimated_if,
+        estimated_tss: metrics.estimated_tss)
+      material_change = material_change?(before, after)
       @workout.transaction do
         @workout.workout_steps.destroy_all
         @workout.assign_attributes(
@@ -31,7 +39,7 @@ module Workouts
         definition.steps.each { |step| @workout.workout_steps.build(step.to_h) }
         @workout.save!
       end
-      Result.new(workout: @workout, material_change: material_change)
+      Result.new(workout: @workout, material_change: material_change, before: before, after: after)
     end
 
     private
@@ -78,11 +86,20 @@ module Workouts
       at_boundary ? Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype) : @workout.variation_key
     end
 
-    def material_change?(kind, subtype, metrics)
-      kind.to_s != @workout.kind ||
-        intensity?(subtype) != intensity?(@workout.subtype) ||
-        ((metrics.estimated_tss / @workout.estimated_tss) - 1).abs >= 0.15 ||
-        (metrics.estimated_if - @workout.estimated_if).abs >= 0.08
+    def material_change?(before, after)
+      after.kind != before.kind ||
+        intensity?(after.subtype) != intensity?(before.subtype) ||
+        ((after.estimated_tss / before.estimated_tss) - 1).abs >= 0.15 ||
+        (after.estimated_if - before.estimated_if).abs >= 0.08
+    end
+
+    def snapshot_for(workout)
+      Snapshot.new(
+        kind: workout.kind,
+        subtype: workout.subtype,
+        duration_minutes: workout.duration_minutes,
+        estimated_if: workout.estimated_if,
+        estimated_tss: workout.estimated_tss)
     end
 
     def current_ftp_watts

@@ -10,13 +10,13 @@ module Planning
       end.sort_by(&:weekday).freeze
     end
 
-    def replace!(range)
+    def replace!(range, preserve_workout_ids: [])
       dates = range.select { |date| date >= Date.current && date.between?(@plan.starts_on, @plan.ends_on) }
       return if dates.empty?
 
       @pre_break_levels = pre_break_levels
-      @plan.planned_workouts.planned.where(scheduled_on: dates & blocked_dates(dates)).destroy_all
-      @plan.planned_workouts.planned.where(kind: :workout, scheduled_on: dates).destroy_all
+      replaceable_workouts(preserve_workout_ids).where(scheduled_on: dates & blocked_dates(dates)).destroy_all
+      replaceable_workouts(preserve_workout_ids).where(kind: :workout, scheduled_on: dates).destroy_all
       prescriptions.filter_map { |item| prepared_prescription(item, dates) }.each do |item|
         next if @plan.planned_workouts.where(scheduled_on: item.scheduled_on).exists?
 
@@ -42,6 +42,10 @@ module Planning
     end
 
     private
+
+    def replaceable_workouts(preserve_workout_ids)
+      @plan.planned_workouts.planned.where.not(id: preserve_workout_ids)
+    end
 
     def prescriptions
       PlanBuilder.new(ExistingPlanConfiguration.new(plan: @plan, availability: @slots)).preview.prescriptions

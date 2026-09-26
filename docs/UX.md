@@ -264,7 +264,7 @@ Buttons:
 - Keep rest of plan unchanged
 - Replan upcoming workouts
 
-Current limitation: a material Change shows only a notice saying replanning will be available in a later milestone. The two replan choices above are not implemented (WKO-005).
+Current implementation: a material Change creates a persisted proposal and shows both choices on the workout detail page. The changed workout remains fixed; acceptance atomically re-prescribes the bounded following 14-day block using the effective availability template for each date.
 
 ## 9. Completion flow
 

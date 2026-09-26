@@ -32,12 +32,12 @@
     <% @plan.adaptation_proposals.each do |proposal| %>
       <section class="alert alert-warning items-start sm:items-center" aria-label="Adaptation proposal">
         <div>
-          <strong class="block">Adaptation proposal</strong>
+          <strong class="block"><%= proposal.material_change_replan? ? "Optional upcoming replan" : "Adaptation proposal" %></strong>
           <p><%= proposal.reason %></p>
         </div>
         <div class="flex flex-wrap gap-2 sm:ml-auto">
-          <%= button_to "Accept all", accept_adaptation_proposal_path(proposal), class: "btn btn-success btn-sm" %>
-          <%= button_to "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, form: { data: { turbo_confirm: "Reject this adaptation proposal?" } }, class: "btn btn-ghost btn-sm" %>
+          <%= button_to proposal.material_change_replan? ? "Replan upcoming workouts" : "Accept all", accept_adaptation_proposal_path(proposal), class: "btn btn-success btn-sm" %>
+          <%= button_to proposal.material_change_replan? ? "Keep rest of plan unchanged" : "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, form: { data: { turbo_confirm: proposal.material_change_replan? ? nil : "Reject this adaptation proposal?" } }, class: "btn btn-ghost btn-sm" %>
         </div>
       </section>
     <% end %>

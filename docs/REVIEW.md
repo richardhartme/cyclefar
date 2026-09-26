@@ -16,6 +16,8 @@ These changes are reflected in PRODUCT, REQUIREMENTS, TRAINING_ENGINE, DATA_MODE
 
 CYF-1 resolved PLN-013 on 2026-09-25: Back to edit now restores the saved preview configuration. Request coverage checks edit, revised preview, confirmation and non-persistence before confirmation.
 
+CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creates an optional persisted proposal. Acceptance keeps the changed workout fixed and atomically re-prescribes the bounded following 14-day block using the effective availability template for each date; dismissal preserves the remaining plan.
+
 ## Open acceptance gaps
 
 These are findings from source inspection, not newly added failing regression tests. Existing green tests do not establish complete requirement coverage. Address each with focused coverage before closing it.
@@ -23,7 +25,6 @@ These are findings from source inspection, not newly added failing regression te
 | Area | Intended behaviour | Current evidence and follow-up |
 |---|---|---|
 
-| WKO-005: material Change | Offer an optional upcoming-workout replan. | [`PlannedWorkoutsController#change`](../app/controllers/planned_workouts_controller.rb) only emits a notice saying replanning will arrive in a later milestone. No proposal/action is offered. |
 | FBK-002: proposal review | Show affected workouts and before/after values. | [`FeedbackEvaluator`](../app/services/adaptations/feedback_evaluator.rb) stores IDs and target levels; the [calendar](../app/views/home/index.html.erb) shows only the reason and Accept/Reject. Add reviewable before/after details. |
 | FBK-002, GEN-001; engine §§12, 32, 47 | Accepted progression bias affects later generation. | [`ProposalApplier`](../app/services/adaptations/proposal_applier.rb) saves global `intensity_bias`; [`HorizonMaterializer`](../app/services/planning/horizon_materializer.rb) uses the outline level directly and does not read that state. The saved bias therefore does not affect newly materialised workouts. |
 | FBK-002; engine §§29–31 | Bound adaptations to 14 days, support comparable-family fallback and nearby hard-session reductions. | [`FeedbackEvaluator`](../app/services/adaptations/feedback_evaluator.rb) finds only the next same-subtype structured workout, without an upper date bound. Add/Copy/Move can leave structured workouts beyond 14 days. It proposes one target only and does not recheck the weekly cap. Easy-workout levels can be nil, so arithmetic on the target level also needs coverage for high-RPE Recovery/Endurance feedback. |

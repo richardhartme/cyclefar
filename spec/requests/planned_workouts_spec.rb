@@ -80,6 +80,48 @@ RSpec.describe "Planned workouts", type: :request do
       kind: "opener",
       duration_minutes: 45,
       name: "Event Opener")
+    proposal = plan.adaptation_proposals.sole
+    expect(proposal).to be_material_change_replan
+
+    follow_redirect!
+    expect(response.body).to include("Replan upcoming workouts", "Keep rest of plan unchanged")
+  end
+
+  it "WKO-005 dismisses a material-change proposal without changing the rest of the plan" do
+    other = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 2)
+    original_attributes = other.attributes
+    post change_planned_workout_path(workout), params: { subtype: "recovery", duration_minutes: 60 }
+    proposal = plan.adaptation_proposals.sole
+
+    delete reject_adaptation_proposal_path(proposal)
+
+    expect(response).to redirect_to(root_path)
+    expect(other.reload.attributes).to eq(original_attributes)
+    expect(AdaptationProposal).not_to exist(proposal.id)
+  end
+
+  it "WKO-005 accepts a material-change proposal and preserves the changed workout" do
+    source = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 1)
+    replaceable = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 3)
+    template = create(:availability_template, training_plan: plan, effective_from: plan.starts_on)
+    create(:availability_slot, availability_template: template, weekday: (Date.current + 3).cwday, duration_minutes: 75, intent: :endurance)
+    post change_planned_workout_path(source), params: { subtype: "recovery", duration_minutes: 60 }
+    proposal = plan.adaptation_proposals.sole
+    changed_attributes = source.reload.attributes.slice("kind", "subtype", "duration_minutes", "name", "estimated_if", "estimated_tss")
+
+    post accept_adaptation_proposal_path(proposal)
+
+    expect(response).to redirect_to(root_path)
+    expect(source.reload.attributes.slice(*changed_attributes.keys)).to eq(changed_attributes)
+    expect(PlannedWorkout).not_to exist(replaceable.id)
+    expect(plan.planned_workouts.find_by!(scheduled_on: Date.current + 3).duration_minutes).to eq(75)
+  end
+
+  it "WKO-005 does not offer replanning for a non-material change" do
+    allow(Workouts::Variations).to receive(:for_generation).with(:endurance).and_return("sustained")
+    post change_planned_workout_path(workout), params: { subtype: "endurance", duration_minutes: 60 }
+
+    expect(plan.adaptation_proposals).to be_empty
   end
 
   it "WKO-006 moves only to an empty date inside the plan" do
