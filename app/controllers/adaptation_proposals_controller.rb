@@ -16,6 +16,6 @@ class AdaptationProposalsController < ApplicationController
   private
 
   def load_proposal
-    @proposal = AdaptationProposal.find(params[:id])
+    @proposal = Current.user.adaptation_proposals.find(params[:id])
   end
 end

@@ -47,6 +47,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-27: CYF-68 made `RiderProfile` and `TrainingPlan` user-owned, removed the profile singleton and global active-plan constraints, and added database-enforced one-profile/one-active-plan-per-user uniqueness. Existing settings, planning and calendar paths now attach and query those records through the signed-in user; full foreign-record, preview and Intervals.icu isolation remains for later tickets. A populated CYF-67-schema copy rehearsal rejected a missing owner without partial changes, then assigned the explicit owner and preserved completed history, FTP data, encrypted profile and sync metadata. Production remains uninspected and needs its own preflight and copy rehearsal. Validation: 1,241 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current and the Milestone 12 release gate is not complete.
 
+2026-09-27: CYF-69 scoped every training controller record lookup to the authenticated rider's plans. Foreign workout, adaptation-proposal and time-off IDs now receive the same empty 404 as missing IDs; two-user request coverage exercises every training read and mutation route, including archived history, plan archival, FTP Settings, schedule changes and sync entry. Preview draft isolation, domain service ownership and sync metadata isolation remain for CYF-70/71/72. Validation: 1,259 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current and the Milestone 12 release gate is not complete.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

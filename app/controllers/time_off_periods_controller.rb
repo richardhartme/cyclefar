@@ -12,8 +12,9 @@ class TimeOffPeriodsController < ApplicationController
   end
 
   def destroy
-    period = TimeOffPeriod.find(params[:id])
-    Planning::TimeOffPlanner.new(plan: Current.user.training_plans.active.sole).remove!(period)
+    plan = Current.user.training_plans.active.sole
+    period = plan.time_off_periods.find(params[:id])
+    Planning::TimeOffPlanner.new(plan: plan).remove!(period)
     redirect_to root_path, notice: "Time off removed."
   rescue ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to root_path, alert: error.message

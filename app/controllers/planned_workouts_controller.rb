@@ -90,7 +90,7 @@ class PlannedWorkoutsController < ApplicationController
   private
 
   def load_workout
-    @workout = PlannedWorkout.includes(:workout_steps, :plan_phase, training_plan: :plan_phases).find(params[:id])
+    @workout = Current.user.planned_workouts.includes(:workout_steps, :plan_phase, training_plan: :plan_phases).find(params[:id])
   end
 
   def material_change_proposal

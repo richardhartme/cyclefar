@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The current release remains a single-rider planner. Rails-generated email/password sign-in exists, and profiles and plans now have required user ownership in PostgreSQL. Other request and service paths still need the independent-rider isolation work; a second account must not be enabled yet.
+The current release remains a single-rider planner. Rails-generated email/password sign-in exists, profiles and plans have required user ownership in PostgreSQL, and training controller lookups are owner-scoped. Preview drafts, domain services and sync metadata still need the independent-rider isolation work; a second account must not be enabled yet.
 
 The assumed rider:
 

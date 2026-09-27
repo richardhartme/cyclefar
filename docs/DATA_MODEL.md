@@ -8,7 +8,7 @@ This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records
 
 Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
 
-`RiderProfile` and `TrainingPlan` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. `IntervalsIcuSync.user_id` remains nullable pending CYF-72. Signing in does not yet make every training path private because request and service scoping remains incomplete. There is no registration model or route.
+`RiderProfile` and `TrainingPlan` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups are owner-scoped. `IntervalsIcuSync.user_id` remains nullable pending CYF-72, and preview, service and sync isolation remain incomplete. There is no registration model or route.
 
 ## RiderProfile
 
