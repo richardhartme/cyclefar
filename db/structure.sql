@@ -235,7 +235,7 @@ CREATE TABLE public.intervals_icu_syncs (
     payload_digest character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint,
+    user_id bigint NOT NULL,
     CONSTRAINT intervals_icu_syncs_owned_external_id CHECK ((((external_id)::text ~~ 'cyclefar-%'::text) AND (length((external_id)::text) > 9)))
 );
 
@@ -965,6 +965,13 @@ CREATE UNIQUE INDEX index_intervals_icu_syncs_on_planned_workout_id ON public.in
 
 
 --
+-- Name: index_intervals_icu_syncs_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_intervals_icu_syncs_on_user_id ON public.intervals_icu_syncs USING btree (user_id);
+
+
+--
 -- Name: index_plan_phases_on_training_plan_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1163,6 +1170,14 @@ ALTER TABLE ONLY public.availability_slots
 
 
 --
+-- Name: intervals_icu_syncs fk_rails_7f552b2b84; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.intervals_icu_syncs
+    ADD CONSTRAINT fk_rails_7f552b2b84 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: adaptation_proposals fk_rails_99bb4455b5; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1217,6 +1232,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260927220000'),
 ('20260927180000'),
 ('20260927170000'),
 ('20260927123825'),

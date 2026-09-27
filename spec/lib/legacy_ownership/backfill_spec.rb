@@ -35,7 +35,7 @@ RSpec.describe LegacyOwnership::Backfill do
     plan = create(:training_plan, user: owner)
     completed = create(:planned_workout, :completed, training_plan: plan)
     linked = create(:intervals_icu_sync, planned_workout: completed, external_id: "cyclefar-workout-#{completed.id}")
-    detached = create(:intervals_icu_sync, planned_workout: nil, external_id: "cyclefar-workout-deleted-42")
+    detached = create(:intervals_icu_sync, planned_workout: nil, user: owner, external_id: "cyclefar-workout-deleted-42")
     original = {
       encrypted_key: connection.select_value("SELECT intervals_icu_api_key FROM rider_profiles WHERE id = #{profile.id}"),
       snapshot: completed.completed_target_snapshot.deep_dup,

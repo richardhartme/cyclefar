@@ -185,5 +185,21 @@ RSpec.describe "Core persistence", type: :model do
         build(:intervals_icu_sync, planned_workout: other, external_id: sync.reload.external_id).save!(validate: false)
       end
     end
+
+    it "USR-006 requires a durable owner and rejects a workout or owner from another rider" do
+      sync = create(:intervals_icu_sync)
+      owner = sync.user
+      other = create(:user)
+      other_workout = create(:planned_workout, training_plan: create(:training_plan, user: other))
+
+      expect(sync.reload.user).to eq(owner)
+      expect(sync.update(user: other)).to be(false)
+      expect(build(:intervals_icu_sync, planned_workout: other_workout, user: owner)).not_to be_valid
+      expect_database_rejection(ActiveRecord::NotNullViolation) { sync.update_columns(user_id: nil) }
+      expect_database_rejection(ActiveRecord::InvalidForeignKey) { sync.update_columns(user_id: 99_999) }
+
+      sync.planned_workout.destroy!
+      expect(sync.reload).to have_attributes(planned_workout_id: nil, user_id: owner.id)
+    end
   end
 end

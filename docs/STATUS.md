@@ -53,6 +53,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-27: CYF-71 binds each session-backed plan preview draft to its authenticated creator. Opening the edit form or confirming a draft under another account clears it, including legacy drafts with no owner; the second rider can create a fresh preview and plan. Same-rider preview, Back to edit and confirmation remain intact. Request specs cover same-browser account switching, stale confirmation rejection and a fresh second-rider confirmation. Validation: 1,266 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current; sync isolation still blocks the Milestone 12 release gate.
 
+2026-09-27: CYF-72 requires an owning user on every Intervals.icu sync record, including detached records. Reconciliation now queries only that rider's metadata and rejects a profile or linked sync belonging to another owner. The migration derives missing linked owners from plans, requires an explicit existing owner for unassigned detached rows, and enforces `NOT NULL` plus a user foreign key. An isolated populated-copy rehearsal confirmed rollback without an owner and preservation of external IDs/payload digests with one. Two-rider specs cover separate HTTP credentials, next-two selection, stale linked/detached cleanup, repeat sync and failed-cleanup retry. Validation: 1,272 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current; controlled account provisioning and the full two-user release gate remain.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

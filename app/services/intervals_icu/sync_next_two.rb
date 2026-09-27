@@ -12,6 +12,7 @@ module IntervalsIcu
     end
 
     def call
+      raise ArgumentError, "Intervals.icu profile must belong to the plan owner" if @profile.user_id != @plan.user_id
       raise Client::RequestError, "Add an Intervals.icu API key in Settings before syncing" if @profile.intervals_icu_api_key.blank?
 
       client = @client || Client.new(api_key: @profile.intervals_icu_api_key)
@@ -32,7 +33,7 @@ module IntervalsIcu
     end
 
     def reconciled_syncs
-      IntervalsIcuSync.includes(:planned_workout).select do |sync|
+      @plan.user.intervals_icu_syncs.includes(:planned_workout).select do |sync|
         workout = sync.planned_workout
         workout.nil? || (workout.training_plan_id == @plan.id && workout.planned? && workout.scheduled_on >= Date.current)
       end
@@ -43,7 +44,10 @@ module IntervalsIcu
     end
 
     def external_id_for(workout)
-      workout.intervals_icu_sync&.external_id || "cyclefar-workout-#{workout.id}"
+      sync = workout.intervals_icu_sync
+      raise Client::RequestError, "Sync metadata owner does not match this rider" if sync && sync.user_id != @plan.user_id
+
+      sync&.external_id || "cyclefar-workout-#{workout.id}"
     end
 
     def persist_success!(workouts, payloads, responses, stale_syncs)
@@ -51,7 +55,7 @@ module IntervalsIcu
       IntervalsIcuSync.transaction do
         workouts.zip(payloads).each do |workout, payload|
           response = response_by_external_id.fetch(payload.fetch(:external_id))
-          sync = workout.intervals_icu_sync || workout.build_intervals_icu_sync(external_id: payload.fetch(:external_id))
+          sync = workout.intervals_icu_sync || workout.build_intervals_icu_sync(user: @plan.user, external_id: payload.fetch(:external_id))
           sync.update!(intervals_event_id: response.fetch("id"), payload_digest: Digest::SHA256.hexdigest(JSON.generate(payload)), last_synced_at: Time.current)
         end
         stale_syncs.each(&:destroy!)

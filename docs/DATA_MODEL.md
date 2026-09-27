@@ -8,7 +8,7 @@ This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records
 
 Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
 
-`RiderProfile` and `TrainingPlan` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups are owner-scoped, and FTP-based services use the plan's owner. `IntervalsIcuSync.user_id` remains nullable pending CYF-72, and preview and sync isolation remain incomplete. There is no registration model or route.
+`RiderProfile`, `TrainingPlan` and `IntervalsIcuSync` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups, preview drafts and sync reconciliation are owner-scoped, and FTP-based services use the plan's owner. There is no registration model or route.
 
 ## RiderProfile
 
@@ -275,7 +275,7 @@ Prefer service/query objects for:
 
 ## Planned Milestone 12 ownership schema and migration contract
 
-This section is the independent-rider target design. CYF-67/68 delivered the explicit-owner backfill and required profile/plan constraints, while sync ownership and complete route/service isolation remain to be delivered. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
+This section records the independent-rider ownership design. CYF-67/68 delivered the explicit-owner backfill and required profile/plan constraints; CYF-71/72 added preview and sync isolation. Provisioning and the full release gate remain. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|
@@ -283,10 +283,10 @@ This section is the independent-rider target design. CYF-67/68 delivered the exp
 | `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
 | `TrainingPlan` | Implemented: required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'` in place of the global active-plan index. Archived plans remain attached to their owner with completed history. |
 | Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback` and `AdaptationProposal` inherit ownership through their plan. |
-| `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Keep unique `external_id` and `planned_workout_id` indexes. |
+| `IntervalsIcuSync` | Implemented: required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Unique `external_id` and `planned_workout_id` indexes remain. |
 
 Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.
 
-The CYF-67/68 migrations preflight each target database, require an explicitly selected existing account for legacy training data, backfill profile, plans and sync rows, then enforce profile/plan `NOT NULL`, foreign keys and per-user uniqueness. They preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. The local development authentication-table conflict has been resolved; production preflight and copy rehearsal remain deployment prerequisites. See [the migration runbook](LEGACY_OWNER_MIGRATION.md).
+The CYF-67/68 migrations preflight each target database, require an explicitly selected existing account for legacy training data, backfill profile, plans and sync rows, then enforce profile/plan `NOT NULL`, foreign keys and per-user uniqueness. CYF-72 derives any remaining linked sync owner from its plan, requires an explicit owner for unassigned detached rows, and enforces sync `NOT NULL` and a user foreign key. They preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. The local development authentication-table conflict has been resolved; production preflight and copy rehearsal remain deployment prerequisites. See [the migration runbook](LEGACY_OWNER_MIGRATION.md).
 
 Only enable a second rider after the ownership migration, controller/service scoping, preview isolation and sync isolation pass the two-user release gate. Until then the checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.

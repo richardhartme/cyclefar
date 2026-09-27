@@ -143,6 +143,7 @@ FactoryBot.define do
 
   factory :intervals_icu_sync do
     planned_workout
+    user { planned_workout&.training_plan&.user || association(:user) }
     external_id { "cyclefar-workout-#{planned_workout.id}" }
   end
 end
