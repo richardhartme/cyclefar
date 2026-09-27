@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resource :session
+  resources :passwords, param: :token
   root "home#index"
   resource :settings, only: [ :show, :update ]
   resource :training_plan, only: [ :new, :create, :destroy ] do
