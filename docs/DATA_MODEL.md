@@ -24,7 +24,7 @@ Validations:
 
 - FTP > 0
 
-Future: attach a `User` owner and define per-rider ownership rules before supporting multiple accounts.
+Planned Milestone 12 replaces this singleton contract with one user-owned profile per provisioned rider; see the ownership schema below.
 
 ## FtpReading
 
@@ -270,3 +270,21 @@ Prefer service/query objects for:
 - power targets in watts;
 - calendar month-boundary labels;
 - workout graph points.
+
+## Planned Milestone 12 ownership schema and migration contract
+
+This section is a target design, not the current SQL schema. The generated `User`/`Session` tables authenticate requests today, but no training table is currently user-owned. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the acceptance contract.
+
+| Record | Planned ownership and constraint |
+|---|---|
+| `RiderProfile` | Required `user_id` foreign key and unique index; remove the `id = 1` check and `RiderProfile.current`. First Settings save with a valid FTP establishes the user's profile. |
+| `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
+| `TrainingPlan` | Required `user_id` foreign key; replace the global active-plan index with a unique partial index on `user_id` where `status = 'active'`. Archived plans remain attached to their owner with completed history. |
+| Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback` and `AdaptationProposal` inherit ownership through their plan. |
+| `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Keep unique `external_id` and `planned_workout_id` indexes. |
+
+Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.
+
+Before tightening ownership columns, preflight each target database: count users, the singleton profile, FTP readings, all plans and completed workouts, plus linked and detached sync rows. Select one **existing account explicitly** for any legacy training data. Do not choose by row order, first user or current session. Stop without assigning anything if the selected account is absent or ownership is inconsistent/ambiguous. Backfill profile, plans and all sync rows to that owner, then add `NOT NULL`, foreign keys and per-user uniqueness; preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. Rehearse on a representative database copy with recovery steps before cutover. The local development database's pre-existing incompatible `users`/`sessions` tables need a data-preserving resolution before this migration.
+
+Only enable a second rider after the ownership migration, controller/service scoping, preview isolation and sync isolation pass the two-user release gate. Until then the checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.

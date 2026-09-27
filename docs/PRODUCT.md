@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-V1 remains a single-rider planner. Rails-generated email/password sign-in and password-reset scaffolding now exists, but training records remain global alongside the singleton rider profile rather than being owned by individual users. There is no self-service registration, team, coach or social feature.
+The current application remains a single-rider planner. Rails-generated email/password sign-in and password-reset scaffolding exists, but training records remain global alongside the singleton rider profile rather than being owned by individual users. Sign-in alone does not isolate one rider's data from another's.
 
 The assumed rider:
 
@@ -129,11 +129,17 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 - AI-generated plans or workouts
 - Hosted-service operation (separate infrastructure preparation is described below)
 
+## Planned independent-rider release
+
+Milestone 12 is planned after the open Milestone 11; none of its per-user ownership requirements is implemented yet. It will support independent riders using provisioned or invited email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there.
+
+The first independent-rider release excludes public self-registration, Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
+
 ## Future-friendly seams
 
 Do not implement these now, but avoid architecture that blocks them:
 
-- account registration, per-user ownership and multiple riders;
+- later account registration beyond the planned provisioned/invited independent-rider release;
 - importing training history/current volume;
 - experience level and age as planning inputs;
 - automatic activity completion from Intervals.icu;

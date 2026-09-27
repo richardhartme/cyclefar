@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. This records the current code shape; it does not add a multi-rider requirement or claim that authenticated request flows, account provisioning and password-reset delivery have been accepted. Training data and Settings remain global to the singleton rider profile. See [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md).
+Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. This records the current code shape; it does not establish per-user ownership, account provisioning or verified password-reset delivery. Training data and Settings remain global to the singleton rider profile. The `USR-*` requirements below describe a later release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
 
 ## 0. Product identity
 
@@ -459,3 +459,67 @@ See `INTERVALS_ICU.md`.
 - Calendar week: Monday–Sunday.
 - Workout scheduling: date only; no preferred time-of-day feature.
 - Store date concepts as Rails `date` where possible to avoid timezone drift.
+
+## 16. Planned independent-rider release
+
+These requirements belong to planned Milestone 12. They do not describe current behavior and do not advance the current Milestone 11. Preserve the deterministic training rules and completed-workout immutability while changing ownership. There is one rider per `User`, with no coach or shared-plan permissions.
+
+### USR-001 Controlled accounts and authentication
+
+- An authorized operator can provision or invite an independent rider account. The rider signs in with the existing email/password session flow, can sign out through a visible control, and can receive a working password-reset email without account enumeration.
+- Do not expose public self-registration, Google/social sign-in, coach, team or shared-plan flows in this release.
+- A second account must not be enabled against legacy global training data before USR-002 through USR-007 and the USR-008 isolation gate pass.
+
+Automated coverage target: authentication/provisioning request specs for a second rider, sign-out and draft clearing, password-reset delivery with mail stubbed, old-session invalidation and indistinguishable reset-request responses.
+
+### USR-002 One owned rider profile and FTP history
+
+- Each `User` can have at most one `RiderProfile`; first Settings save establishes it when the rider supplies the required FTP. Thereafter that rider has one profile. Its encrypted Intervals.icu API key and all `FtpReading` rows belong to that rider through the profile.
+- Replace the global `RiderProfile.current`/`id = 1` contract. A unique, required `rider_profiles.user_id` foreign key enforces at most one profile per user; concurrent first Settings saves must establish only one profile safely.
+- Updating FTP recalculates only that user's future plan metrics and watts. Both users' completed workout snapshots remain immutable.
+
+Automated coverage target: model/database uniqueness and foreign-key specs, concurrent first-profile creation, two-user Settings/FTP service and request specs, and completed-history regression specs.
+
+### USR-003 One active plan per user and archived history
+
+- Each `TrainingPlan` belongs to one `User`. Each user may have at most one active plan and any number of archived plans; another user's active plan does not block plan creation.
+- Replace the global partial active-plan index with a unique partial index on `training_plans.user_id` where `status = 'active'`, alongside a required user foreign key. Archive retains completed workouts and their parent plan as private history; uncompleted future prescriptions follow the existing archive policy. No separate History screen is required.
+- Target events, phases, availability, workouts, time off and adaptation proposals inherit ownership through their plan. FTP readings inherit it through the profile. Completed records remain immutable.
+
+Automated coverage target: two-user and concurrent plan-creation model/database specs, archive/history service specs, and request specs proving each user's calendar and plan actions see only their own records.
+
+### USR-004 Owner-scoped reads and mutations
+
+- Resolve the active plan and profile from the authenticated `Current.user`. Resolve every workout, proposal and time-off identifier through that user's owned plan, including detail, editing, completion, missed resolution, availability and archive actions.
+- A valid ID owned by another user must neither disclose data nor mutate it. Missing and foreign IDs receive the same not-found response. Domain services receive an explicit owned plan or profile; pure training calculations remain independent of `Current.user`.
+
+Automated coverage target: two-user request matrix for every training read and mutation route, guessed-ID/not-found equivalence, and service specs proving cross-user inputs cannot recalculate or mutate another rider's records.
+
+### USR-005 Same-browser preview isolation
+
+- Bind the session-backed plan preview draft to the authenticated user or clear it when the account changes. Another user signing in with the same browser cannot view, edit or confirm the prior user's draft. A stale draft cannot create a plan for the wrong user.
+- Preserve preview, Back to edit and confirmation for the same user.
+
+Automated coverage target: request specs for A sign-out/B sign-in in one browser, stale draft confirmation rejection, and the same-user preview/edit/confirm flow.
+
+### USR-006 Owner-scoped Intervals.icu sync
+
+- Use the signed-in rider's own profile/API key, active plan and sync records for next-two selection and reconciliation. `IntervalsIcuSync` has a required `user_id` so a record remains attributable after its workout is deleted.
+- Keep stable `cyclefar-workout-<planned_workout.id>` external IDs. A rider's sync may upsert or delete only that rider's CycleFar-owned remote events, including detached stale records; it must never inspect another rider's key or sync records. Preserve retry-safe partial-failure behavior.
+
+Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, next-two sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
+
+### USR-007 Explicit-owner legacy migration
+
+- Before adding required ownership constraints, inspect each target database's users, singleton profile, FTP readings, plans, completed workouts and linked or detached sync rows. Report counts and the selected existing owner without revealing API keys.
+- Require an explicitly selected existing account for legacy training data. Never infer the owner from the first user, current session or record order. If ownership is ambiguous or inconsistent, fail before partial assignment. Preserve completed structures, snapshots, FTP history and existing external IDs exactly.
+- Backfill profile, plans and sync rows to that owner, then enforce required foreign keys, unique profile ownership and per-user active-plan uniqueness. Rehearse on a representative database copy and document recovery before cutover; resolve the known local development users/sessions migration conflict without deleting rider data.
+
+Automated coverage target: migration/preflight specs for empty, valid single-owner, ambiguous and inconsistent data; preservation checks for completed snapshots, FTP readings and detached sync IDs; database-constraint specs and a documented copy-of-data rehearsal.
+
+### USR-008 Two-user release gate
+
+- Enable multiple rider accounts only after owner schema, controller and service scoping, preview isolation, sync scoping and provisioning are complete together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
+- Keep the current Milestone 11 open until its own exit criteria and required gates pass. Update [STATUS.md](STATUS.md) when a milestone actually completes; do not report planned per-user work as delivered.
+
+Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before Milestone 12 completion.

@@ -19,6 +19,7 @@ Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
 - [x] Milestone 9 — FTP lifecycle
 - [x] Milestone 10 — Intervals.icu sync
 - [ ] Milestone 11 — Polish and hardening (original delivery complete; acceptance follow-up reopened)
+- [ ] Milestone 12 — Independent riders (planned after Milestone 11; not current)
 
 ## Current work
 
@@ -39,6 +40,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 2026-09-27: The Rails authentication generator was added after the original V1 milestones. `User`/`Session` models and migrations, a default controller authentication concern, sign-in/sign-out, and password-reset routes/views/mailer are present. No registration or per-user training ownership was added; Settings and plans still use singleton/global data. The SQL schema dump is not yet regenerated for the new tables, existing request specs have not been adapted to authenticated requests, the layout lacks sign-out navigation, and password-reset delivery remains unverified. Supporting documentation and C4 diagrams were updated to describe this state. Documentation validation: Markdown links, six diagram source/relationship checks, `git diff --check`, and Zeitwerk passed. PlantUML is not installed, so visual rendering was not performed. Milestone 11 remains open; this entry does not claim authentication acceptance.
 
 2026-09-27: Applied the generated authentication migrations to the test database and regenerated `db/structure.sql`. Existing training request specs now sign in through the session route; focused model/request specs cover password authentication, redirects, sign-out and password-reset session invalidation. The earlier schema-dump and request-spec gaps above are resolved. Validation: 1,231 RSpec examples passed with no pending examples, Zeitwerk passed, RuboCop passed (156 files), and `git diff --check` passed. The local development database has empty but incompatible pre-existing `users`/`sessions` tables from an untracked migration, so its auth migrations remain pending; no existing development data was changed. Milestone 11 remains open.
+
+2026-09-27: CYF-66 documented the planned independent-rider scope and explicit-owner migration contract in the product, requirements, data model, architecture, UX and implementation plan. `USR-001` through `USR-008` define automated coverage targets for controlled accounts, per-user ownership, two-user isolation, same-browser previews, Intervals.icu sync and cutover. Validation: 1,231 RSpec examples passed, Zeitwerk passed, RuboCop passed (156 files), Brakeman reported no warnings, Bundler Audit and importmap audit found no vulnerabilities, documentation links resolved, and `git diff --check` passed. This is documentation only: no user-owned training schema or multi-rider support has been delivered. Milestone 11 remains current; Milestone 12 is planned and cannot begin its release gate until Milestone 11 is complete.
 
 ## Later feature changes
 

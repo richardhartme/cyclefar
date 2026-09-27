@@ -4,6 +4,8 @@ This is the original milestone sequence, retained as the implementation and acce
 
 Rails authentication was generated on 2026-09-27 after this sequence. The milestone tasks below remain historical; [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) describe the current authentication scaffold and integration gaps.
 
+Milestone 12 below is a planned independent-rider release. Milestone 11 remains current until its own acceptance gaps and required gates pass; documenting Milestone 12 does not start or complete it.
+
 Build vertical slices. Do not attempt the adaptive engine, calendar UI and external integration in one pass.
 
 ## Milestone 0 — Bootstrap and guardrails
@@ -355,6 +357,22 @@ Review:
 - test suite speed.
 
 Run full regression suite and manually exercise all requirements.
+
+## Milestone 12 — Independent riders (planned; not current)
+
+Goal: turn the existing authentication scaffold into private training accounts for independent riders while preserving deterministic training and immutable completed history. One `User` has one profile, at most one active plan and any number of archived plans. Accounts are provisioned or invited; public registration, Google/social sign-in, coaches, shared plans and teams remain outside this release.
+
+Implement in this order, with reviewable changes and the [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) coverage targets:
+
+1. **Contract (CYF-66):** document ownership, migration and user-flow requirements without changing current behavior or milestone status.
+2. **Legacy preflight/backfill (CYF-67):** inventory target databases, require an explicitly selected existing owner, preserve completed snapshots, FTP history and linked/detached Intervals.icu external IDs, and rehearse a data-preserving migration with recovery steps. Resolve the known local development users/sessions migration conflict before cutover.
+3. **Owner schema (CYF-68):** add a unique required `RiderProfile.user_id`, a required `TrainingPlan.user_id` and a per-user partial active-plan unique index after backfill; retain archived plans and child ownership. Update `db/structure.sql`, factories and seeds.
+4. **Request and domain boundaries (CYF-69/70):** scope all controller lookups to `Current.user`; pass owned plan/profile context into services, presenters, FTP recalculation and locks. Make foreign and missing IDs indistinguishable. Keep pure training calculations free of request state.
+5. **Draft and sync isolation (CYF-71/72):** bind session preview drafts to their creator. Give `IntervalsIcuSync` a required owner, including detached rows, and reconcile only that rider's next-two events with their own API key while keeping stable external IDs.
+6. **Account access (CYF-73):** provide controlled provisioning/invitations, visible identity/sign-out and working password-reset delivery. Do not enable a second rider before owner boundaries pass.
+7. **Release gate (CYF-74):** run a two-user matrix across Settings, plan preview/creation/archive, calendar, workouts, feedback, missed resolution, availability/time off, FTP, completed history and Intervals.icu. Exercise foreign IDs, concurrent first profile/plan creation, detached sync cleanup and same-browser account switching.
+
+Exit criteria: required migration rehearsal and two-user coverage pass; `bundle exec rspec`, `bin/rails zeitwerk:check` and configured lint/security checks pass; only then update [STATUS.md](STATUS.md) to complete Milestone 12 and name the next current milestone. Milestone 11 must have completed its own gate before Milestone 12 becomes current.
 
 ## Later additions already delivered
 

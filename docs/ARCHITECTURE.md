@@ -12,6 +12,18 @@ The application module is `CycleFar`, the project is `cycle_far`, and domain cla
 
 The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. All training records and Settings remain global: authentication does not add per-user ownership or isolation. Training request specs now sign in explicitly, and focused specs cover the basic authentication boundary.
 
+## Planned independent-rider boundary (Milestone 12)
+
+Milestone 12 follows the still-open Milestone 11. The first independent-rider release uses controlled provisioning or invitations on the existing email/password `User`/`Session` scaffold. Public registration, Google/social sign-in, coaches, teams and shared plans are outside it. A second account is not enabled until the complete ownership and isolation gate passes.
+
+`Current.user` becomes the controller entry point for owned `RiderProfile` and active `TrainingPlan` queries. Controllers load workout, proposal and time-off IDs through that owned plan and respond identically to missing and foreign IDs. Settings, plan creation/archive, calendar presentation, manual editing, completion, replanning and FTP recalculation receive the owned profile or plan explicitly. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state. The current global `RiderProfile.current`, `TrainingPlan.active.sole` and global Settings lock are removed or replaced with owner-scoped lookups and locking; request and service specs exercise two users and concurrent first saves.
+
+The session-backed preview configuration is bound to its authenticated creator or cleared on account change. Confirmation verifies that owner before creating a plan. A sign-out followed by another sign-in in the same browser cannot carry the first rider's draft across accounts.
+
+`IntervalsIcu::SyncNextTwo` receives the signed-in rider's profile, plan and owner-scoped sync relation. A direct `IntervalsIcuSync.user_id` identifies detached records after a workout is deleted, so cleanup cannot consume another rider's stale record. The existing durable `cyclefar-workout-<id>` identity remains stable. API keys and remote operations never cross owner boundaries.
+
+The database migration first inventories legacy data and requires an explicitly selected existing owner; ambiguous data fails before partial assignment. It backfills profile, plans and linked/detached sync rows before enforcing required owner foreign keys and per-user unique indexes. Archived plans and immutable completed records stay attached to their selected owner. [DATA_MODEL.md](DATA_MODEL.md#planned-milestone-12-ownership-schema-and-migration-contract) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) lists the route, service and migration test targets. These are planned boundaries, not claims about the current implementation or diagrams.
+
 Services and presenters currently live under `app/services/`:
 
 ```text
