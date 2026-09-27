@@ -235,6 +235,7 @@ CREATE TABLE public.intervals_icu_syncs (
     payload_digest character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    user_id bigint,
     CONSTRAINT intervals_icu_syncs_owned_external_id CHECK ((((external_id)::text ~~ 'cyclefar-%'::text) AND (length((external_id)::text) > 9)))
 );
 
@@ -366,6 +367,7 @@ CREATE TABLE public.rider_profiles (
     intervals_icu_api_key text,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    user_id bigint,
     CONSTRAINT rider_profiles_positive_ftp CHECK ((ftp_watts > 0)),
     CONSTRAINT rider_profiles_singleton CHECK ((id = 1))
 );
@@ -529,6 +531,7 @@ CREATE TABLE public.training_plans (
     engine_version character varying DEFAULT 'v1'::character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    user_id bigint,
     CONSTRAINT training_plans_discipline_values CHECK (((discipline)::text = ANY ((ARRAY['road'::character varying, 'gravel'::character varying, 'mtb'::character varying, 'ultra_endurance'::character varying])::text[]))),
     CONSTRAINT training_plans_goal_values CHECK (((goal)::text = ANY ((ARRAY['general_fitness'::character varying, 'increase_ftp'::character varying, 'improve_endurance'::character varying, 'improve_climbing'::character varying, 'event'::character varying])::text[]))),
     CONSTRAINT training_plans_ordered_dates CHECK ((ends_on >= starts_on)),
@@ -1192,6 +1195,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260927170000'),
 ('20260927123825'),
 ('20260927123824'),
 ('20260921000001'),
