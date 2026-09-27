@@ -68,6 +68,49 @@ RSpec.describe "Training plan preview", type: :request do
     expect(TrainingPlan.active.sole.planned_workouts.structured.count).to be < TrainingPlan.active.sole.planned_workouts.count
   end
 
+  describe "USR-005 preview ownership" do
+    let(:other_user) { create(:user) }
+
+    def switch_to_other_user
+      delete session_path
+      expect(response).to redirect_to(new_session_path)
+      sign_in_as(other_user)
+    end
+
+    it "does not show the first rider's draft when another rider signs in with the same browser" do
+      other_user.create_rider_profile!(ftp_watts: 310)
+      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "285", event_name: "Private event") }
+      expect(response).to have_http_status(:ok)
+
+      switch_to_other_user
+      get new_training_plan_path
+
+      expect(response).to have_http_status(:ok)
+      html = Nokogiri::HTML(response.body)
+      expect(html.at_css('input[name="plan_configuration[ftp_watts]"]')["value"]).to eq("310")
+      expect(html.at_css('input[name="plan_configuration[event_name]"]')["value"]).to be_blank
+    end
+
+    it "rejects confirmation of a draft created by another rider" do
+      post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+      switch_to_other_user
+
+      expect { post training_plan_path }.not_to change(TrainingPlan, :count)
+      expect(response).to redirect_to(new_training_plan_path)
+      follow_redirect!
+      expect(response.body).to include("Preview the plan again before creating it.")
+    end
+
+    it "allows the second rider to preview and confirm their own configuration after switching" do
+      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "285") }
+      switch_to_other_user
+      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "310") }
+
+      expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
+      expect(TrainingPlan.active.sole).to have_attributes(user: other_user, initial_ftp_watts: 310)
+    end
+  end
+
   describe "PLN-013 editing a preview" do
     before { travel_to Time.zone.local(2026, 9, 7, 12) }
     after { travel_back }

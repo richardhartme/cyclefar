@@ -51,6 +51,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-27: CYF-70 centralized future-workout FTP selection on the owning `TrainingPlan` and passed the saved profile directly to FTP recalculation, binding watt input to that profile's user. Two-owner service coverage now checks planning, horizon materialization, manual add/edit/copy, completion, presentation, unchanged second-rider credentials/history, and concurrent first Settings saves under per-user row locks. Completed structures and watt snapshots remain unchanged after FTP updates. Validation: 1,263 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current; preview and sync isolation still block the Milestone 12 release gate.
 
+2026-09-27: CYF-71 binds each session-backed plan preview draft to its authenticated creator. Opening the edit form or confirming a draft under another account clears it, including legacy drafts with no owner; the second rider can create a fresh preview and plan. Same-rider preview, Back to edit and confirmation remain intact. Request specs cover same-browser account switching, stale confirmation rejection and a fresh second-rider confirmation. Validation: 1,266 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current; sync isolation still blocks the Milestone 12 release gate.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

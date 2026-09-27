@@ -1,6 +1,6 @@
 class TrainingPlansController < ApplicationController
   def new
-    @configuration = Planning::PlanConfiguration.new(session[:plan_configuration] || default_configuration)
+    @configuration = Planning::PlanConfiguration.new(owned_plan_configuration || default_configuration)
   end
 
   def preview
@@ -8,14 +8,16 @@ class TrainingPlansController < ApplicationController
     if @configuration.valid?
       @preview = Planning::PlanBuilder.new(@configuration).preview
       @presenter = Planning::PreviewPresenter.new(@preview)
-      session[:plan_configuration] = plan_configuration_params
+      session[:plan_configuration] = { "user_id" => Current.user.id, "configuration" => plan_configuration_params }
     else
       render :new, status: :unprocessable_content
     end
   end
 
   def create
-    @configuration = Planning::PlanConfiguration.new(session.delete(:plan_configuration) || {})
+    configuration = owned_plan_configuration
+    session.delete(:plan_configuration)
+    @configuration = Planning::PlanConfiguration.new(configuration || {})
     unless @configuration.valid?
       flash[:alert] = "Preview the plan again before creating it."
       redirect_to new_training_plan_path
@@ -46,6 +48,18 @@ class TrainingPlansController < ApplicationController
   end
 
   private
+
+  def owned_plan_configuration
+    draft = session[:plan_configuration]
+    return unless draft
+
+    if draft.is_a?(Hash) && draft["user_id"] == Current.user.id && draft["configuration"].is_a?(Hash)
+      draft["configuration"]
+    else
+      session.delete(:plan_configuration)
+      nil
+    end
+  end
 
   def default_configuration
     {
