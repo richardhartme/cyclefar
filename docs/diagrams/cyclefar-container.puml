@@ -1,5 +1,5 @@
 @startuml CycleFar Container Diagram
-' Reviewed against application source on 2026-09-25; scope and limitations: README.md
+' Authentication updated against application source on 2026-09-27; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 title CycleFar — Container Diagram
@@ -9,14 +9,14 @@ LAYOUT_LEFT_RIGHT()
 Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
 
 System_Boundary(cyclefar_boundary, "CycleFar") {
-  Container(web_application, "Web application", "Ruby on Rails, ERB, Turbo, Tailwind CSS", "Serves the desktop-first interface and request-driven training workflows, persists sampled endurance profiles, and performs manual Intervals.icu sync.")
-  ContainerDb(database, "Database", "PostgreSQL", "Stores rider settings, plans, calendar workouts, canonical workout steps, completion snapshots, adaptations, time off, and sync records.")
+  Container(web_application, "Web application", "Ruby on Rails, ERB, Turbo, Tailwind CSS", "Authenticates requests and serves the desktop-first training workflows, including manual Intervals.icu sync.")
+  ContainerDb(database, "Database", "PostgreSQL", "Stores users and login sessions alongside shared rider settings, plans, workouts, adaptations, time off and sync records; auth tables await schema-dump refresh.")
 }
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 
-Rel(rider, web_application, "Uses", "HTTP (local)")
-Rel(web_application, database, "Reads and writes training data", "SQL / Active Record")
+Rel(rider, web_application, "Signs in and uses training planner", "HTTP (local)")
+Rel(web_application, database, "Reads and writes sessions and training data", "SQL / Active Record")
 Rel(web_application, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 
 SHOW_LEGEND()

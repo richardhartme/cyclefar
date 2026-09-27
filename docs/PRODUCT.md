@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-V1 is single-user. There are no accounts, teams, coaches or social features.
+V1 remains a single-rider planner. Rails-generated email/password sign-in and password-reset scaffolding now exists, but training records remain global alongside the singleton rider profile rather than being owned by individual users. There is no self-service registration, team, coach or social feature.
 
 The assumed rider:
 
@@ -83,7 +83,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 This describes intended V1 scope, including later additions. See [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md) for implementation gaps.
 
-- Single-user local app
+- Single-rider local app with Rails-generated sign-in, sign-out and password-reset scaffolding
 - Settings with FTP and Intervals.icu API key
 - One active training plan
 - One target event maximum
@@ -108,8 +108,8 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ### Explicitly out of scope
 
-- User accounts/authentication
-- Multi-user support
+- Self-service account registration and per-user training data
+- Multi-rider support
 - Coaches/social features
 - Running, strength or multisport training
 - Controlling a smart trainer
@@ -133,7 +133,7 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 Do not implement these now, but avoid architecture that blocks them:
 
-- user accounts and multiple riders;
+- account registration, per-user ownership and multiple riders;
 - importing training history/current volume;
 - experience level and age as planning inputs;
 - automatic activity completion from Intervals.icu;

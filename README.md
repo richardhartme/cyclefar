@@ -13,6 +13,7 @@ snapshots.
 
 - Guided plan creation with a preview for general fitness, FTP, endurance,
   climbing and event goals.
+- Rails-generated email/password sign-in, sign-out and password-reset scaffolding.
 - A deterministic, versioned workout engine for endurance, tempo, Sweet Spot,
   threshold, VO2 max, over-under and recovery sessions.
 - A continuous calendar with workout details, editable future workouts and
@@ -28,8 +29,9 @@ snapshots.
 - Archive and delete controls for a plan, plus an idempotent development seed
   for visual testing.
 
-CycleFar V1 intentionally has no authentication, ride imports, trainer control,
-notifications or automatic calendar syncing.
+CycleFar remains a single-rider app. The authentication scaffold has no
+registration or per-user training-data ownership. V1 has no ride imports,
+trainer control, notifications or automatic calendar syncing.
 
 ## Local setup
 
@@ -52,6 +54,26 @@ It can be rerun safely; existing encryption keys are retained. Use
 The encryption-key files in `config/` are ignored by Git. Keep them with any
 local database backup: losing them prevents decryption of a saved Intervals.icu
 API key.
+
+The authentication generator added `users` and `sessions` migrations. Apply
+them with `bin/rails db:migrate` before signing in. There is no registration
+screen or seeded login, so create a local `User` through the Rails console.
+The checked-in `db/structure.sql` has not yet been regenerated for these tables.
+Password-reset email still uses the generated placeholder sender and has no
+verified delivery setup.
+
+```sh
+bin/rails console
+```
+
+In the console, set an email and enter a password without placing it in shell
+history:
+
+```ruby
+require "io/console"
+password = IO.console.getpass("Password: ")
+User.create!(email_address: "rider@example.com", password: password, password_confirmation: password)
+```
 
 ## Development sample plan
 

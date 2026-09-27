@@ -1,8 +1,14 @@
 # CycleFar — Rails Data Model
 
-Reviewed against the models, migrations and `db/structure.sql` on 2026-09-24. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication migrations and models were added on 2026-09-27; the checked-in SQL schema dump has not yet been regenerated to include them. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
 This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
+
+## User and Session
+
+Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
+
+Neither `RiderProfile` nor plans, workouts or Settings have a `user_id`. Signing in gates application requests but does not make training data private to a particular account. There is no registration model or route.
 
 ## RiderProfile
 
@@ -18,7 +24,7 @@ Validations:
 
 - FTP > 0
 
-Future: attach a `User`/`Rider` owner without redesigning training records.
+Future: attach a `User` owner and define per-rider ownership rules before supporting multiple accounts.
 
 ## FtpReading
 

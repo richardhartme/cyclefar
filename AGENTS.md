@@ -181,9 +181,9 @@ A useful sample:
 
 ## Do not implement yet
 
-Even if straightforward, do not expand scope into:
+Rails-generated authentication has already been added. Do not extend it into:
 
-- authentication/multiple users;
+- self-service registration or multiple riders;
 - automatic ride imports;
 - trainer control;
 - notifications;

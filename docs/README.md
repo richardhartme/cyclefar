@@ -17,10 +17,12 @@ This folder is the implementation brief for **CycleFar**, a local, single-user i
 - FactoryBot
 - Rails built-in Active Record Encryption for the Intervals.icu API key
 - No React
-- No authentication in V1
+- Rails-generated email/password sign-in and password-reset scaffolding; no registration or per-user training ownership
 - No AI/LLM in V1
 
 CycleFar is desktop-first and intended to run locally. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) infrastructure preparation has since been added; it is not a deployed service, and Kamal remains a placeholder.
+
+The authentication generator was added after the original V1 milestone sequence. Its routes now gate application requests, while Settings and training records remain shared singleton data. See [ARCHITECTURE.md](ARCHITECTURE.md) for current integration limits.
 
 Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguishes completed work from outstanding acceptance gaps. Historical milestone completion does not establish full requirements coverage.
 

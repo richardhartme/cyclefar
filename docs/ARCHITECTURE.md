@@ -1,10 +1,16 @@
 # CycleFar Application Architecture
 
-Reviewed against the repository on 2026-09-24. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
+Training architecture reviewed against the repository on 2026-09-24; authentication additions checked on 2026-09-27. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
 
 ## Application identity and stack
 
-The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS and plain Ruby domain services. Stimulus is installed, but only the generated example controller is present. There is no authentication or automatic Intervals.icu sync.
+The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS and plain Ruby domain services. Stimulus is installed, but only the generated example controller is present. Rails-generated authentication now gates application requests. There is no automatic Intervals.icu sync.
+
+## Authentication boundary
+
+`ApplicationController` includes the generated `Authentication` concern. Its default before-action redirects requests without a valid signed `session_id` cookie to the sign-in page, saving the requested URL in the Rails session for the post-login redirect. `SessionsController` permits unauthenticated sign-in, creates a database-backed `Session` for a `User`, and destroys it on sign-out. `Current.session` exposes the current session and user during a request. `PasswordsController` permits unauthenticated reset requests and token-based updates; a successful reset destroys that user's sessions. Sign-in and reset-request actions are rate-limited.
+
+The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. All training records and Settings remain global: authentication does not add per-user ownership or isolation. Existing request specs have not been adapted to sign in.
 
 Services and presenters currently live under `app/services/`:
 
@@ -69,6 +75,8 @@ See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the implemented request contract an
 The authoritative route definitions are in [`config/routes.rb`](../config/routes.rb):
 
 ```ruby
+resource :session
+resources :passwords, param: :token
 root "home#index"
 resource :settings, only: [:show, :update]
 resource :training_plan, only: [:new, :create, :destroy] do
@@ -104,11 +112,11 @@ Use transactions for multi-record mutations. Database constraints enforce the si
 
 Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`.
 
-API keys use Active Record Encryption and filtered parameters. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
+API keys use Active Record Encryption and filtered parameters. Login passwords use `has_secure_password` digests; signed, permanent, HttpOnly, SameSite=Lax cookies identify database sessions. The checked-in `db/structure.sql` predates the new `users` and `sessions` migrations and must be regenerated after migration. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
 
 ## Deployment preparation
 
-The application remains a local single-rider app. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. No deployed environment is recorded; choose one infrastructure owner per environment.
+The application remains a local single-rider app with an authentication scaffold. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. No deployed environment is recorded; choose one infrastructure owner per environment.
 
 Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` remains a Kamal placeholder; infrastructure provisioning does not deploy the app.
 
@@ -123,4 +131,4 @@ PlantUML sources describe the logical application, not an already deployed AWS e
 - [Plan changes](diagrams/cyclefar-plan-change-components.puml)
 - [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
 
-The diagrams were reviewed again on 2026-09-25. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.
+The diagrams were updated for authentication on 2026-09-27. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.

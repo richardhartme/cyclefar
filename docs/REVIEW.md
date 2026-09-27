@@ -18,6 +18,10 @@ CYF-1 resolved PLN-013 on 2026-09-25: Back to edit now restores the saved previe
 
 CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creates an optional persisted proposal. Acceptance keeps the changed workout fixed and atomically re-prescribes the bounded following 14-day block using the effective availability template for each date; dismissal preserves the remaining plan.
 
+## Post-review authentication addition
+
+Rails authentication was generated on 2026-09-27. The new sign-in gate and password-reset flow have not been integrated into the existing request specs. `User` and `Session` migrations are present, but the checked-in SQL schema dump predates them. There is no registration or per-user ownership of Settings/plans, no sign-out control in the layout, and no verified password-reset email delivery. These are follow-up findings, not changes to the training requirements or evidence of authentication acceptance. See [STATUS.md](STATUS.md).
+
 ## Open acceptance gaps
 
 These are findings from source inspection, not newly added failing regression tests. Existing green tests do not establish complete requirement coverage. Address each with focused coverage before closing it.

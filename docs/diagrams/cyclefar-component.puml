@@ -1,5 +1,5 @@
 @startuml CycleFar Component Diagram
-' Reviewed against application source on 2026-09-25; scope and limitations: README.md
+' Authentication updated against application source on 2026-09-27; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Web Application Component Diagram
@@ -11,7 +11,10 @@ System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service t
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent data.")
 
 Container_Boundary(web_application, "CycleFar web application") {
-  Component(controllers, "Rails controllers", "Ruby on Rails", "Handle HTTP requests for settings, plan creation, calendar actions, completions, adaptations, time off, availability and sync.")
+  Component(controllers, "Rails controllers", "Ruby on Rails", "Handle authenticated requests for settings, plans, workouts, adaptations, availability, time off and sync.")
+  Component(authentication, "Authentication concern and session/password controllers", "Rails authentication", "Require a signed login session by default; sign in/out and handle token-based password reset.")
+  Component(auth_models, "User, Session and Current", "Active Record / CurrentAttributes", "Store password digests and login sessions; expose the current user without owning training records.")
+  Component(password_mailer, "PasswordsMailer", "Action Mailer", "Builds reset emails; sender and delivery remain unverified placeholders.")
   Component(views, "Views and graph helpers", "ERB, Turbo, CalendarHelper", "Render full-page forms, calendar totals, weekly TSS chart and canonical-step SVG profiles.")
   Component(calendar, "Calendar presenter", "Planning::CalendarPresenter", "Builds the continuous calendar view from plans, workouts, phases and time off.")
   Component(plan_management, "Plan management services", "Planning services", "Validate configurations, build previews, create plans, prescribe future workouts and materialise the structured-workout horizon.")
@@ -24,6 +27,11 @@ Container_Boundary(web_application, "CycleFar web application") {
 }
 
 Rel(rider, controllers, "Uses CycleFar", "HTTP (local)")
+Rel(rider, authentication, "Signs in, out or requests a password reset", "HTTP (local)")
+Rel(controllers, authentication, "Require authentication before training actions")
+Rel(authentication, auth_models, "Validates credentials and creates/destroys sessions")
+Rel(authentication, password_mailer, "Queues reset email")
+Rel(auth_models, database, "Persists users and sessions", "SQL")
 Rel(controllers, calendar, "Builds calendar views")
 Rel(controllers, plan_management, "Previews/creates plans; materializes horizon on home load")
 Rel(controllers, workouts, "Views and changes workouts")

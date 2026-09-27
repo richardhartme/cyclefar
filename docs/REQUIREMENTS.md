@@ -2,6 +2,10 @@
 
 Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. See [STATUS.md](STATUS.md) and the [2026-09-24 implementation review](REVIEW.md) for verified behaviour and outstanding gaps.
 
+## Current authentication scaffold
+
+Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. This records the current code shape; it does not add a multi-rider requirement or claim that authenticated request flows, account provisioning and password-reset delivery have been accepted. Training data and Settings remain global to the singleton rider profile. See [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md).
+
 ## 0. Product identity
 
 ### BRD-001 CycleFar naming

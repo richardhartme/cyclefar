@@ -36,6 +36,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-25: Reviewed all six C4 diagrams against controllers, services and persistence boundaries. Added the preview session draft, home-request materialisation, presentation boundary and replanning dependencies; clarified up-to-two sync selection, cleanup gaps and proposal limitations. Added a diagram guide. Documentation-only validation: document markers, relationship references, relative Markdown links and `git diff --check` passed. PlantUML is not installed, so visual rendering was not performed. Milestone 11 remains open.
 
+2026-09-27: The Rails authentication generator was added after the original V1 milestones. `User`/`Session` models and migrations, a default controller authentication concern, sign-in/sign-out, and password-reset routes/views/mailer are present. No registration or per-user training ownership was added; Settings and plans still use singleton/global data. The SQL schema dump is not yet regenerated for the new tables, existing request specs have not been adapted to authenticated requests, the layout lacks sign-out navigation, and password-reset delivery remains unverified. Supporting documentation and C4 diagrams were updated to describe this state. Documentation validation: Markdown links, six diagram source/relationship checks, `git diff --check`, and Zeitwerk passed. PlantUML is not installed, so visual rendering was not performed. Milestone 11 remains open; this entry does not claim authentication acceptance.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

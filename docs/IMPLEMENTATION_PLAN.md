@@ -2,6 +2,8 @@
 
 This is the original milestone sequence, retained as the implementation and acceptance checklist. Milestones 0–11 were delivered in September 2026, followed by additional features. The 2026-09-24 documentation review reopened milestone 11 for outstanding acceptance gaps; see [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md).
 
+Rails authentication was generated on 2026-09-27 after this sequence. The milestone tasks below remain historical; [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) describe the current authentication scaffold and integration gaps.
+
 Build vertical slices. Do not attempt the adaptive engine, calendar UI and external integration in one pass.
 
 ## Milestone 0 — Bootstrap and guardrails

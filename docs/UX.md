@@ -18,6 +18,10 @@ Keep navigation minimal:
 
 No History page in V1.
 
+## Authentication screens currently generated
+
+Unauthenticated application requests redirect to the generated **Sign in** page. It accepts an email address and password and links to **Forgot password?**. The reset-request page accepts an email address and displays the same confirmation whether or not it matches a user; a token link opens the password-update form. The application layout still shows the normal Calendar and Settings navigation on these pages and has no sign-out link, although the sign-out route exists. There is no registration screen. Password-reset email delivery has not been configured or verified beyond the generated mailer.
+
 ## 1. No-plan home
 
 Purpose: show the current calendar while getting the rider into plan creation immediately.
