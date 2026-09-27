@@ -20,7 +20,7 @@ CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creat
 
 ## Post-review authentication addition
 
-Rails authentication was generated on 2026-09-27. The new sign-in gate and password-reset flow have not been integrated into the existing request specs. `User` and `Session` migrations are present, but the checked-in SQL schema dump predates them. There is no registration or per-user ownership of Settings/plans, no sign-out control in the layout, and no verified password-reset email delivery. These are follow-up findings, not changes to the training requirements or evidence of authentication acceptance. See [STATUS.md](STATUS.md).
+Rails authentication was generated on 2026-09-27. The sign-in gate initially broke existing request specs and the checked-in SQL schema dump lacked `User` and `Session` tables. Both were corrected in the subsequent spec repair: training request specs sign in, focused auth specs cover the basic boundary, and the SQL schema dump includes the auth tables. There is still no registration or per-user ownership of Settings/plans, no sign-out control in the layout, and no verified password-reset email delivery. These are follow-up findings, not changes to the training requirements or evidence of full authentication acceptance. See [STATUS.md](STATUS.md).
 
 ## Open acceptance gaps
 

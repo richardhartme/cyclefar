@@ -17,7 +17,7 @@ The UI uses server-rendered ERB and Turbo navigation/forms. Stimulus is installe
 
 The generation diagram's session component represents the Rails session draft, which is distinct from the database-backed `Session` used for login. Confirmation consumes the saved configuration and rebuilds the preview before persisting a plan. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
-Authentication gates application controllers, but training records remain global to the singleton rider profile. There is no registration route or per-user data ownership. The checked-in SQL schema dump has not yet been regenerated for the new auth tables; password-reset delivery and sign-out navigation remain unverified or absent.
+Authentication gates application controllers, but training records remain global to the singleton rider profile. There is no registration route or per-user data ownership. The checked-in SQL schema dump includes the auth tables; password-reset delivery and sign-out navigation remain unverified or absent.
 
 The sync view describes the current cleanup scope, which excludes some stale linked events. Remote operations and the local metadata transaction are not one atomic transaction. The plan-change view records saved-but-unused progression bias and incomplete proposal bounds/expiry; see REVIEW.md for the full acceptance backlog.
 

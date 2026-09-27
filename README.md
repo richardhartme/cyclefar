@@ -58,7 +58,7 @@ API key.
 The authentication generator added `users` and `sessions` migrations. Apply
 them with `bin/rails db:migrate` before signing in. There is no registration
 screen or seeded login, so create a local `User` through the Rails console.
-The checked-in `db/structure.sql` has not yet been regenerated for these tables.
+The checked-in `db/structure.sql` includes the authentication tables.
 Password-reset email still uses the generated placeholder sender and has no
 verified delivery setup.
 

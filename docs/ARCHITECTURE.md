@@ -10,7 +10,7 @@ The application module is `CycleFar`, the project is `cycle_far`, and domain cla
 
 `ApplicationController` includes the generated `Authentication` concern. Its default before-action redirects requests without a valid signed `session_id` cookie to the sign-in page, saving the requested URL in the Rails session for the post-login redirect. `SessionsController` permits unauthenticated sign-in, creates a database-backed `Session` for a `User`, and destroys it on sign-out. `Current.session` exposes the current session and user during a request. `PasswordsController` permits unauthenticated reset requests and token-based updates; a successful reset destroys that user's sessions. Sign-in and reset-request actions are rate-limited.
 
-The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. All training records and Settings remain global: authentication does not add per-user ownership or isolation. Existing request specs have not been adapted to sign in.
+The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. All training records and Settings remain global: authentication does not add per-user ownership or isolation. Training request specs now sign in explicitly, and focused specs cover the basic authentication boundary.
 
 Services and presenters currently live under `app/services/`:
 
@@ -112,7 +112,7 @@ Use transactions for multi-record mutations. Database constraints enforce the si
 
 Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`.
 
-API keys use Active Record Encryption and filtered parameters. Login passwords use `has_secure_password` digests; signed, permanent, HttpOnly, SameSite=Lax cookies identify database sessions. The checked-in `db/structure.sql` predates the new `users` and `sessions` migrations and must be regenerated after migration. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
+API keys use Active Record Encryption and filtered parameters. Login passwords use `has_secure_password` digests; signed, permanent, HttpOnly, SameSite=Lax cookies identify database sessions. The checked-in `db/structure.sql` includes the generated `users` and `sessions` tables. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
 
 ## Deployment preparation
 

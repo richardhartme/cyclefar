@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Planned workouts", type: :request do
+  before { sign_in_as(create(:user)) }
+
   let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70) }
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }

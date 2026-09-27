@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Settings", type: :request do
+  before { sign_in_as(create(:user)) }
+
   it "SET-001 allows first-run settings without creating records on GET" do
     get settings_path
     expect(response).to have_http_status(:ok)

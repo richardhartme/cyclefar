@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Training plan preview", type: :request do
+  before { sign_in_as(create(:user)) }
+
   def plan_configuration(overrides = {})
     {
       goal: "increase_ftp", discipline: "road", starts_on: "2026-09-07", duration_mode: "preset", duration_months: "3",

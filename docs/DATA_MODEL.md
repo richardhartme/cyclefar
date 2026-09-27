@@ -1,6 +1,6 @@
 # CycleFar — Rails Data Model
 
-The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication migrations and models were added on 2026-09-27; the checked-in SQL schema dump has not yet been regenerated to include them. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication migrations and models were added on 2026-09-27; the checked-in SQL schema dump now includes their tables, indexes and foreign key. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
 This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
 

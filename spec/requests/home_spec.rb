@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Home", type: :request do
+  before { sign_in_as(create(:user)) }
+
   it "BRD-001 / PLN-001 shows a calendar starting last week and a working no-plan action" do
     travel_to Date.new(2026, 9, 16) do
       get root_path

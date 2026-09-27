@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Workout completion", type: :request do
+  before { sign_in_as(create(:user)) }
+
   let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70) }
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, subtype: :threshold, intent: :threshold, scheduled_on: Date.current + 1) }
