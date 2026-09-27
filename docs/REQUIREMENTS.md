@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. This records the current code shape; it does not establish per-user ownership, account provisioning or verified password-reset delivery. Training data and Settings remain global to the singleton rider profile. The `USR-*` requirements below describe a later release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles and plans now have required user ownership in PostgreSQL, but complete request/service isolation, account provisioning and verified password-reset delivery remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
 
 ## 0. Product identity
 
@@ -24,7 +24,7 @@ Acceptance criteria:
 
 ### SET-001 Current FTP
 
-The application has a singleton rider settings/profile record containing the current FTP in watts.
+The application stores each rider's current FTP in their user-owned settings/profile record. The original V1 release has one enabled rider.
 
 Acceptance criteria:
 
@@ -131,7 +131,7 @@ The rider may go back and edit the configuration, then confirm to create the pla
 
 ### PLN-014 One active plan
 
-Only one active plan may exist.
+Only one active plan may exist per rider. The original V1 release has one enabled rider.
 
 Major plan settings are immutable after confirmation:
 

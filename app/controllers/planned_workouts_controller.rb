@@ -2,7 +2,7 @@ class PlannedWorkoutsController < ApplicationController
   before_action :load_workout, except: %i[new create]
 
   def new
-    @plan = TrainingPlan.active.sole
+    @plan = Current.user.training_plans.active.sole
     @scheduled_on = Date.iso8601(params.require(:scheduled_on))
     Workouts::Creator.new(@plan).validate_destination!(@scheduled_on)
   rescue Date::Error, ArgumentError => error
@@ -10,7 +10,7 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def create
-    plan = TrainingPlan.active.sole
+    plan = Current.user.training_plans.active.sole
     workout = Workouts::Creator.new(plan).create!(
       scheduled_on: Date.iso8601(params.require(:scheduled_on)),
       subtype: params.require(:subtype),

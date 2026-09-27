@@ -103,7 +103,7 @@ module Workouts
     end
 
     def current_ftp_watts
-      RiderProfile.current.ftp_watts || @workout.training_plan.initial_ftp_watts
+      @workout.training_plan.user.rider_profile&.ftp_watts || @workout.training_plan.initial_ftp_watts
     end
 
     def intensity?(subtype)

@@ -1,13 +1,14 @@
 require "rails_helper"
 
 RSpec.describe Planning::PlanCreator, type: :service do
+  let(:user) { create(:user) }
   def configuration
     Planning::PlanConfiguration.new(goal: "increase_ftp", discipline: "road", starts_on: Date.new(2026, 9, 7), duration_mode: "preset", duration_months: 3, ftp_watts: 260, include_base: true, progression_mode: "hard_recovery_cycle", hard_weeks_before_recovery: 3, availability: { "1" => { enabled: "1", weekday: "1", duration_minutes: "60", intent: "intervals" }, "3" => { enabled: "1", weekday: "3", duration_minutes: "90", intent: "endurance" }, "6" => { enabled: "1", weekday: "6", duration_minutes: "60", intent: "intervals" } })
   end
 
   it "PLN-013 persists the same preview transactionally with only the 14-day horizon structured" do
     preview = Planning::PlanBuilder.new(configuration).preview
-    plan = described_class.new(configuration).create!
+    plan = described_class.new(configuration, user: user).create!
     expect(plan).to be_active
     expect(plan.plan_phases.map { |phase| [ phase.kind, phase.starts_on, phase.ends_on ] }).to eq(preview.phases.map { |phase| [ phase.kind, phase.starts_on, phase.ends_on ] })
     expect(plan.planned_workouts.count).to eq(preview.prescriptions.count { |item| item.kind != "event" })
@@ -18,7 +19,7 @@ RSpec.describe Planning::PlanCreator, type: :service do
   end
 
   it "materialises a later outline idempotently when it enters the horizon" do
-    plan = described_class.new(configuration).create!
+    plan = described_class.new(configuration, user: user).create!
     future = plan.planned_workouts.outline.where(kind: :workout).order(:scheduled_on).first
     Planning::HorizonMaterializer.new(plan, date: future.scheduled_on).call
     expect(future.reload).to be_structured

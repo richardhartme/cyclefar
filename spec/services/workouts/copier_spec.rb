@@ -6,7 +6,7 @@ RSpec.describe Workouts::Copier, type: :service do
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1) }
 
   it "copies canonical steps to an empty date and recalculates metrics at the current FTP" do
-    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 300 }).call
+    Settings::Update.new(profile: plan.user.build_rider_profile, attributes: { ftp_watts: 300 }).call
     destination = Date.current + 2
     expected_metrics = Metrics::WorkoutCalculator.new(steps: workout.workout_steps, ftp_watts: 300).call
 

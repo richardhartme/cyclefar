@@ -10,13 +10,13 @@ The application module is `CycleFar`, the project is `cycle_far`, and domain cla
 
 `ApplicationController` includes the generated `Authentication` concern. Its default before-action redirects requests without a valid signed `session_id` cookie to the sign-in page, saving the requested URL in the Rails session for the post-login redirect. `SessionsController` permits unauthenticated sign-in, creates a database-backed `Session` for a `User`, and destroys it on sign-out. `Current.session` exposes the current session and user during a request. `PasswordsController` permits unauthenticated reset requests and token-based updates; a successful reset destroys that user's sessions. Sign-in and reset-request actions are rate-limited.
 
-The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. All training records and Settings remain global: authentication does not add per-user ownership or isolation. Training request specs now sign in explicitly, and focused specs cover the basic authentication boundary.
+The generator provides no registration or account-provisioning flow. Password-reset mail uses the generated `PasswordsMailer`, whose sender is still the placeholder `from@example.com`; delivery is not configured or verified for production. Application layout navigation does not yet provide a sign-out control. Profile and plan rows now require a user, but owner checks are incomplete across request and service paths. Training request specs sign in explicitly, and focused specs cover the basic authentication boundary.
 
 ## Planned independent-rider boundary (Milestone 12)
 
 Milestone 12 follows the still-open Milestone 11. The first independent-rider release uses controlled provisioning or invitations on the existing email/password `User`/`Session` scaffold. Public registration, Google/social sign-in, coaches, teams and shared plans are outside it. A second account is not enabled until the complete ownership and isolation gate passes.
 
-`Current.user` becomes the controller entry point for owned `RiderProfile` and active `TrainingPlan` queries. Controllers load workout, proposal and time-off IDs through that owned plan and respond identically to missing and foreign IDs. Settings, plan creation/archive, calendar presentation, manual editing, completion, replanning and FTP recalculation receive the owned profile or plan explicitly. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state. The current global `RiderProfile.current`, `TrainingPlan.active.sole` and global Settings lock are removed or replaced with owner-scoped lookups and locking; request and service specs exercise two users and concurrent first saves.
+`Current.user` now supplies Settings and active-plan controller queries; `RiderProfile.current`, the singleton profile ID and the global active-plan index have been removed. Settings locks the owning user row, and plan creation receives that user explicitly. Controllers still need to load every workout, proposal and time-off ID through the owned plan and respond identically to missing and foreign IDs. Remaining service and sync lookups need the full owner audit in CYF-69/70/72. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state.
 
 The session-backed preview configuration is bound to its authenticated creator or cleared on account change. Confirmation verifies that owner before creating a plan. A sign-out followed by another sign-in in the same browser cannot carry the first rider's draft across accounts.
 
@@ -120,7 +120,7 @@ resource :intervals_icu_sync, only: :create
 
 ## Persistence, dates and invariants
 
-Use transactions for multi-record mutations. Database constraints enforce the singleton rider, one active plan, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. The SQL schema dump is `db/structure.sql`.
+Use transactions for multi-record mutations. Database constraints enforce one profile and at most one active plan per user, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. The SQL schema dump is `db/structure.sql`.
 
 Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`.
 

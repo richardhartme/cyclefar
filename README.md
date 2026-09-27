@@ -81,10 +81,10 @@ In development, load a realistic 12-week plan with a 260 W FTP and a
 Tuesday/Thursday/Saturday/Sunday schedule:
 
 ```sh
-bin/rails db:seed
+CYCLEFAR_SEED_USER_EMAIL=rider@example.com bin/rails db:seed
 ```
 
-The seed is idempotent and does nothing when an active plan already exists.
+Set the email to an existing local user. The seed is idempotent for that user and does nothing when they already have an active plan.
 
 ## Working with Intervals.icu
 

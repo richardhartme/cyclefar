@@ -1,7 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Settings", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
   it "SET-001 allows first-run settings without creating records on GET" do
     get settings_path
@@ -16,7 +17,7 @@ RSpec.describe "Settings", type: :request do
     expect(response).to have_http_status(:see_other)
     follow_redirect!
     expect(response.body).to include("Settings saved.")
-    expect(RiderProfile.current.ftp_watts).to eq(260)
+    expect(user.rider_profile.ftp_watts).to eq(260)
     expect(FtpReading.sole.ftp_watts).to eq(260)
   end
 
@@ -37,7 +38,7 @@ RSpec.describe "Settings", type: :request do
     patch settings_path, params: { rider_profile: { ftp_watts: 0, intervals_icu_api_key: "replacement-secret" } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).not_to include("replacement-secret", "sensitive-test-key")
-    expect(RiderProfile.current.intervals_icu_api_key).to eq("sensitive-test-key")
+    expect(user.rider_profile.reload.intervals_icu_api_key).to eq("sensitive-test-key")
   end
 
   it "SET-002 filters API keys from request and SQL logs" do
@@ -63,7 +64,7 @@ RSpec.describe "Settings", type: :request do
   it "SET-002 removes a saved key without changing FTP history" do
     patch settings_path, params: { rider_profile: { ftp_watts: 260, intervals_icu_api_key: "saved-key" } }
     patch settings_path, params: { rider_profile: { ftp_watts: 260, clear_intervals_icu_api_key: "1" } }
-    expect(RiderProfile.current.intervals_icu_api_key).to be_nil
+    expect(user.rider_profile.reload.intervals_icu_api_key).to be_nil
     expect(FtpReading.count).to eq(1)
   end
 end

@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The current application remains a single-rider planner. Rails-generated email/password sign-in and password-reset scaffolding exists, but training records remain global alongside the singleton rider profile rather than being owned by individual users. Sign-in alone does not isolate one rider's data from another's.
+The current release remains a single-rider planner. Rails-generated email/password sign-in exists, and profiles and plans now have required user ownership in PostgreSQL. Other request and service paths still need the independent-rider isolation work; a second account must not be enabled yet.
 
 The assumed rider:
 
@@ -131,7 +131,7 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ## Planned independent-rider release
 
-Milestone 12 is planned after the open Milestone 11; none of its per-user ownership requirements is implemented yet. It will support independent riders using provisioned or invited email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there.
+Milestone 12 is planned after the open Milestone 11. Its legacy preflight and profile/plan ownership schema have been implemented; full rider isolation has not. It will support independent riders using provisioned or invited email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there.
 
 The first independent-rider release excludes public self-registration, Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
 

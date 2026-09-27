@@ -5,7 +5,7 @@ module IntervalsIcu
   class SyncNextTwo
     Result = Data.define(:synced_count, :removed_count)
 
-    def initialize(plan:, profile: RiderProfile.current, client: nil)
+    def initialize(plan:, profile: plan.user.rider_profile || plan.user.build_rider_profile, client: nil)
       @plan = plan
       @profile = profile
       @client = client

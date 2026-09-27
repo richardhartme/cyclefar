@@ -1,10 +1,10 @@
 class AvailabilityChangesController < ApplicationController
   def new
-    @plan = TrainingPlan.active.sole
+    @plan = Current.user.training_plans.active.sole
   end
 
   def create
-    plan = TrainingPlan.active.sole
+    plan = Current.user.training_plans.active.sole
     slots = params.fetch(:slots, {}).values.filter_map do |slot|
       slot.to_unsafe_h.symbolize_keys if ActiveModel::Type::Boolean.new.cast(slot[:enabled])
     end

@@ -1,9 +1,10 @@
 require "rails_helper"
 
 RSpec.describe "Availability changes", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
-  let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70) }
+  let(:plan) { create(:training_plan, user: user, starts_on: Date.current - 7, ends_on: Date.current + 70) }
   let!(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on) }
   let!(:template) { create(:availability_template, training_plan: plan, effective_from: plan.starts_on) }
 

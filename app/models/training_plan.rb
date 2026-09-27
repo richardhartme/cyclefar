@@ -8,6 +8,7 @@ class TrainingPlan < ApplicationRecord
   enum :discipline, DISCIPLINES.index_by(&:itself), validate: true
   enum :progression_mode, %w[continuous hard_recovery_cycle].index_by(&:itself), validate: true
 
+  belongs_to :user
   has_many :planned_workouts, dependent: :destroy
   has_one :target_event, dependent: :destroy
   has_many :plan_phases, -> { order(:position) }, dependent: :destroy
@@ -15,7 +16,7 @@ class TrainingPlan < ApplicationRecord
   has_many :time_off_periods, dependent: :destroy
   has_many :adaptation_proposals, dependent: :destroy
 
-  validates :status, uniqueness: true, if: :active?
+  validates :status, uniqueness: { scope: :user_id }, if: :active?
   validates :starts_on, :ends_on, :engine_version, presence: true
   validates :ends_on, comparison: { greater_than_or_equal_to: :starts_on }, if: -> { starts_on && ends_on }
   validates :include_base, inclusion: { in: [ true, false ] }

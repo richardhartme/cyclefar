@@ -17,12 +17,12 @@ This folder is the implementation brief for **CycleFar**, a local, single-user i
 - FactoryBot
 - Rails built-in Active Record Encryption for the Intervals.icu API key
 - No React
-- Rails-generated email/password sign-in and password-reset scaffolding; no registration or per-user training ownership
+- Rails-generated email/password sign-in and password-reset scaffolding; no registration
 - No AI/LLM in V1
 
 CycleFar is desktop-first and intended to run locally. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) infrastructure preparation has since been added; it is not a deployed service, and Kamal remains a placeholder.
 
-The authentication generator was added after the original V1 milestone sequence. Its routes now gate application requests, while Settings and training records remain shared singleton data. See [ARCHITECTURE.md](ARCHITECTURE.md) for current integration limits.
+The authentication generator was added after the original V1 milestone sequence. Profiles and plans now belong to users, but full request and Intervals.icu isolation is still pending. See [ARCHITECTURE.md](ARCHITECTURE.md) for current integration limits.
 
 Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguishes completed work from outstanding acceptance gaps. Historical milestone completion does not establish full requirements coverage.
 
@@ -41,7 +41,7 @@ Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguis
 
 ## Core design constraints
 
-- There is at most one active training plan.
+- There is at most one active training plan per user.
 - Plan generation and forecasts are deterministic and rules based. Initial endurance profiles are randomly selected and persisted under WKO-009; subsequent views remain stable.
 - Automatic generation structures the next 14 calendar days; later prescriptions remain outlines. Explicit Add/Copy actions and moved structures can retain detail outside that horizon.
 - As each new day enters the 14-day horizon, its workout is structured automatically. Existing structured workouts are not silently regenerated.

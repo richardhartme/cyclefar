@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :rider_profile do
+    user
     ftp_watts { 260 }
   end
 
@@ -10,6 +11,7 @@ FactoryBot.define do
   end
 
   factory :training_plan do
+    user
     goal { :increase_ftp }
     discipline { :road }
     starts_on { Date.new(2026, 9, 7) }

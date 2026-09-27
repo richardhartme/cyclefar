@@ -1,13 +1,15 @@
 module Planning
   class PlanCreator
-    def initialize(configuration)
+    def initialize(configuration, user:)
       @configuration = configuration
+      @user = user
     end
 
     def create!
       preview = PlanBuilder.new(@configuration).preview
       TrainingPlan.transaction do
         plan = TrainingPlan.create!(
+          user: @user,
           goal: @configuration.goal,
           discipline: @configuration.discipline,
           starts_on: preview.starts_on,

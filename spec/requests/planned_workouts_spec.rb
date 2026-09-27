@@ -1,9 +1,10 @@
 require "rails_helper"
 
 RSpec.describe "Planned workouts", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
-  let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70) }
+  let(:plan) { create(:training_plan, user: user, starts_on: Date.current - 7, ends_on: Date.current + 70) }
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }
 
@@ -182,7 +183,7 @@ RSpec.describe "Planned workouts", type: :request do
   end
 
   it "SET-001 displays current FTP watt targets for planned workouts and snapshots for completed workouts" do
-    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 300 }).call
+    Settings::Update.new(profile: plan.user.build_rider_profile, attributes: { ftp_watts: 300 }).call
     planned = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 2)
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 3)
 

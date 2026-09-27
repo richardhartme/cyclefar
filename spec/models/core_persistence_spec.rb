@@ -1,19 +1,22 @@
 require "rails_helper"
 
 RSpec.describe "Core persistence", type: :model do
-  describe "PLN-014 plans" do
-    it "allows one active plan and multiple archived plans" do
-      create(:training_plan)
-      expect(build(:training_plan)).not_to be_valid
-      create_list(:training_plan, 2, :archived)
-      expect_database_rejection(ActiveRecord::RecordNotUnique) { build(:training_plan).save!(validate: false) }
+  describe "PLN-014 / USR-003 plans" do
+    it "allows one active plan and multiple archived plans per user" do
+      user = create(:user)
+      create(:training_plan, user: user)
+      expect(build(:training_plan, user: user)).not_to be_valid
+      create_list(:training_plan, 2, :archived, user: user)
+      expect_database_rejection(ActiveRecord::RecordNotUnique) { build(:training_plan, user: user).save!(validate: false) }
       expect(TrainingPlan.active.count).to eq(1)
       expect(TrainingPlan.archived.count).to eq(2)
+      expect(create(:training_plan, user: create(:user, email_address: "second@example.com"))).to be_persisted
     end
 
     it "rejects reactivation while another plan is active" do
-      create(:training_plan)
-      archive = create(:training_plan, :archived)
+      user = create(:user)
+      create(:training_plan, user: user)
+      archive = create(:training_plan, :archived, user: user)
       expect(archive.update(status: :active)).to be(false)
       expect_database_rejection(ActiveRecord::RecordNotUnique) { archive.update_columns(status: "active") }
     end

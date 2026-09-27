@@ -5,14 +5,14 @@ RSpec.describe Planning::FtpRecalculator, type: :service do
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on) }
 
   it "recalculates planned future metrics from the current FTP without changing percentage structure or completed history" do
-    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 250 }).call
+    Settings::Update.new(profile: plan.user.build_rider_profile, attributes: { ftp_watts: 250 }).call
     future = create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 2)
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 3)
     percentage_structure = future.workout_steps.map { |step| [ step.target_low_pct_ftp, step.target_high_pct_ftp ] }
     completed_snapshot = completed.completed_target_snapshot.deep_dup
     completed_metrics = completed.slice(:estimated_np_watts, :estimated_if, :estimated_tss, :estimated_work_kj)
 
-    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 300 }).call
+    Settings::Update.new(profile: plan.user.rider_profile, attributes: { ftp_watts: 300 }).call
 
     expected = Metrics::WorkoutCalculator.new(steps: future.workout_steps, ftp_watts: 300).call
     future.reload
@@ -23,5 +23,20 @@ RSpec.describe Planning::FtpRecalculator, type: :service do
     expect(future.workout_steps.map { |step| [ step.target_low_pct_ftp, step.target_high_pct_ftp ] }).to eq(percentage_structure)
     expect(completed.reload.completed_target_snapshot).to eq(completed_snapshot)
     expect(completed.slice(:estimated_np_watts, :estimated_if, :estimated_tss, :estimated_work_kj)).to eq(completed_metrics)
+  end
+
+  it "leaves another user's future workouts and FTP history alone" do
+    Settings::Update.new(profile: plan.user.build_rider_profile, attributes: { ftp_watts: 250 }).call
+    other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
+    other_profile = Settings::Update.new(profile: other_plan.user.build_rider_profile, attributes: { ftp_watts: 260 }).call
+    other_phase = create(:plan_phase, training_plan: other_plan, starts_on: other_plan.starts_on, ends_on: other_plan.ends_on)
+    other_workout = create(:planned_workout, :structured, training_plan: other_plan, plan_phase: other_phase, scheduled_on: Date.current + 2)
+    original_metrics = other_workout.slice(:estimated_np_watts, :estimated_if, :estimated_tss, :estimated_work_kj)
+
+    Settings::Update.new(profile: plan.user.rider_profile, attributes: { ftp_watts: 300 }).call
+
+    expect(other_profile.reload.ftp_watts).to eq(260)
+    expect(other_profile.ftp_readings.pluck(:ftp_watts)).to eq([ 260 ])
+    expect(other_workout.reload.slice(*original_metrics.keys)).to eq(original_metrics)
   end
 end

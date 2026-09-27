@@ -105,7 +105,7 @@ RSpec.describe PlannedWorkout, type: :model do
     it "retains structure, historical watts and metrics after Settings FTP changes" do
       original = workout.reload.attributes
       original_steps = workout.workout_steps.map(&:attributes)
-      Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 300 }).call
+      Settings::Update.new(profile: workout.training_plan.user.build_rider_profile, attributes: { ftp_watts: 300 }).call
       expect(workout.reload.attributes).to eq(original)
       expect(workout.workout_steps.map(&:attributes)).to eq(original_steps)
     end

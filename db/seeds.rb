@@ -1,8 +1,10 @@
 if Rails.env.development?
-  if TrainingPlan.active.exists?
+  email = ENV.fetch("CYCLEFAR_SEED_USER_EMAIL")
+  user = User.find_by!(email_address: email.strip.downcase)
+  if user.training_plans.active.exists?
     puts "A training plan already exists; development sample data was not added."
   else
-    Settings::Update.new(profile: RiderProfile.current, attributes: { ftp_watts: 260 }).call
+    Settings::Update.new(profile: user.rider_profile || user.build_rider_profile, attributes: { ftp_watts: 260 }).call
 
     configuration = Planning::PlanConfiguration.new(
       goal: "increase_ftp",
@@ -24,7 +26,7 @@ if Rails.env.development?
 
     raise "Development sample plan is invalid: #{configuration.errors.full_messages.to_sentence}" unless configuration.valid?
 
-    plan = Planning::PlanCreator.new(configuration).create!
+    plan = Planning::PlanCreator.new(configuration, user: user).create!
     puts "Created a 12-week CycleFar development sample plan (FTP #{plan.initial_ftp_watts} W)."
   end
 end

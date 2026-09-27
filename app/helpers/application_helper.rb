@@ -1,6 +1,8 @@
 module ApplicationHelper
   def workout_ftp_watts(workout)
-    workout.completed? ? workout.completed_ftp_watts : RiderProfile.current.ftp_watts || workout.training_plan.initial_ftp_watts
+    return workout.completed_ftp_watts if workout.completed?
+
+    workout.training_plan.user.rider_profile&.ftp_watts || workout.training_plan.initial_ftp_watts
   end
 
   def workout_step_watt_targets(workout, step)

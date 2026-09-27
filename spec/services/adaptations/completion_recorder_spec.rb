@@ -6,7 +6,7 @@ RSpec.describe Adaptations::CompletionRecorder, type: :service do
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, subtype: :threshold, intent: :threshold, progression_level: 3, scheduled_on: plan.starts_on) }
 
   it "FBK-001 atomically records feedback and an immutable completion snapshot" do
-    create(:rider_profile, ftp_watts: 275)
+    create(:rider_profile, user: plan.user, ftp_watts: 275)
     expect { described_class.new(workout: workout, rpe: 8, completion_quality: :as_planned).call }.to change(WorkoutFeedback, :count).by(1)
     expect(workout.reload).to be_completed
     expect(workout.completed_ftp_watts).to eq(275)

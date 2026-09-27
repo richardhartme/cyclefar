@@ -22,7 +22,7 @@ class TrainingPlansController < ApplicationController
       return
     end
 
-    Planning::PlanCreator.new(@configuration).create!
+    Planning::PlanCreator.new(@configuration, user: Current.user).create!
     redirect_to root_path, notice: "Training plan created."
   rescue ActiveRecord::RecordInvalid => error
     flash[:alert] = error.record.errors.full_messages.to_sentence
@@ -30,7 +30,7 @@ class TrainingPlansController < ApplicationController
   end
 
   def destroy
-    plan = TrainingPlan.active.sole
+    plan = Current.user.training_plans.active.sole
     if plan.planned_workouts.completed.exists?
       TrainingPlan.transaction do
         plan.planned_workouts.planned.destroy_all
@@ -54,7 +54,7 @@ class TrainingPlansController < ApplicationController
       starts_on: Date.current,
       duration_mode: "preset",
       duration_months: 3,
-      ftp_watts: RiderProfile.current.ftp_watts,
+      ftp_watts: Current.user.rider_profile&.ftp_watts,
       include_base: true,
       progression_mode: "continuous",
       availability: {}

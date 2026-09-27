@@ -24,15 +24,15 @@ RSpec.describe LegacyOwnership::Backfill do
     expect(backfill.report[:counts]).to include(rider_profiles: 1)
     expect { backfill.preflight! }.to raise_error(described_class::UnsafeData, /existing CYCLEFAR_LEGACY_OWNER_USER_ID/)
     expect { backfill(owner_id: 99_999).preflight! }.to raise_error(described_class::UnsafeData, /does not exist/)
-    expect(profile.reload.user_id).to be_nil
+    expect(profile.reload.user_id).to be_present
   end
 
   it "backfills one selected account while preserving completed history, FTP readings and linked/detached external IDs" do
     owner = create(:user, email_address: "owner@example.com")
     create(:user, email_address: "other@example.com")
-    profile = create(:rider_profile, intervals_icu_api_key: "private-key")
+    profile = create(:rider_profile, user: owner, intervals_icu_api_key: "private-key")
     reading = create(:ftp_reading, rider_profile: profile)
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: owner)
     completed = create(:planned_workout, :completed, training_plan: plan)
     linked = create(:intervals_icu_sync, planned_workout: completed, external_id: "cyclefar-workout-#{completed.id}")
     detached = create(:intervals_icu_sync, planned_workout: nil, external_id: "cyclefar-workout-deleted-42")
@@ -63,12 +63,11 @@ RSpec.describe LegacyOwnership::Backfill do
   it "stops before changing any row when a previous owner conflicts" do
     selected = create(:user, email_address: "selected@example.com")
     other = create(:user, email_address: "other@example.com")
-    profile = create(:rider_profile)
-    plan = create(:training_plan)
-    plan.update_column(:user_id, other.id)
+    profile = create(:rider_profile, user: selected)
+    plan = create(:training_plan, user: other)
 
     expect { backfill(owner_id: selected.id).backfill! }.to raise_error(described_class::UnsafeData, /different owner/)
-    expect(profile.reload.user_id).to be_nil
+    expect(profile.reload.user_id).to eq(selected.id)
     expect(plan.reload.user_id).to eq(other.id)
   end
 

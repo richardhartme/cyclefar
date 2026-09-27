@@ -1,7 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Home", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
   it "BRD-001 / PLN-001 shows a calendar starting last week and a working no-plan action" do
     travel_to Date.new(2026, 9, 16) do
@@ -32,7 +33,7 @@ RSpec.describe "Home", type: :request do
   end
 
   it "CAL-003 charts the summed TSS for every plan week, including empty weeks" do
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: user)
     phase = create(:plan_phase, training_plan: plan)
     [ 1, 2 ].each do |offset|
       create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + offset)
@@ -50,7 +51,7 @@ RSpec.describe "Home", type: :request do
   end
 
   it "CAL-003 labels recovery weeks without also displaying the plan phase" do
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: user)
     create(:plan_phase, training_plan: plan)
 
     get root_path
@@ -64,7 +65,7 @@ RSpec.describe "Home", type: :request do
   end
 
   it "provides keyboard navigation and confirmed plan deletion for an active plan" do
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: user)
     create(:plan_phase, training_plan: plan)
 
     get root_path
@@ -84,7 +85,7 @@ RSpec.describe "Home", type: :request do
   end
 
   it "archives a plan with completed workouts and labels the control accordingly" do
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: user)
     phase = create(:plan_phase, training_plan: plan)
     create(:planned_workout, :completed, training_plan: plan, plan_phase: phase)
     planned = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 2)

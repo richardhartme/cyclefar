@@ -1,6 +1,6 @@
 # CycleFar — Rails Data Model
 
-The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication migrations and models were added on 2026-09-27; the checked-in SQL schema dump now includes their tables, indexes and foreign key. PostgreSQL SQL schema dumps preserve the database constraints and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication and required profile/plan ownership were added on 2026-09-27; the checked-in SQL schema dump includes their tables, indexes, foreign keys and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
 This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
 
@@ -8,23 +8,24 @@ This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records
 
 Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
 
-Neither `RiderProfile` nor plans, workouts or Settings have a `user_id`. Signing in gates application requests but does not make training data private to a particular account. There is no registration model or route.
+`RiderProfile` and `TrainingPlan` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. `IntervalsIcuSync.user_id` remains nullable pending CYF-72. Signing in does not yet make every training path private because request and service scoping remains incomplete. There is no registration model or route.
 
 ## RiderProfile
 
-Singleton in V1, enforced with `id = 1` in model validation and a database constraint. `RiderProfile.current` returns an unsaved profile when Settings have not been entered.
+One profile per `User`, enforced by a required foreign key and unique index. The singleton `id = 1` rule and `RiderProfile.current` API were removed. First Settings save builds the signed-in user's profile when needed.
 
 Fields:
 
 - `ftp_watts: integer, null: false`
 - `intervals_icu_api_key: string` — encrypted with Active Record Encryption
+- `user_id: bigint, null: false` — unique foreign key to `User`
 - timestamps
 
 Validations:
 
 - FTP > 0
 
-Planned Milestone 12 replaces this singleton contract with one user-owned profile per provisioned rider; see the ownership schema below.
+CYF-68 provides the profile ownership schema; controlled account provisioning and full isolation remain later work.
 
 ## FtpReading
 
@@ -42,6 +43,7 @@ Create one whenever Settings FTP changes to a new value.
 
 Fields:
 
+- `user_id: bigint, null: false` — foreign key to `User`
 - `status: enum` — `active`, `archived`
 - `goal: enum` — `general_fitness`, `increase_ftp`, `improve_endurance`, `improve_climbing`, `event`
 - `discipline: enum` — `road`, `gravel`, `mtb`, `ultra_endurance`
@@ -57,7 +59,7 @@ Fields:
 
 Constraints:
 
-- partial unique index ensuring at most one `active` plan.
+- partial unique index on `user_id` ensuring at most one `active` plan per user.
 
 Do not destroy archived plans that have completed workouts. The current archive action removes planned records and retains completed and missed records; a plan without completed workouts is deleted.
 
@@ -273,18 +275,18 @@ Prefer service/query objects for:
 
 ## Planned Milestone 12 ownership schema and migration contract
 
-This section is a target design, not the current SQL schema. The generated `User`/`Session` tables authenticate requests today, but no training table is currently user-owned. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the acceptance contract.
+This section is the independent-rider target design. CYF-67/68 delivered the explicit-owner backfill and required profile/plan constraints, while sync ownership and complete route/service isolation remain to be delivered. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
 
-| Record | Planned ownership and constraint |
+| Record | Ownership and constraint |
 |---|---|
-| `RiderProfile` | Required `user_id` foreign key and unique index; remove the `id = 1` check and `RiderProfile.current`. First Settings save with a valid FTP establishes the user's profile. |
+| `RiderProfile` | Implemented: required `user_id` foreign key and unique index; the `id = 1` check and `RiderProfile.current` have been removed. First Settings save with a valid FTP establishes the user's profile. |
 | `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
-| `TrainingPlan` | Required `user_id` foreign key; replace the global active-plan index with a unique partial index on `user_id` where `status = 'active'`. Archived plans remain attached to their owner with completed history. |
+| `TrainingPlan` | Implemented: required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'` in place of the global active-plan index. Archived plans remain attached to their owner with completed history. |
 | Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback` and `AdaptationProposal` inherit ownership through their plan. |
 | `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Keep unique `external_id` and `planned_workout_id` indexes. |
 
 Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.
 
-Before tightening ownership columns, preflight each target database: count users, the singleton profile, FTP readings, all plans and completed workouts, plus linked and detached sync rows. Select one **existing account explicitly** for any legacy training data. Do not choose by row order, first user or current session. Stop without assigning anything if the selected account is absent or ownership is inconsistent/ambiguous. Backfill profile, plans and all sync rows to that owner, then add `NOT NULL`, foreign keys and per-user uniqueness; preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. Rehearse on a representative database copy with recovery steps before cutover. The local development database's pre-existing incompatible `users`/`sessions` tables need a data-preserving resolution before this migration.
+The CYF-67/68 migrations preflight each target database, require an explicitly selected existing account for legacy training data, backfill profile, plans and sync rows, then enforce profile/plan `NOT NULL`, foreign keys and per-user uniqueness. They preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. The local development authentication-table conflict has been resolved; production preflight and copy rehearsal remain deployment prerequisites. See [the migration runbook](LEGACY_OWNER_MIGRATION.md).
 
 Only enable a second rider after the ownership migration, controller/service scoping, preview isolation and sync isolation pass the two-user release gate. Until then the checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.

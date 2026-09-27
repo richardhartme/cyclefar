@@ -1,10 +1,11 @@
 require "rails_helper"
 
 RSpec.describe "Intervals.icu sync", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
   it "ICU-001 shows a manual sync action and reports a missing API key" do
-    plan = create(:training_plan)
+    plan = create(:training_plan, user: user)
     create(:plan_phase, training_plan: plan)
 
     get root_path

@@ -1,10 +1,10 @@
 class SettingsController < ApplicationController
   def show
-    @profile = RiderProfile.current
+    @profile = Current.user.rider_profile || Current.user.build_rider_profile
   end
 
   def update
-    @profile = Settings::Update.new(profile: RiderProfile.current, attributes: settings_params).call
+    @profile = Settings::Update.new(profile: Current.user.rider_profile || Current.user.build_rider_profile, attributes: settings_params).call
     redirect_to settings_path, notice: "Settings saved.", status: :see_other
   rescue ActiveRecord::RecordInvalid => error
     @profile = error.record

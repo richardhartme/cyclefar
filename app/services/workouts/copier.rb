@@ -60,7 +60,7 @@ module Workouts
     end
 
     def current_ftp_watts
-      RiderProfile.current.ftp_watts || plan.initial_ftp_watts
+      plan.user.rider_profile&.ftp_watts || plan.initial_ftp_watts
     end
 
     def phase_for(destination)

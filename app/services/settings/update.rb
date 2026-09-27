@@ -7,17 +7,15 @@ module Settings
     end
 
     def call
-      RiderProfile.transaction do
-        # Also serialize concurrent first saves, before the singleton row exists.
-        RiderProfile.connection.execute("SELECT pg_advisory_xact_lock(731001)")
-        current = RiderProfile.find_by(id: 1)
-        @profile = current if current
+      user = @profile.user
+      user.with_lock do
+        @profile = user.rider_profile || user.build_rider_profile
         @profile.assign_attributes(profile_attributes)
         ftp_changed = @profile.new_record? || @profile.will_save_change_to_ftp_watts?
         @profile.save!
         if ftp_changed
           @profile.ftp_readings.create!(ftp_watts: @profile.ftp_watts, effective_on: @effective_on)
-          Planning::FtpRecalculator.new(ftp_watts: @profile.ftp_watts, effective_on: @effective_on).call
+          Planning::FtpRecalculator.new(user: user, ftp_watts: @profile.ftp_watts, effective_on: @effective_on).call
         end
       end
       @profile

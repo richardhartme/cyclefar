@@ -22,7 +22,7 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
 
   let(:plan) { create(:training_plan, starts_on: Date.current, ends_on: Date.current + 30) }
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on) }
-  let(:profile) { create(:rider_profile, id: 1, ftp_watts: 300, intervals_icu_api_key: "test-api-key") }
+  let(:profile) { create(:rider_profile, user: plan.user, ftp_watts: 300, intervals_icu_api_key: "test-api-key") }
   let(:client) { FakeClient.new }
 
   it "ICU-001 syncs exactly the next two upcoming structured workouts with the current FTP" do

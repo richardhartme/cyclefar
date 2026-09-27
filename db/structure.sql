@@ -367,9 +367,8 @@ CREATE TABLE public.rider_profiles (
     intervals_icu_api_key text,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint,
-    CONSTRAINT rider_profiles_positive_ftp CHECK ((ftp_watts > 0)),
-    CONSTRAINT rider_profiles_singleton CHECK ((id = 1))
+    user_id bigint NOT NULL,
+    CONSTRAINT rider_profiles_positive_ftp CHECK ((ftp_watts > 0))
 );
 
 
@@ -531,7 +530,7 @@ CREATE TABLE public.training_plans (
     engine_version character varying DEFAULT 'v1'::character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    user_id bigint,
+    user_id bigint NOT NULL,
     CONSTRAINT training_plans_discipline_values CHECK (((discipline)::text = ANY ((ARRAY['road'::character varying, 'gravel'::character varying, 'mtb'::character varying, 'ultra_endurance'::character varying])::text[]))),
     CONSTRAINT training_plans_goal_values CHECK (((goal)::text = ANY ((ARRAY['general_fitness'::character varying, 'increase_ftp'::character varying, 'improve_endurance'::character varying, 'improve_climbing'::character varying, 'event'::character varying])::text[]))),
     CONSTRAINT training_plans_ordered_dates CHECK ((ends_on >= starts_on)),
@@ -1001,6 +1000,13 @@ CREATE UNIQUE INDEX index_planned_workouts_on_training_plan_id_and_scheduled_on 
 
 
 --
+-- Name: index_rider_profiles_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_rider_profiles_on_user_id ON public.rider_profiles USING btree (user_id);
+
+
+--
 -- Name: index_sessions_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1050,10 +1056,10 @@ CREATE UNIQUE INDEX index_workout_steps_on_planned_workout_id_and_position ON pu
 
 
 --
--- Name: one_active_training_plan; Type: INDEX; Schema: public; Owner: -
+-- Name: one_active_training_plan_per_user; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX one_active_training_plan ON public.training_plans USING btree (status) WHERE ((status)::text = 'active'::text);
+CREATE UNIQUE INDEX one_active_training_plan_per_user ON public.training_plans USING btree (user_id) WHERE ((status)::text = 'active'::text);
 
 
 --
@@ -1114,6 +1120,14 @@ ALTER TABLE ONLY public.target_events
 
 ALTER TABLE ONLY public.workout_feedbacks
     ADD CONSTRAINT fk_rails_41527fb704 FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id);
+
+
+--
+-- Name: training_plans fk_rails_542418f870; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_plans
+    ADD CONSTRAINT fk_rails_542418f870 FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -1181,6 +1195,14 @@ ALTER TABLE ONLY public.availability_templates
 
 
 --
+-- Name: rider_profiles fk_rails_d2539f3e59; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rider_profiles
+    ADD CONSTRAINT fk_rails_d2539f3e59 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: planned_workouts fk_rails_e016bf7fc7; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1195,6 +1217,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260927180000'),
 ('20260927170000'),
 ('20260927123825'),
 ('20260927123824'),

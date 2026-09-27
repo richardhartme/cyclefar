@@ -1,7 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Training plan preview", type: :request do
-  before { sign_in_as(create(:user)) }
+  let(:user) { create(:user) }
+  before { sign_in_as(user) }
 
   def plan_configuration(overrides = {})
     {
@@ -136,7 +137,7 @@ RSpec.describe "Training plan preview", type: :request do
     end
 
     it "confirms revised settings, event and availability after editing and clears the draft" do
-      RiderProfile.current.update!(ftp_watts: 240)
+      user.create_rider_profile!(ftp_watts: 240)
       get new_training_plan_path
       expect(field_value(:ftp_watts)).to eq("240")
       expect(field_value(:goal)).to eq("general_fitness")
