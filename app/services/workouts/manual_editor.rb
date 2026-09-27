@@ -13,7 +13,7 @@ module Workouts
       before = snapshot_for(@workout)
       subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
-      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
+      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.ftp_watts_for_planning).call
       after = Snapshot.new(
         kind: kind.to_s,
         subtype: definition.subtype.to_s,
@@ -100,10 +100,6 @@ module Workouts
         duration_minutes: workout.duration_minutes,
         estimated_if: workout.estimated_if,
         estimated_tss: workout.estimated_tss)
-    end
-
-    def current_ftp_watts
-      @workout.training_plan.user.rider_profile&.ftp_watts || @workout.training_plan.initial_ftp_watts
     end
 
     def intensity?(subtype)

@@ -11,7 +11,7 @@ module Workouts
       kind, definition = definition_for(scheduled_on, subtype, duration_minutes)
       metrics = Metrics::WorkoutCalculator.new(
         steps: definition.steps,
-        ftp_watts: current_ftp_watts).call
+        ftp_watts: @plan.ftp_watts_for_planning).call
 
       PlannedWorkout.transaction do
         workout = @plan.planned_workouts.build(
@@ -77,10 +77,6 @@ module Workouts
     def phase_for(date)
       @plan.plan_phases.find { |phase| date.between?(phase.starts_on, phase.ends_on) } ||
         raise(ArgumentError, "Choose a date covered by a plan phase")
-    end
-
-    def current_ftp_watts
-      @plan.user.rider_profile&.ftp_watts || @plan.initial_ftp_watts
     end
   end
 end

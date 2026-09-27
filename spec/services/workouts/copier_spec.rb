@@ -6,6 +6,8 @@ RSpec.describe Workouts::Copier, type: :service do
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1) }
 
   it "copies canonical steps to an empty date and recalculates metrics at the current FTP" do
+    other_plan = create(:training_plan)
+    other_profile = create(:rider_profile, user: other_plan.user, ftp_watts: 410)
     Settings::Update.new(profile: plan.user.build_rider_profile, attributes: { ftp_watts: 300 }).call
     destination = Date.current + 2
     expected_metrics = Metrics::WorkoutCalculator.new(steps: workout.workout_steps, ftp_watts: 300).call
@@ -32,6 +34,7 @@ RSpec.describe Workouts::Copier, type: :service do
       workout.workout_steps.map { |step| step.attributes.slice(*Workouts::Copier::STEP_ATTRIBUTES.map(&:to_s)) }
     )
     expect(workout.reload.scheduled_on).to eq(Date.current - 1)
+    expect(other_profile.reload.ftp_watts).to eq(410)
   end
 
   it "rejects an occupied destination and non-editable source" do

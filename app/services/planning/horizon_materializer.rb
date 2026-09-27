@@ -8,7 +8,7 @@ module Planning
     def call
       @plan.planned_workouts.planned.where(kind: %w[workout opener], detail_status: :outline, scheduled_on: @date..@date + 13).find_each do |workout|
         definition = definition_for(workout)
-        metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
+        metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
         workout.assign_attributes(
           detail_status: :structured,
           variation_key: definition.variation_key,
@@ -39,10 +39,6 @@ module Planning
         subtype: workout.subtype,
         progression_level: workout.progression_level || 1,
         variation_key: Workouts::Variations.for_generation(workout.subtype, current_key: workout.variation_key)).call
-    end
-
-    def current_ftp_watts
-      @plan.user.rider_profile&.ftp_watts || @plan.initial_ftp_watts
     end
   end
 end

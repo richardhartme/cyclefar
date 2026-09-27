@@ -28,6 +28,17 @@ RSpec.describe "Core persistence", type: :model do
       expect(plan.reload.update(status: :archived)).to be(true)
     end
 
+    it "uses only its owner's current FTP for future prescriptions, falling back to the initial FTP" do
+      plan = create(:training_plan, initial_ftp_watts: 250)
+      other_plan = create(:training_plan, initial_ftp_watts: 260)
+      create(:rider_profile, user: other_plan.user, ftp_watts: 410)
+
+      expect(plan.ftp_watts_for_planning).to eq(250)
+      create(:rider_profile, user: plan.user, ftp_watts: 290)
+      expect(plan.reload.ftp_watts_for_planning).to eq(290)
+      expect(other_plan.ftp_watts_for_planning).to eq(410)
+    end
+
     it "PLN-012 requires a positive hard-week count only for cyclic progression" do
       expect(build(:training_plan, hard_weeks_before_recovery: 0)).not_to be_valid
       expect(build(:training_plan, progression_mode: :continuous)).not_to be_valid

@@ -1,6 +1,25 @@
 require "rails_helper"
 
 RSpec.describe Planning::HorizonMaterializer do
+  it "uses the passed plan's rider FTP without structuring another rider's horizon" do
+    plan = create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70)
+    other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
+    create(:rider_profile, user: other_plan.user, ftp_watts: 410)
+    create(:rider_profile, user: plan.user, ftp_watts: 290)
+    phase = create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
+    other_phase = create(:plan_phase, training_plan: other_plan, starts_on: other_plan.starts_on, ends_on: other_plan.ends_on)
+    workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 1)
+    other_workout = create(:planned_workout, training_plan: other_plan, plan_phase: other_phase, scheduled_on: Date.current + 1)
+
+    described_class.new(plan).call
+
+    expected = Metrics::WorkoutCalculator.new(steps: workout.reload.workout_steps, ftp_watts: 290).call
+    expect(workout).to be_structured
+    expect(workout.estimated_np_watts).to be_within(0.001).of(expected.estimated_np_watts)
+    expect(workout.estimated_work_kj).to be_within(0.001).of(expected.estimated_work_kj)
+    expect(other_workout.reload).to be_outline
+  end
+
   %w[sustained alternating undulating].each do |key|
     it "persists randomly selected endurance profile #{key} and never redraws it on later requests" do
       plan = create(:training_plan, starts_on: Date.current, ends_on: Date.current + 70)

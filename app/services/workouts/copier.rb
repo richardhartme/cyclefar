@@ -39,7 +39,7 @@ module Workouts
     end
 
     def copy_attributes(destination)
-      metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: current_ftp_watts).call
+      metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: plan.ftp_watts_for_planning).call
       {
         plan_phase: phase_for(destination),
         scheduled_on: destination,
@@ -57,10 +57,6 @@ module Workouts
         estimated_tss: metrics.estimated_tss,
         estimated_work_kj: metrics.estimated_work_kj
       }
-    end
-
-    def current_ftp_watts
-      plan.user.rider_profile&.ftp_watts || plan.initial_ftp_watts
     end
 
     def phase_for(destination)

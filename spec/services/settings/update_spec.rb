@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe Settings::Update do
+  uses_transaction "USR-002 serializes concurrent first Settings saves for two owners"
+
   let(:user) { create(:user) }
 
   def profile
@@ -70,5 +72,52 @@ RSpec.describe Settings::Update do
     reading = FtpReading.sole
     expect { reading.update!(ftp_watts: 300) }.to raise_error(ActiveRecord::ReadOnlyRecord)
     expect { reading.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
+  end
+
+  it "USR-002 serializes concurrent first Settings saves for two owners" do
+    owners = []
+    [ 260, 310 ].each do |ftp|
+      owners << [ User.create!(email_address: "settings-#{SecureRandom.hex(8)}@example.com", password: "password").id, ftp ]
+    end
+    ready = Queue.new
+    start = Queue.new
+    threads = owners.flat_map do |owner_id, ftp|
+      2.times.map do
+        Thread.new do
+          ActiveRecord::Base.connection_pool.with_connection do
+            ready << true
+            start.pop
+            owner = User.find(owner_id)
+            profile = owner.rider_profile || owner.build_rider_profile
+            [ owner_id, described_class.new(profile: profile, attributes: { ftp_watts: ftp }).call.id ]
+          end
+        end
+      end
+    end
+
+    4.times { ready.pop }
+    4.times { start << true }
+    results = threads.map(&:value)
+
+    owners.each do |owner_id, ftp|
+      profile = RiderProfile.find_by!(user_id: owner_id)
+      expect(results.select { |id, _| id == owner_id }.map(&:last).uniq).to eq([ profile.id ])
+      expect(profile.ftp_watts).to eq(ftp)
+      expect(profile.ftp_readings.pluck(:ftp_watts)).to eq([ ftp ])
+    end
+    expect(RiderProfile.where(user_id: owners.map(&:first)).count).to eq(2)
+  ensure
+    threads&.size&.times { start << true }
+    threads&.each(&:join)
+    if owners&.any?
+      owner_ids = owners.map(&:first)
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          FtpReading.where(rider_profile_id: RiderProfile.where(user_id: owner_ids).select(:id)).delete_all
+          RiderProfile.where(user_id: owner_ids).delete_all
+          User.where(id: owner_ids).delete_all
+        end
+      end.value
+    end
   end
 end

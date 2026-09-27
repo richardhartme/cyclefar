@@ -6,12 +6,22 @@ RSpec.describe Adaptations::CompletionRecorder, type: :service do
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, subtype: :threshold, intent: :threshold, progression_level: 3, scheduled_on: plan.starts_on) }
 
   it "FBK-001 atomically records feedback and an immutable completion snapshot" do
+    other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
+    other_phase = create(:plan_phase, training_plan: other_plan, starts_on: other_plan.starts_on, ends_on: other_plan.ends_on)
+    other_workout = create(:planned_workout, :structured, training_plan: other_plan, plan_phase: other_phase, scheduled_on: plan.starts_on)
+    other_attributes = other_workout.attributes.deep_dup
+    other_profile = create(:rider_profile, user: other_plan.user, ftp_watts: 410, intervals_icu_api_key: "other-rider-secret")
     create(:rider_profile, user: plan.user, ftp_watts: 275)
     expect { described_class.new(workout: workout, rpe: 8, completion_quality: :as_planned).call }.to change(WorkoutFeedback, :count).by(1)
     expect(workout.reload).to be_completed
     expect(workout.completed_ftp_watts).to eq(275)
     expect(workout.completed_target_snapshot.fetch("steps")).not_to be_empty
+    first_step = workout.workout_steps.first
+    first_target = workout.completed_target_snapshot.fetch("steps").first
+    expect(first_target.fetch("low_watts")).to eq((first_step.target_low_pct_ftp * 275 / 100).round)
     expect { workout.update!(name: "Changed") }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    expect(other_workout.reload.attributes).to eq(other_attributes)
+    expect(other_profile.reload).to have_attributes(ftp_watts: 410, intervals_icu_api_key: "other-rider-secret")
   end
 
   it "FBK-002 creates a proposal but does not alter future workouts before acceptance" do

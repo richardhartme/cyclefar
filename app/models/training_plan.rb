@@ -27,6 +27,10 @@ class TrainingPlan < ApplicationRecord
   validate :configuration_is_immutable, on: :update
   before_destroy :preserve_completed_history, prepend: true
 
+  def ftp_watts_for_planning
+    user.rider_profile&.ftp_watts || initial_ftp_watts
+  end
+
   private
 
   def progression_state_is_object

@@ -30,6 +30,19 @@ RSpec.describe Workouts::ManualEditor, type: :service do
     expect(plan.reload.progression_state).to eq({})
   end
 
+  it "recalculates edits from the workout owner's FTP with another rider present" do
+    other_plan = create(:training_plan)
+    other_profile = create(:rider_profile, user: other_plan.user, ftp_watts: 410)
+    create(:rider_profile, user: plan.user, ftp_watts: 290)
+
+    described_class.new(workout).apply!(action: :easier)
+
+    expected = Metrics::WorkoutCalculator.new(steps: workout.reload.workout_steps, ftp_watts: 290).call
+    expect(workout.estimated_np_watts).to be_within(0.001).of(expected.estimated_np_watts)
+    expect(workout.estimated_work_kj).to be_within(0.001).of(expected.estimated_work_kj)
+    expect(other_profile.reload.ftp_watts).to eq(410)
+  end
+
   it "WKO-004 enforces the 30 minute minimum and regenerates exact 15 minute changes" do
     described_class.new(workout).apply!(action: :shorter)
     expect(workout.reload.duration_minutes).to eq(45)

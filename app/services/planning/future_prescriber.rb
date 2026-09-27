@@ -136,7 +136,7 @@ module Planning
         phase: item.phase,
         goal: @plan.goal,
         discipline: @plan.discipline).call
-      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: current_ftp_watts).call
+      metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
       item.with(
         subtype: definition.subtype,
         duration_minutes: duration_minutes,
@@ -160,10 +160,6 @@ module Planning
 
     def time_off_periods
       @time_off_periods ||= @plan.time_off_periods.order(:starts_on).to_a
-    end
-
-    def current_ftp_watts
-      @plan.user.rider_profile&.ftp_watts || @plan.initial_ftp_watts
     end
   end
 end

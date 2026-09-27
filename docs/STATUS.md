@@ -49,6 +49,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-27: CYF-69 scoped every training controller record lookup to the authenticated rider's plans. Foreign workout, adaptation-proposal and time-off IDs now receive the same empty 404 as missing IDs; two-user request coverage exercises every training read and mutation route, including archived history, plan archival, FTP Settings, schedule changes and sync entry. Preview draft isolation, domain service ownership and sync metadata isolation remain for CYF-70/71/72. Validation: 1,259 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current and the Milestone 12 release gate is not complete.
 
+2026-09-27: CYF-70 centralized future-workout FTP selection on the owning `TrainingPlan` and passed the saved profile directly to FTP recalculation, binding watt input to that profile's user. Two-owner service coverage now checks planning, horizon materialization, manual add/edit/copy, completion, presentation, unchanged second-rider credentials/history, and concurrent first Settings saves under per-user row locks. Completed structures and watt snapshots remain unchanged after FTP updates. Validation: 1,263 RSpec examples, Zeitwerk and RuboCop passed; Brakeman, Bundler Audit and importmap audit were clear. Milestone 11 remains current; preview and sync isolation still block the Milestone 12 release gate.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

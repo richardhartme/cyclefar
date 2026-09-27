@@ -17,6 +17,12 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
   end
 
   it "creates a one-week template and replaces only future prescriptions in that week" do
+    other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
+    other_phase = create(:plan_phase, training_plan: other_plan, starts_on: other_plan.starts_on, ends_on: other_plan.ends_on)
+    other_workout = create(:planned_workout, :structured, training_plan: other_plan, plan_phase: other_phase, scheduled_on: next_week + 1)
+    other_attributes = other_workout.attributes.deep_dup
+    create(:rider_profile, user: other_plan.user, ftp_watts: 410)
+    create(:rider_profile, user: plan.user, ftp_watts: 290)
     old_workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: next_week + 1)
     past_workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1)
 
@@ -31,7 +37,11 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
     replacement = plan.planned_workouts.find_by!(scheduled_on: next_week + 1)
     expect(replacement).to be_structured
     expect(replacement).to have_attributes(intent: "threshold", duration_minutes: 90, plan_phase: phase)
+    expected = Metrics::WorkoutCalculator.new(steps: replacement.workout_steps, ftp_watts: 290).call
+    expect(replacement.estimated_np_watts).to be_within(0.001).of(expected.estimated_np_watts)
+    expect(replacement.estimated_work_kj).to be_within(0.001).of(expected.estimated_work_kj)
     expect(plan.planned_workouts.where(scheduled_on: next_week + 1).count).to eq(1)
+    expect(other_workout.reload.attributes).to eq(other_attributes)
   end
 
   it "versions an ongoing change while preserving past workouts and event items" do
