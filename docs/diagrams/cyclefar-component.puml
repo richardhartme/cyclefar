@@ -13,7 +13,7 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Rails controllers", "Ruby on Rails", "Handle authenticated requests for settings, plans, workouts, adaptations, availability, time off and sync.")
-  Component(authentication, "Authentication concern and session/password controllers", "Rails authentication", "Require a signed login session by default; sign in/out and handle token-based password reset.")
+  Component(authentication, "Authentication concern and account controllers", "Rails authentication", "Require a signed session for private requests; register, sign in/out and handle password reset.")
   Component(auth_models, "User, Session and Current", "Active Record / CurrentAttributes", "Store password digests and login sessions; expose the owner for training requests.")
   Component(account_access, "Accounts::Provision and operator task", "Service / Rake", "Creates a rider with a random password and sends a setup link behind a release flag.")
   Component(password_mailer, "PasswordsMailer", "Action Mailer", "Builds setup and reset emails using configured sender and delivery.")
@@ -29,7 +29,7 @@ Container_Boundary(web_application, "CycleFar web application") {
 }
 
 Rel(rider, controllers, "Uses CycleFar", "HTTP (local)")
-Rel(rider, authentication, "Signs in, out or requests a password reset", "HTTP (local)")
+Rel(rider, authentication, "Registers, signs in/out or requests a password reset", "HTTP (local)")
 Rel(controllers, authentication, "Require authentication before training actions")
 Rel(authentication, auth_models, "Validates credentials and creates/destroys sessions")
 Rel(authentication, password_mailer, "Queues reset email")

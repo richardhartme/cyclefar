@@ -6,7 +6,7 @@ The request matrix uses two signed-in accounts and the same browser session. Ser
 
 | Flow | Coverage |
 |---|---|
-| Controlled account setup, sign-out, password reset | `spec/requests/account_access_spec.rb`, `spec/services/accounts/provision_spec.rb`, `spec/tasks/accounts_spec.rb` |
+| Public registration, controlled account setup, sign-out, password reset | `spec/requests/registration_spec.rb`, `spec/requests/account_access_spec.rb`, `spec/services/accounts/provision_spec.rb`, `spec/tasks/accounts_spec.rb` |
 | First Settings save, concurrent profiles, per-rider FTP/history | `spec/services/settings/update_spec.rb`, `spec/models/user_owned_training_spec.rb`, `spec/services/planning/ftp_recalculator_spec.rb`, `spec/requests/two_rider_release_gate_spec.rb` |
 | Preview/edit/confirm, same-browser account switch, plan creation/archive | `spec/requests/training_plan_preview_spec.rb`, `spec/requests/owner_scoped_training_spec.rb`, `spec/requests/two_rider_release_gate_spec.rb` |
 | Calendar, workout detail/actions, guessed IDs | `spec/requests/owner_scoped_training_spec.rb`, `spec/requests/two_rider_release_gate_spec.rb` |
@@ -26,6 +26,6 @@ Before enabling another rider in a deployment:
 1. Complete the still-open Milestone 11 acceptance gate.
 2. Inventory the target database, choose and record its existing legacy owner, and rehearse the migration on a restorable copy of that target's data as described in the runbook. Check counts, ownership, completed snapshots, FTP history, encrypted profile data and linked/detached external IDs after migration.
 3. Verify configured SMTP delivery and password setup/reset links with the deployed host and queue worker.
-4. Re-run the suite and migration checks against the release revision; only then enable controlled provisioning and mark Milestone 12 complete in `STATUS.md`.
+4. Re-run the suite and migration checks against the release revision; only then deploy public registration, enable controlled provisioning and mark Milestone 12 complete in `STATUS.md`.
 
-No production-data copy or live SMTP provider was available for this local gate. Additional rider provisioning remains disabled.
+No production-data copy or live SMTP provider was available for this local gate. Operator provisioning remains disabled, and the public registration route should not be deployed with additional riders until the deployment gate passes.

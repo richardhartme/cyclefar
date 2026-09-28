@@ -34,7 +34,8 @@ RSpec.describe "Authentication", type: :request do
     expect(response).to redirect_to(new_session_path)
     expect(user.sessions.count).to eq(0)
     get root_path
-    expect(response).to redirect_to(new_session_path)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Sign In", "Register")
   end
 
   it "invalidates existing sessions when the password is reset" do

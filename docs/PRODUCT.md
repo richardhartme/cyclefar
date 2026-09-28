@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The current release remains a single-rider planner. Rails-generated email/password sign-in exists, profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are implemented; a second account must not be enabled until the target-data migration rehearsal, live mail check and Milestone 11 acceptance work pass.
+The original V1 release was a single-rider planner. Email/password sign-in and self-registration are now implemented locally, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are also implemented. Deployment with additional riders still requires the target-data migration rehearsal, live mail check and Milestone 11 acceptance work.
 
 The assumed rider:
 
@@ -83,7 +83,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 This describes intended V1 scope, including later additions. See [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md) for implementation gaps.
 
-- Single-rider local app with Rails-generated sign-in, sign-out and password-reset scaffolding
+- Email/password registration, sign-in, sign-out and password reset
 - Settings with FTP and Intervals.icu API key
 - One active training plan
 - One target event maximum
@@ -108,7 +108,6 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ### Explicitly out of scope
 
-- Self-service account registration
 - Enabling additional riders before the release gate
 - Coaches/social features
 - Running, strength or multisport training
@@ -131,15 +130,14 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ## Planned independent-rider release
 
-Milestone 12 is planned after the open Milestone 11. Its ownership schema, owner-scoped application paths, controlled provisioning and automated two-rider matrix have been implemented, but the release gate remains open. It will enable independent riders using operator-provisioned email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. The target database copy rehearsal and live SMTP delivery remain unverified; additional account provisioning is disabled.
+Milestone 12 is planned after the open Milestone 11. Its ownership schema, owner-scoped application paths, public registration, controlled provisioning and automated two-rider matrix have been implemented locally, but the deployment release gate remains open. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. The target database copy rehearsal and live SMTP delivery remain unverified; operator provisioning remains disabled by default.
 
-The first independent-rider release excludes public self-registration, Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
+The first independent-rider release excludes Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
 
 ## Future-friendly seams
 
 Do not implement these now, but avoid architecture that blocks them:
 
-- later account registration beyond the planned provisioned/invited independent-rider release;
 - importing training history/current volume;
 - experience level and age as planning inputs;
 - automatic activity completion from Intervals.icu;

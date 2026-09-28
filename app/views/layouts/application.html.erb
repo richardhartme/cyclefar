@@ -43,6 +43,11 @@
             <span class="text-base-content/70 max-w-40 truncate text-sm" title="<%= Current.user.email_address %>"><%= Current.user.email_address %></span>
             <%= button_to "Sign out", session_path, method: :delete, class: "btn btn-ghost btn-sm" %>
           </div>
+        <% else %>
+          <div class="navbar-end gap-2">
+            <%= link_to "Sign In", new_session_path, class: "btn btn-ghost btn-sm" %>
+            <%= link_to "Register", new_registration_path, class: "btn btn-primary btn-sm" %>
+          </div>
         <% end %>
       </nav>
     </header>

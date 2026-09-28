@@ -17,12 +17,12 @@ This folder is the implementation brief for **CycleFar**, a cycling training pla
 - FactoryBot
 - Rails built-in Active Record Encryption for the Intervals.icu API key
 - No React
-- Rails-generated email/password sign-in and password-reset scaffolding; no registration
+- Email/password registration, sign-in and password reset
 - No AI/LLM in V1
 
 CycleFar is desktop-first and intended to run locally. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) infrastructure preparation has since been added; it is not a deployed service, and Kamal remains a placeholder.
 
-The authentication generator was added after the original V1 milestone sequence. Profiles, plans, preview drafts and Intervals.icu sync records are now owner-scoped, with an integrated two-rider test matrix. Additional rider provisioning is still disabled pending the deployment checks and open Milestone 11 work. See [ARCHITECTURE.md](ARCHITECTURE.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
+The authentication generator was added after the original V1 milestone sequence. The public homepage now links to registration and sign-in. Profiles, plans, preview drafts and Intervals.icu sync records are owner-scoped, with an integrated two-rider test matrix. Deployment with additional riders still requires the target-data and mail checks and open Milestone 11 work; operator provisioning remains disabled by default. See [ARCHITECTURE.md](ARCHITECTURE.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguishes completed work from outstanding acceptance gaps. Historical milestone completion does not establish full requirements coverage.
 

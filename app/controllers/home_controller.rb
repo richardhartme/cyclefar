@@ -1,5 +1,9 @@
 class HomeController < ApplicationController
+  allow_unauthenticated_access only: :index
+
   def index
+    return render :welcome unless authenticated?
+
     plan = Current.user.training_plans.active.first
     if plan
       Planning::HorizonMaterializer.new(plan).call

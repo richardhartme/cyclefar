@@ -75,7 +75,8 @@ RSpec.describe "Independent rider account access", type: :request do
     put password_path(token), params: { password: "replacement-password", password_confirmation: "replacement-password" }
     expect(rider.sessions.count).to eq(0)
     get root_path
-    expect(response).to redirect_to(new_session_path)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Sign In", "Register")
   end
 
   def plan_configuration

@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
 
 ## 0. Product identity
 
@@ -462,15 +462,16 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Planned independent-rider release
 
-These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, plus automated two-rider coverage, is present; additional riders remain disabled pending the target-data migration rehearsal, live mail delivery and open Milestone 11 work. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal, live mail delivery and open Milestone 11 work. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
-### USR-001 Controlled accounts and authentication
+### USR-001 Account registration and authentication
 
-- An authorized operator can provision or invite an independent rider account. The rider signs in with the existing email/password session flow, can sign out through a visible control, and can receive a working password-reset email without account enumeration.
-- Do not expose public self-registration, Google/social sign-in, coach, team or shared-plan flows in this release.
-- A second account must not be enabled against legacy global training data before USR-002 through USR-007 and the USR-008 isolation gate pass.
+- The public homepage offers Sign In and Register. A new rider can create an account with an email address and confirmed password, is signed in, and sees their private calendar. A signed-in rider cannot create another account through the registration form.
+- An authorized operator can also provision or invite an independent rider account. The rider signs in with the existing email/password session flow, can sign out through a visible control, and can receive a working password-reset email without account enumeration.
+- Do not expose Google/social sign-in, coach, team or shared-plan flows in this release.
+- Do not deploy multi-rider access against legacy global training data before USR-002 through USR-007 and the USR-008 isolation gate pass.
 
-Automated coverage target: authentication/provisioning request specs for a second rider, sign-out and draft clearing, password-reset delivery with mail stubbed, old-session invalidation and indistinguishable reset-request responses.
+Automated coverage target: public-home and registration request specs, plus authentication/provisioning specs for a second rider, sign-out and draft clearing, password-reset delivery with mail stubbed, old-session invalidation and indistinguishable reset-request responses.
 
 ### USR-002 One owned rider profile and FTP history
 

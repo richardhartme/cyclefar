@@ -20,7 +20,7 @@ CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creat
 
 ## Post-review authentication and ownership additions
 
-Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. There is still no public registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, additional rider provisioning is disabled, and Milestone 11 acceptance work remains open. See [STATUS.md](STATUS.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
+Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. A user-requested follow-up added a public homepage and registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, operator provisioning is disabled, and Milestone 11 acceptance work remains open. See [STATUS.md](STATUS.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 ## Open acceptance gaps
 

@@ -1,0 +1,37 @@
+<section class="card bg-base-100 border-base-300 mx-auto w-full max-w-lg border shadow-sm">
+  <div class="card-body gap-6 p-6 sm:p-8">
+    <header>
+      <h1 class="card-title text-3xl">Register</h1>
+      <p class="text-base-content/70 mt-2">Create your CycleFar account to start planning your training.</p>
+    </header>
+
+    <% if @user.errors.any? %>
+      <div role="alert" class="alert alert-error">
+        <ul class="list-disc pl-5">
+          <% @user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user, url: registration_path, class: "space-y-5" do |form| %>
+      <fieldset class="fieldset">
+        <%= form.label :email_address, "Email address", class: "fieldset-legend" %>
+        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "email", class: "input w-full" %>
+      </fieldset>
+      <fieldset class="fieldset">
+        <%= form.label :password, class: "fieldset-legend" %>
+        <%= form.password_field :password, required: true, autocomplete: "new-password", maxlength: 72, class: "input w-full" %>
+      </fieldset>
+      <fieldset class="fieldset">
+        <%= form.label :password_confirmation, "Confirm password", class: "fieldset-legend" %>
+        <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72, class: "input w-full" %>
+      </fieldset>
+      <%= form.submit "Create account", class: "btn btn-primary w-full" %>
+    <% end %>
+
+    <div class="divider my-0 text-sm">Already have an account?</div>
+    <%= link_to "Sign In", new_session_path, class: "btn btn-outline btn-primary w-full" %>
+  </div>
+</section>

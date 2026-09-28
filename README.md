@@ -59,26 +59,12 @@ The encryption-key files in `config/` are ignored by Git. Keep them with any
 local database backup: losing them prevents decryption of a saved Intervals.icu
 API key.
 
-Prepare the database before signing in. There is no registration screen or
-seeded login, so create the first local `User` through the Rails console.
-The checked-in `db/structure.sql` includes authentication and user ownership
-constraints. Production password-reset delivery uses environment-configured
-SMTP; delivery through a live provider has not been verified. See the
-[account access guide](docs/ACCOUNT_ACCESS.md) for deployment settings and
-the provisioning gate.
-
-```sh
-bin/rails console
-```
-
-In the console, set an email and enter a password without placing it in shell
-history:
-
-```ruby
-require "io/console"
-password = IO.console.getpass("Password: ")
-User.create!(email_address: "rider@example.com", password: password, password_confirmation: password)
-```
+Prepare the database, then open the homepage and choose **Register** to create
+your rider account or **Sign In** if you already have one. The checked-in
+`db/structure.sql` includes authentication and user ownership constraints.
+Production password-reset delivery uses environment-configured SMTP; delivery
+through a live provider has not been verified. See the [account access
+guide](docs/ACCOUNT_ACCESS.md) for deployment settings and the release gate.
 
 ## Development sample plan
 

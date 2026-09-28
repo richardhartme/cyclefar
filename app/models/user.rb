@@ -1,3 +1,5 @@
+require "uri/mailto"
+
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
@@ -9,4 +11,5 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   validates :email_address, presence: true, uniqueness: { case_sensitive: false }
+  validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
 end

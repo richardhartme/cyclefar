@@ -1,6 +1,6 @@
-# Controlled rider account access
+# Rider account access
 
-CycleFar has no public registration route. An authorized operator provisions an account by email, and the rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; keep rider provisioning disabled until the target-data migration rehearsal, live SMTP verification and open Milestone 11 acceptance gate pass. Existing single-rider access remains available.
+The public homepage offers Sign In and Register. Registration creates a rider account with a confirmed password and signs them in. An authorized operator can also provision an account by email, and that rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; deployment with additional riders still requires the target-data migration rehearsal, live SMTP verification and open Milestone 11 acceptance gate. Operator provisioning stays disabled until then.
 
 ## Production mail settings
 
@@ -27,4 +27,4 @@ Run the task in the deployed environment with the provisioning flag and intended
 CYCLEFAR_RIDER_PROVISIONING_ENABLED=true EMAIL_ADDRESS=rider@example.test bin/rails accounts:provision
 ```
 
-The task creates one `User` with an unshared random password, emails a short-lived password setup link, and prints the normalized address. It rejects an invalid or existing address and does not expose a signup page. The operator should confirm mail delivery with the rider. If delivery fails, correct the mail configuration and retry; the failed account creation is rolled back. A rider can later request another link through **Forgot password?**. Sign-out destroys the active database session and clears the browser's Rails session, including any plan preview draft.
+The task creates one `User` with an unshared random password, emails a short-lived password setup link, and prints the normalized address. It rejects an invalid or existing address. The operator should confirm mail delivery with the rider. If delivery fails, correct the mail configuration and retry; the failed account creation is rolled back. A rider can later request another link through **Forgot password?**. Sign-out destroys the active database session and clears the browser's Rails session, including any plan preview draft.

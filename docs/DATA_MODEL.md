@@ -8,7 +8,7 @@ This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records
 
 Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
 
-`RiderProfile`, `TrainingPlan` and `IntervalsIcuSync` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups, preview drafts and sync reconciliation are owner-scoped, and FTP-based services use the plan's owner. There is no registration model or route.
+`RiderProfile`, `TrainingPlan` and `IntervalsIcuSync` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups, preview drafts and sync reconciliation are owner-scoped, and FTP-based services use the plan's owner. Public registration creates an ordinary `User` and `Session`; it adds no registration table.
 
 ## RiderProfile
 
@@ -25,7 +25,7 @@ Validations:
 
 - FTP > 0
 
-Controlled account provisioning and an automated two-rider isolation matrix are implemented. Additional account provisioning remains disabled pending the release prerequisites in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md).
+Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented locally. Deployment with additional riders remains pending the release prerequisites in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md); the operator provisioning task remains disabled by default.
 
 ## FtpReading
 
