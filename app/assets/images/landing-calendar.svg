@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-labelledby="title description">
+  <title id="title">Training calendar screenshot placeholder</title>
+  <desc id="description">Replace this image with a screenshot of the training calendar.</desc>
+  <rect width="1200" height="750" fill="#eff6ff"/>
+  <rect x="32" y="32" width="1136" height="686" rx="24" fill="#ffffff" stroke="#93c5fd" stroke-width="4" stroke-dasharray="14 12"/>
+  <rect x="112" y="112" width="976" height="42" rx="12" fill="#dbeafe"/>
+  <rect x="112" y="190" width="976" height="210" rx="16" fill="#eff6ff"/>
+  <path d="M251 190v210m139-210v210m140-210v210m139-210v210m140-210v210m139-210v210" stroke="#bfdbfe" stroke-width="5"/>
+  <text x="600" y="508" text-anchor="middle" fill="#1e3a8a" font-family="system-ui, sans-serif" font-size="42" font-weight="700">Training calendar screenshot</text>
+  <text x="600" y="564" text-anchor="middle" fill="#64748b" font-family="system-ui, sans-serif" font-size="25">Replace this placeholder with your screenshot</text>
+</svg>

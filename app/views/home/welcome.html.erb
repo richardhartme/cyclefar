@@ -1,12 +1,48 @@
-<section class="hero bg-base-100 rounded-box shadow-sm">
-  <div class="hero-content py-16 text-center">
-    <div class="max-w-xl">
-      <h1 class="text-4xl font-bold">Plan smart. Ride far.</h1>
-      <p class="text-base-content/70 py-5 text-lg">Build a cycling training plan around your goals and available time.</p>
-      <div class="flex flex-wrap justify-center gap-3">
-        <%= link_to "Sign In", new_session_path, class: "btn btn-primary" %>
-        <%= link_to "Register", new_registration_path, class: "btn btn-outline btn-primary" %>
+<div class="space-y-12">
+  <section class="hero bg-base-100 border-base-300 rounded-box border shadow-sm">
+    <div class="hero-content py-14 text-center sm:py-20">
+      <div class="max-w-2xl">
+        <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Plan smart. Ride far.</h1>
+        <p class="text-base-content/70 mx-auto mt-5 text-lg">Build a training plan around your goals, the time you have to ride, and sync the workouts directly to intervals.icu</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <%= link_to "Register", new_registration_path, class: "btn btn-primary" %>
+          <%= link_to "Sign In", new_session_path, class: "btn btn-outline btn-primary" %>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section aria-labelledby="features-heading">
+    <div class="grid gap-6 lg:grid-cols-3">
+      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
+        <figure class="bg-base-200">
+          <%= image_tag "landing-plan-preview.svg", alt: "Placeholder for a plan preview screenshot", loading: "lazy", class: "aspect-[8/5] w-full object-cover" %>
+        </figure>
+        <div class="card-body">
+          <h3 class="card-title">Plan around your week</h3>
+          <p class="text-base-content/70">Choose your goal and available training days, then preview the plan before you confirm it.</p>
+        </div>
+      </article>
+
+      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
+        <figure class="bg-base-200">
+          <%= image_tag "landing-calendar.svg", alt: "Placeholder for a training calendar screenshot", loading: "lazy", class: "aspect-[8/5] w-full object-cover" %>
+        </figure>
+        <div class="card-body">
+          <h3 class="card-title">See the whole plan</h3>
+          <p class="text-base-content/70">Follow your training in a continuous calendar with upcoming workouts and weekly load.</p>
+        </div>
+      </article>
+
+      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
+        <figure class="bg-base-200">
+          <%= image_tag "landing-workout.svg", alt: "Placeholder for a workout detail screenshot", loading: "lazy", class: "aspect-[8/5] w-full object-cover" %>
+        </figure>
+        <div class="card-body">
+          <h3 class="card-title">Know what to ride</h3>
+          <p class="text-base-content/70">Open a workout to see its structure, power targets, and profile before you start.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
