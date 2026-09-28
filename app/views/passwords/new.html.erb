@@ -1,17 +1,19 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <% if alert = flash[:alert] %>
-    <p class="py-2 px-3 bg-red-50 mb-5 text-red-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
-  <% end %>
+<section class="card bg-base-100 border-base-300 mx-auto w-full max-w-lg border shadow-sm">
+  <div class="card-body gap-6 p-6 sm:p-8">
+    <header>
+      <h1 class="card-title text-3xl">Forgot your password?</h1>
+      <p class="text-base-content/70 mt-2">Enter your account email and we’ll send you a reset link.</p>
+    </header>
 
-  <h1 class="font-bold text-4xl">Forgot your password?</h1>
+    <%= form_with url: passwords_path, class: "space-y-5" do |form| %>
+      <fieldset class="fieldset">
+        <%= form.label :email_address, "Email address", class: "fieldset-legend" %>
+        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], class: "input w-full" %>
+      </fieldset>
 
-  <%= form_with url: passwords_path, class: "contents" do |form| %>
-    <div class="my-5">
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "block shadow-sm rounded-md border border-gray-400 focus:outline-solid focus:outline-blue-600 px-3 py-2 mt-2 w-full" %>
-    </div>
+      <%= form.submit "Email reset instructions", class: "btn btn-primary w-full" %>
+    <% end %>
 
-    <div class="inline">
-      <%= form.submit "Email reset instructions", class: "w-full sm:w-auto text-center rounded-lg px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
-    </div>
-  <% end %>
-</div>
+    <%= link_to "Back to Sign In", new_session_path, class: "link link-primary text-center" %>
+  </div>
+</section>

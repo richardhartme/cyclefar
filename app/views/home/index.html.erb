@@ -73,7 +73,7 @@
                 <% end %>
               </strong>
               <% if date.day == 1 %>
-                <p class="badge badge-primary badge-sm mt-1"><%= date.strftime("%B") %></p>
+                <p class="badge badge-primary badge-sm"><%= date.strftime("%B") %></p>
               <% end %>
 
               <% if (event = @calendar.event_on(date)) %>
