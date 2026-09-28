@@ -51,8 +51,13 @@ COPY . .
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile with build-only mail values; real SMTP settings are injected by Kamal at runtime.
+RUN CYCLEFAR_APP_HOST=cyclefar.com \
+    CYCLEFAR_MAIL_FROM=build@cyclefar.invalid \
+    CYCLEFAR_SMTP_HOST=localhost \
+    CYCLEFAR_SMTP_USERNAME=build \
+    CYCLEFAR_SMTP_PASSWORD=build \
+    SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
 

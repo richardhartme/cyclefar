@@ -41,7 +41,12 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - DB_PASSWORD
+    - CYCLEFAR_MAIL_FROM
+    - CYCLEFAR_SMTP_HOST
+    - CYCLEFAR_SMTP_USERNAME
+    - CYCLEFAR_SMTP_PASSWORD
   clear:
+    CYCLEFAR_APP_HOST: cyclefar.com
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true

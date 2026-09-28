@@ -17,6 +17,8 @@ Supply these environment variables in the intended production environment before
 
 Production uses authenticated SMTP with STARTTLS, sends mail from `CYCLEFAR_MAIL_FROM`, and raises delivery errors. Missing required settings stop production boot. Keep the SMTP password in the environment's secret store; do not commit it. Password-reset requests enqueue mail through Active Job, so the Solid Queue worker must be running. Provisioning sends its setup email immediately and rolls back the new account if delivery fails.
 
+For Kamal, `config/deploy.yml` supplies `CYCLEFAR_APP_HOST=cyclefar.com` and uses the default SMTP port `587`. The four remaining mail settings are declared as runtime secrets. `.kamal/secrets` reads them from the deploy shell; export `CYCLEFAR_MAIL_FROM`, `CYCLEFAR_SMTP_HOST`, `CYCLEFAR_SMTP_USERNAME`, and `CYCLEFAR_SMTP_PASSWORD` there (or replace those entries with password-manager lookups) before running `bin/kamal deploy`. The Docker asset build uses temporary nonsecret mail values only to boot Rails; it does not use the production SMTP credentials.
+
 The test environment uses Action Mailer's test delivery adapter. Request specs verify the delivered link, account setup, identical reset-request responses for known and unknown addresses, and invalidation of old sessions. These tests do not establish delivery through a live SMTP provider; check that with the configured provider before enabling additional riders.
 
 ## Provision a rider after the release gate
