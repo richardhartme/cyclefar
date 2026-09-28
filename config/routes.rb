@@ -5,7 +5,8 @@ Rails.application.routes.draw do
   root "home#index"
   resource :settings, only: [ :show, :update ]
   resource :training_plan, only: [ :new, :create, :destroy ] do
-    post :preview
+    get :preview
+    post :preview, action: :prepare_preview
   end
   resources :planned_workouts, only: [ :new, :create, :show ] do
     member do

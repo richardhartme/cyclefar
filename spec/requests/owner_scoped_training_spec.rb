@@ -158,6 +158,8 @@ RSpec.describe "USR-004 owner-scoped training routes", type: :request do
         availability: { "2" => { weekday: "2", enabled: "1", duration_minutes: "60", intent: "intervals" } }
       }
       post preview_training_plan_path, params: { plan_configuration: configuration }
+      expect(response).to redirect_to(preview_training_plan_path)
+      follow_redirect!
       expect(response).to have_http_status(:ok)
       post training_plan_path
       expect(response).to redirect_to(root_path)

@@ -44,7 +44,7 @@ Avoid repository layers, command buses, event sourcing, GraphQL and front-end SP
 
 ## Plan creation and calendar
 
-- `TrainingPlansController` saves valid preview inputs in the Rails session, restores them on Back to edit, and consumes the draft on confirmation (CYF-1, 2026-09-25). Preview does not persist a plan.
+- `TrainingPlansController` saves valid preview inputs in the Rails session, redirects to a refreshable GET preview, restores them on Back to edit, and consumes the draft on confirmation (CYF-1 and CYF-75). Preview does not persist a plan.
 - `Planning::PlanConfiguration` validates setup inputs and `Planning::Availability` represents weekly slots using ISO weekdays (Monday=1).
 - `Planning::PlanBuilder#preview` builds in-memory phases, prescriptions, recovery/taper treatment, FTP tests, forecast metrics and load warnings. It delegates phase allocation and subtype selection to `PhaseAllocator` and `IntervalSelector`.
 - `Planning::PreviewPresenter` formats that preview for the view.
@@ -93,7 +93,8 @@ resources :passwords, param: :token
 root "home#index"
 resource :settings, only: [:show, :update]
 resource :training_plan, only: [:new, :create, :destroy] do
-  post :preview
+  get :preview
+  post :preview, action: :prepare_preview
 end
 resources :planned_workouts, only: [:new, :create, :show] do
   member do

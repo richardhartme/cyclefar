@@ -40,6 +40,8 @@ RSpec.describe "Independent rider account access", type: :request do
     rider = create(:user)
     sign_in_as(rider)
     post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+    expect(response).to redirect_to(preview_training_plan_path)
+    follow_redirect!
     expect(response).to have_http_status(:ok)
 
     delete session_path

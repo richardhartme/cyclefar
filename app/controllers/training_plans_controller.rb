@@ -4,11 +4,28 @@ class TrainingPlansController < ApplicationController
   end
 
   def preview
+    configuration = owned_plan_configuration
+    unless configuration
+      redirect_to new_training_plan_path, alert: "Preview the plan again before creating it."
+      return
+    end
+
+    @configuration = Planning::PlanConfiguration.new(configuration)
+    unless @configuration.valid?
+      session.delete(:plan_configuration)
+      redirect_to new_training_plan_path, alert: "Preview the plan again before creating it."
+      return
+    end
+
+    @preview = Planning::PlanBuilder.new(@configuration).preview
+    @presenter = Planning::PreviewPresenter.new(@preview)
+  end
+
+  def prepare_preview
     @configuration = Planning::PlanConfiguration.new(plan_configuration_params)
     if @configuration.valid?
-      @preview = Planning::PlanBuilder.new(@configuration).preview
-      @presenter = Planning::PreviewPresenter.new(@preview)
       session[:plan_configuration] = { "user_id" => Current.user.id, "configuration" => plan_configuration_params }
+      redirect_to preview_training_plan_path, status: :see_other
     else
       render :new, status: :unprocessable_content
     end

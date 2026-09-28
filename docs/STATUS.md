@@ -63,6 +63,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-28: Added a public homepage with Sign In and Register choices, a self-registration form that creates a private rider account and signs them in, and registration links in the public navigation and sign-in form. Private training pages still require authentication. Request specs cover the entry paths, registration success and validation, and signed-in registration rejection. Validation: 1,285 RSpec examples passed; Zeitwerk and RuboCop passed (172 files); Brakeman and importmap audit found no warnings or vulnerabilities; Bundler Audit found none using its installed advisory database (updating that database was blocked by local filesystem permissions). This user-requested change adds local public registration; the target-data rehearsal, live mail check and Milestone 11 acceptance gate remain open before deployment with additional riders. Milestone 11 remains current.
 
+2026-09-28: CYF-75 makes a valid plan-preview submission redirect to a session-backed GET preview, so refreshing the preview works without resubmitting the form or persisting a plan. Missing or foreign-account drafts return to the plan form; invalid submissions still show validation errors. Request specs cover refresh, draft ownership and the updated redirect flow. Validation: 1,287 RSpec examples passed; Zeitwerk and RuboCop passed (172 files); Brakeman reported no warnings; Bundler Audit and importmap audit found no vulnerabilities. Milestone 11 remains current for the other acceptance gaps.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

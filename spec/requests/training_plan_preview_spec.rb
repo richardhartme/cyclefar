@@ -16,6 +16,29 @@ RSpec.describe "Training plan preview", type: :request do
     }.merge(overrides)
   end
 
+  def submit_preview(configuration)
+    post preview_training_plan_path, params: { plan_configuration: configuration }
+    follow_redirect! if response.redirect?
+  end
+
+  it "PLN-013 redirects to a refreshable preview without persisting a plan" do
+    expect {
+      post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+      expect(response).to redirect_to(preview_training_plan_path)
+      follow_redirect!
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Plan preview")
+      get preview_training_plan_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Plan preview")
+    }.not_to change { [ TrainingPlan.count, PlannedWorkout.count, PlanPhase.count, TargetEvent.count, AvailabilityTemplate.count ] }
+  end
+
+  it "redirects an unowned or missing preview draft to the plan form" do
+    get preview_training_plan_path
+    expect(response).to redirect_to(new_training_plan_path)
+  end
+
   it "PLN-010 renders one configuration form with all plan inputs" do
     get new_training_plan_path
     expect(response).to have_http_status(:ok)
@@ -35,7 +58,7 @@ RSpec.describe "Training plan preview", type: :request do
 
   it "PLN-013 generates and renders an in-memory preview without persisting a plan" do
     expect {
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+      submit_preview(plan_configuration)
     }.not_to change { [ TrainingPlan.count, PlannedWorkout.count, PlanPhase.count, TargetEvent.count, AvailabilityTemplate.count ] }
 
     expect(response).to have_http_status(:ok)
@@ -44,19 +67,19 @@ RSpec.describe "Training plan preview", type: :request do
   end
 
   it "PLN-010 returns useful validation errors without generating a preview" do
-    post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "", availability: {}) }
+    submit_preview(plan_configuration(ftp_watts: "", availability: {}))
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Please correct the plan configuration", "Ftp watts can&#39;t be blank")
   end
 
   it "PLN-022 displays target-event taper and opener details" do
-    post preview_training_plan_path, params: { plan_configuration: plan_configuration(goal: "event", event_name: "Autumn Classic", event_on: "2026-12-06", event_discipline: "road", event_expected_duration_minutes: "360") }
+    submit_preview(plan_configuration(goal: "event", event_name: "Autumn Classic", event_on: "2026-12-06", event_discipline: "road", event_expected_duration_minutes: "360"))
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Target event:", "Taper and opener", "Event Opener")
   end
 
   it "PLN-013 / CAL-001 confirms the preview and renders a continuous persisted calendar" do
-    post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+    submit_preview(plan_configuration)
     expect {
       post training_plan_path
     }.to change(TrainingPlan, :count).by(1)
@@ -80,10 +103,12 @@ RSpec.describe "Training plan preview", type: :request do
 
     it "does not show the first rider's draft when another rider signs in with the same browser" do
       other_user.create_rider_profile!(ftp_watts: 310)
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "285", event_name: "Private event") }
+      submit_preview(plan_configuration(ftp_watts: "285", event_name: "Private event"))
       expect(response).to have_http_status(:ok)
 
       switch_to_other_user
+      get preview_training_plan_path
+      expect(response).to redirect_to(new_training_plan_path)
       get new_training_plan_path
 
       expect(response).to have_http_status(:ok)
@@ -93,7 +118,7 @@ RSpec.describe "Training plan preview", type: :request do
     end
 
     it "rejects confirmation of a draft created by another rider" do
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+      submit_preview(plan_configuration)
       switch_to_other_user
 
       expect { post training_plan_path }.not_to change(TrainingPlan, :count)
@@ -103,9 +128,9 @@ RSpec.describe "Training plan preview", type: :request do
     end
 
     it "allows the second rider to preview and confirm their own configuration after switching" do
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "285") }
+      submit_preview(plan_configuration(ftp_watts: "285"))
       switch_to_other_user
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "310") }
+      submit_preview(plan_configuration(ftp_watts: "310"))
 
       expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
       expect(TrainingPlan.active.sole).to have_attributes(user: other_user, initial_ftp_watts: 310)
@@ -144,7 +169,7 @@ RSpec.describe "Training plan preview", type: :request do
     it "restores custom settings and active slots on repeated edit visits without persisting records" do
       inputs = plan_configuration(discipline: "gravel", duration_mode: "custom", custom_duration_weeks: "8", include_base: "0", ftp_watts: "285")
       expect {
-        post preview_training_plan_path, params: { plan_configuration: inputs }
+        submit_preview(inputs)
         back_to_edit
         2.times do
           inputs.except(:availability, :include_base).each { |name, value| expect(field_value(name)).to eq(value) }
@@ -173,7 +198,7 @@ RSpec.describe "Training plan preview", type: :request do
         event_elevation_m: "0",
         event_expected_duration_minutes: "360")
       expect {
-        post preview_training_plan_path, params: { plan_configuration: inputs }
+        submit_preview(inputs)
         back_to_edit
       }.not_to change { plan_record_counts }
       inputs.except(:availability, :include_base).each { |name, value| expect(field_value(name)).to eq(value) }
@@ -204,14 +229,14 @@ RSpec.describe "Training plan preview", type: :request do
           "7" => { weekday: "7", enabled: "1", duration_minutes: "75", intent: "threshold" }
         })
       expect {
-        post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+        submit_preview(plan_configuration)
         back_to_edit
-        post preview_training_plan_path, params: { plan_configuration: revised }
+        submit_preview(revised)
         expect(response.body).to include("Revised event", "120 min Endurance", "75 min Threshold")
         back_to_edit
         expect(field_value("availability][1][enabled")).to be(false)
         expect(field_value("availability][7][enabled")).to be(true)
-        post preview_training_plan_path, params: { plan_configuration: revised }
+        submit_preview(revised)
       }.not_to change { plan_record_counts }
 
       expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
@@ -248,17 +273,17 @@ RSpec.describe "Training plan preview", type: :request do
     end
 
     it "renders invalid edits and confirms a corrected preview" do
-      post preview_training_plan_path, params: { plan_configuration: plan_configuration }
+      submit_preview(plan_configuration)
       back_to_edit
       expect {
-        post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "0", discipline: "gravel") }
+        submit_preview(plan_configuration(ftp_watts: "0", discipline: "gravel"))
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("Please correct the plan configuration")
         expect(field_value(:ftp_watts)).to eq("0")
         expect(field_value(:discipline)).to eq("gravel")
         get new_training_plan_path
         expect(field_value(:ftp_watts)).to eq("260")
-        post preview_training_plan_path, params: { plan_configuration: plan_configuration(ftp_watts: "290", discipline: "gravel") }
+        submit_preview(plan_configuration(ftp_watts: "290", discipline: "gravel"))
       }.not_to change { plan_record_counts }
       expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
       expect(TrainingPlan.active.sole).to have_attributes(initial_ftp_watts: 290, discipline: "gravel")
