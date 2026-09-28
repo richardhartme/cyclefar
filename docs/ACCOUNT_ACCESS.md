@@ -19,6 +19,10 @@ Production uses authenticated SMTP with STARTTLS, sends mail from `CYCLEFAR_MAIL
 
 For Kamal, `config/deploy.yml` supplies `CYCLEFAR_APP_HOST=cyclefar.com` and uses the default SMTP port `587`. The four remaining mail settings are declared as runtime secrets. `.kamal/secrets` reads them from the deploy shell; export `CYCLEFAR_MAIL_FROM`, `CYCLEFAR_SMTP_HOST`, `CYCLEFAR_SMTP_USERNAME`, and `CYCLEFAR_SMTP_PASSWORD` there (or replace those entries with password-manager lookups) before running `bin/kamal deploy`. The Docker asset build uses temporary nonsecret mail values only to boot Rails; it does not use the production SMTP credentials.
 
+## Production encryption keys
+
+Production also needs `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, and `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT`. Generate one production set with `bin/rails db:encryption:init`, store all three values in a secret manager, and export them in the deploy shell. Kamal reads them through `.kamal/secrets` and passes them to the app container. After setting them, run `bin/kamal app boot` to replace the container with one that has the new environment. Keep this set for the lifetime of encrypted Intervals.icu API keys; replacing it later would make existing ciphertext unreadable.
+
 The test environment uses Action Mailer's test delivery adapter. Request specs verify the delivered link, account setup, identical reset-request responses for known and unknown addresses, and invalidation of old sessions. These tests do not establish delivery through a live SMTP provider; check that with the configured provider before enabling additional riders.
 
 ## Provision a rider after the release gate
