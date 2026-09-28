@@ -1,32 +1,181 @@
-<section class="max-w-5xl">
-  <h1 class="mb-2 text-3xl font-semibold">Plan preview</h1>
-  <p class="mb-8 text-slate-600"><%= @presenter.goal_label %> · <%= @presenter.discipline_label %> · <%= @presenter.date_range %></p>
+<div class="card bg-base-100 mx-auto w-full max-w-5xl shadow-sm">
+    <div class="card-body gap-8">
+        <header>
+            <%= link_to "← Back to edit", new_training_plan_path, class: "link link-primary font-semibold" %>
+            <div class="mt-5 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Plan preview</h1>
+                <p class="text-base-content/70 mt-2 max-w-2xl">Check the training phases, weekly rhythm and projected load before you create your plan.</p>
+            </div>
+            </div>
+        </header>
 
-  <% if @presenter.event_summary %><p class="mb-6 rounded bg-amber-50 p-4"><strong>Target event:</strong> <%= @presenter.event_summary %></p><% end %>
+        <section aria-label="Plan summary" class="card bg-base-100 border-base-300 border shadow-sm">
+            <div class="card-body gap-5">
+            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Goal</p>
+                <p class="mt-1 text-lg font-semibold"><%= @presenter.goal_label %></p>
+                </div>
+                <div>
+                <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Discipline</p>
+                <p class="mt-1 text-lg font-semibold"><%= @presenter.discipline_label %></p>
+                </div>
+                <div>
+                <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Plan dates</p>
+                <p class="mt-1 font-semibold"><%= @presenter.date_range %></p>
+                </div>
+                <div>
+                <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">FTP basis</p>
+                <p class="mt-1 text-lg font-semibold"><%= @configuration.ftp_watts %> W</p>
+                </div>
+            </div>
+            <% if @presenter.event_summary %>
+                <div class="alert alert-warning alert-soft items-start">
+                <span><strong>Target event:</strong> <%= @presenter.event_summary %></span>
+                </div>
+            <% end %>
+            </div>
+        </section>
 
-  <section aria-labelledby="phase-timeline" class="mb-8">
-    <h2 id="phase-timeline" class="text-xl font-semibold">Phase timeline</h2>
-    <ol class="mt-3 grid gap-3 md:grid-cols-4"><% @preview.phases.each do |phase| %><li class="rounded border border-slate-300 p-3"><strong><%= @presenter.phase_label(phase) %></strong><br><%= phase.starts_on.to_fs(:long) %> – <%= phase.ends_on.to_fs(:long) %></li><% end %></ol>
-  </section>
+        <section aria-labelledby="phase-timeline" class="card bg-base-100 border-base-300 border shadow-sm">
+            <div class="card-body">
+            <div>
+                <h2 id="phase-timeline" class="card-title">Phase timeline</h2>
+                <p class="text-base-content/60 mt-1 text-sm">Your training focus changes as the plan progresses.</p>
+            </div>
+            <ol class="mt-3">
+                <% @preview.phases.each_with_index do |phase, index| %>
+                <li class="mb-3 bg-base-200 border-base-300 rounded-box border border-t-4 border-t-primary p-4">
+                    <span class="text-primary text-xs font-bold uppercase tracking-wider">Phase <%= index + 1 %></span>
+                    <h3 class="mt-2 text-lg font-semibold"><%= @presenter.phase_label(phase) %></h3>
+                    <p class="text-base-content/70 mt-1 text-sm"><%= phase.starts_on.to_fs(:long) %><br>to <%= phase.ends_on.to_fs(:long) %></p>
+                </li>
+                <% end %>
+            </ol>
+            </div>
+        </section>
 
-  <section aria-labelledby="availability-summary" class="mb-8">
-    <h2 id="availability-summary" class="text-xl font-semibold">Weekly template</h2>
-    <p class="mt-2"><%= @configuration.availability.map { |slot| "#{Date::DAYNAMES.rotate.fetch(slot.weekday - 1)}: #{slot.duration_minutes} min #{slot.intent.humanize}" }.join(" · ") %></p>
-    <p class="mt-2">Recovery pattern: <%= @configuration.progression_mode == "continuous" ? "Continuous progression" : "#{@configuration.hard_weeks_before_recovery} hard weeks, then one recovery week" %></p>
-  </section>
+        <section aria-labelledby="availability-summary" class="card bg-base-100 border-base-300 border shadow-sm">
+            <div class="card-body">
+            <div>
+                <h2 id="availability-summary" class="card-title">Weekly template</h2>
+                <p class="text-base-content/60 mt-1 text-sm">Your chosen training days repeat through the plan, with recovery and taper adjustments where needed.</p>
+            </div>
+            <div class="mt-3">
+                <% Date::DAYNAMES.rotate.each_with_index do |day_name, index| %>
+                <% slot = @configuration.slot_for(index + 1) %>
+                <div class="mb-3 rounded-box border p-3 <%= slot ? 'border-primary/30 bg-primary/5' : 'border-base-300 bg-base-200' %>">
+                    <p class="text-sm font-semibold"><%= day_name %></p>
+                    <% if slot %>
+                    <p class="mt-3 font-semibold"><%= slot.duration_minutes %> min <%= slot.intent.humanize %></p>
+                    <% else %>
+                    <p class="text-base-content/50 mt-3 text-sm">Rest day</p>
+                    <% end %>
+                </div>
+                <% end %>
+            </div>
+            <div class="bg-base-200 rounded-box mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
+                <span class="font-semibold">Recovery pattern: </span>
+                <span class="text-base-content/70"><%= @configuration.progression_mode == "continuous" ? "Continuous progression" : "#{@configuration.hard_weeks_before_recovery} hard weeks, then one recovery week" %></span>
+            </div>
+            </div>
+        </section>
 
-  <section aria-labelledby="assessment-dates" class="mb-8"><h2 id="assessment-dates" class="text-xl font-semibold">FTP assessments</h2><p class="mt-2"><%= @preview.ftp_test_dates.any? ? @preview.ftp_test_dates.map { |date| date.to_fs(:long) }.join(" · ") : "No routine FTP test is proposed for this plan length." %></p></section>
-  <% opener = @preview.prescriptions.find { |item| item.kind == "opener" } %>
-  <% if opener %><section aria-labelledby="taper-details" class="mb-8"><h2 id="taper-details" class="text-xl font-semibold">Taper and opener</h2><p class="mt-2"><%= opener.name %> on <%= opener.scheduled_on.to_fs(:long) %>, <%= opener.duration_minutes %> minutes.</p></section><% end %>
+        <% opener = @preview.prescriptions.find { |item| item.kind == "opener" } %>
+        <div class="grid gap-6 <%= opener ? 'lg:grid-cols-2' : '' %>">
+            <section aria-labelledby="assessment-dates" class="card bg-base-100 border-base-300 border shadow-sm">
+            <div class="card-body">
+                <h2 id="assessment-dates" class="card-title">FTP assessments</h2>
+                <% if @preview.ftp_test_dates.any? %>
+                <p class="text-base-content/60 text-sm">Proposed dates to reassess your training power.</p>
+                <ul class="mt-2 flex flex-wrap gap-2">
+                    <% @preview.ftp_test_dates.each do |date| %>
+                    <li class="badge badge-outline badge-lg"><%= date.to_fs(:long) %></li>
+                    <% end %>
+                </ul>
+                <% else %>
+                <p class="text-base-content/70">No routine FTP test is proposed for this plan length.</p>
+                <% end %>
+            </div>
+            </section>
+            <% if opener %>
+            <section aria-labelledby="taper-details" class="card bg-base-100 border-base-300 border shadow-sm">
+                <div class="card-body">
+                <h2 id="taper-details" class="card-title">Taper and opener</h2>
+                <p class="text-base-content/70">Your taper reduces training load before the event. <strong class="text-base-content"><%= opener.name %></strong> is scheduled for <%= opener.scheduled_on.to_fs(:long) %> (<%= opener.duration_minutes %> min).</p>
+                </div>
+            </section>
+            <% end %>
+        </div>
 
-  <section aria-labelledby="weekly-load" class="mb-8">
-    <h2 id="weekly-load" class="text-xl font-semibold">Projected weekly load</h2>
-    <div class="mt-3 overflow-x-auto"><table class="w-full text-left"><thead><tr><th>Week</th><th>Phase</th><th>Duration</th><th>TSS</th><th>Work</th></tr></thead><tbody><% @preview.weeks.each do |week| %><tr><td><%= week.starts_on.to_fs(:long) %></td><td><%= week.recovery_week ? "Recovery week" : week.phase.humanize %></td><td><%= @presenter.week_duration(week) %></td><td><%= @presenter.week_tss(week) %></td><td><%= @presenter.week_work(week) %></td></tr><% end %></tbody></table></div>
-    <% @preview.warnings.each do |warning| %><p role="status" class="mt-3 rounded bg-amber-50 p-3"><%= warning %></p><% end %>
-  </section>
+        <section aria-labelledby="weekly-load" class="card bg-base-100 border-base-300 border shadow-sm">
+            <div class="card-body">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                <h2 id="weekly-load" class="card-title">Projected weekly load</h2>
+                <p class="text-base-content/60 mt-1 text-sm">Estimated training stress by calendar week. Recovery weeks are highlighted.</p>
+                </div>
+                <span class="badge badge-primary badge-outline">TSS</span>
+            </div>
 
-  <div class="flex gap-5">
-    <%= link_to "Back to edit", new_training_plan_path, class: "font-semibold text-blue-800 underline" %>
-    <%= button_to "Create plan", training_plan_path, method: :post, class: "rounded bg-blue-800 px-5 py-3 font-semibold text-white" %>
-  </div>
-</section>
+            <% maximum_tss = [@preview.weeks.map(&:estimated_tss).max.to_f, 1].max %>
+            <% chart_ceiling = (maximum_tss / 50.0).ceil * 50 %>
+            <div class="mt-5 overflow-x-auto" aria-hidden="true">
+                <div class="flex min-w-[40rem] gap-3">
+                <div class="text-base-content/50 flex h-44 w-10 shrink-0 flex-col justify-between text-right text-xs">
+                    <span><%= chart_ceiling %></span>
+                    <span><%= chart_ceiling / 2 %></span>
+                    <span>0</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <ol class="flex h-48 gap-1">
+                    <% @preview.weeks.each do |week| %>
+                        <li class="border-base-300 flex min-w-0 flex-1 items-end justify-center border-b" title="Week of <%= week.starts_on.to_fs(:long) %>: <%= week.estimated_tss.round %> TSS">
+                        <div class="w-4/5 rounded-t <%= week.recovery_week ? 'bg-secondary' : 'bg-primary' %>" style="height: <%= (week.estimated_tss / chart_ceiling * 100).round(2) %>%"></div>
+                        </li>
+                    <% end %>
+                    </ol>
+                    <ol class="mt-2 flex gap-1 text-center text-xs text-base-content/60">
+                    <% @preview.weeks.each_with_index do |week, index| %>
+                        <li class="min-w-0 flex-1"><%= index + 1 %></li>
+                    <% end %>
+                    </ol>
+                </div>
+                </div>
+            </div>
+
+            <div class="border-base-300 mt-5 overflow-x-auto rounded-box border">
+                <table class="table table-zebra w-full">
+                <caption class="sr-only">Projected duration, training stress and work for each plan week</caption>
+                <thead><tr><th scope="col">Week</th><th scope="col">Phase</th><th scope="col" class="text-right">Duration</th><th scope="col" class="text-right">TSS</th><th scope="col" class="text-right">Work</th></tr></thead>
+                <tbody>
+                    <% @preview.weeks.each do |week| %>
+                    <tr>
+                        <th scope="row" class="font-medium"><%= week.starts_on.to_fs(:long) %></th>
+                        <td><% if week.recovery_week %><span class="badge badge-secondary badge-outline">Recovery week</span><% else %><%= week.phase.humanize %><% end %></td>
+                        <td class="text-right"><%= @presenter.week_duration(week) %></td>
+                        <td class="text-right"><%= @presenter.week_tss(week) %></td>
+                        <td class="text-right"><%= @presenter.week_work(week) %></td>
+                    </tr>
+                    <% end %>
+                </tbody>
+                </table>
+            </div>
+            </div>
+        </section>
+
+        <% if @preview.warnings.any? %>
+            <section aria-label="Plan warnings" class="space-y-2">
+            <% @preview.warnings.each do |warning| %>
+                <p role="status" class="alert alert-warning alert-soft"><%= warning %></p>
+            <% end %>
+            </section>
+        <% end %>
+
+        <div class="flex flex-wrap items-center justify-end gap-3 pb-8">
+            <%= link_to "Back to edit", new_training_plan_path, class: "btn btn-ghost" %>
+            <%= button_to "Create plan", training_plan_path, method: :post, class: "btn btn-primary" %>
+        </div>
+    </div>
+</div>
