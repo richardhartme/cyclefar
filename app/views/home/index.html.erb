@@ -100,7 +100,7 @@
               <% end %>
 
               <% @calendar.workouts_on(date).each do |workout| %>
-                <article class="card mt-3 border border-l-4 shadow-sm <%= workout_card_colors(workout) %>">
+                <article class="card mt-3 border shadow-sm <%= workout_card_colors(workout) %>">
                   <div class="card-body gap-1 p-3">
                     <div class="<%= "opacity-50 grayscale" if workout.missed? %>">
                       <% if workout.ftp_test? %>
