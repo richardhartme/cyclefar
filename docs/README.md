@@ -1,6 +1,6 @@
 # CycleFar — V1 Build Specification
 
-This folder is the implementation brief for **CycleFar**, a local, single-user indoor cycling training planner built with Ruby on Rails.
+This folder is the implementation brief for **CycleFar**, a cycling training planner built with Ruby on Rails. The current deployment enables one rider while independent-rider release checks remain open.
 
 ## Product in one sentence
 
@@ -22,7 +22,7 @@ This folder is the implementation brief for **CycleFar**, a local, single-user i
 
 CycleFar is desktop-first and intended to run locally. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) infrastructure preparation has since been added; it is not a deployed service, and Kamal remains a placeholder.
 
-The authentication generator was added after the original V1 milestone sequence. Profiles and plans now belong to users, but full request and Intervals.icu isolation is still pending. See [ARCHITECTURE.md](ARCHITECTURE.md) for current integration limits.
+The authentication generator was added after the original V1 milestone sequence. Profiles, plans, preview drafts and Intervals.icu sync records are now owner-scoped, with an integrated two-rider test matrix. Additional rider provisioning is still disabled pending the deployment checks and open Milestone 11 work. See [ARCHITECTURE.md](ARCHITECTURE.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguishes completed work from outstanding acceptance gaps. Historical milestone completion does not establish full requirements coverage.
 

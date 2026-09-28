@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning and configured SMTP delivery are implemented, but the full two-user release gate and live mail delivery verification remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
 
 ## 0. Product identity
 
@@ -462,7 +462,7 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Planned independent-rider release
 
-These requirements belong to planned Milestone 12. They do not describe current behavior and do not advance the current Milestone 11. Preserve the deterministic training rules and completed-workout immutability while changing ownership. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, plus automated two-rider coverage, is present; additional riders remain disabled pending the target-data migration rehearsal, live mail delivery and open Milestone 11 work. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Controlled accounts and authentication
 

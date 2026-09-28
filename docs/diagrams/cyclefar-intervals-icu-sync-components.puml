@@ -1,5 +1,5 @@
 @startuml CycleFar Intervals ICU Sync Components
-' Reviewed against application source on 2026-09-25; scope and limitations: README.md
+' Owner-scoped sync checked on 2026-09-28; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Intervals.icu Sync Components
@@ -11,16 +11,16 @@ System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service t
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's plans, workouts, settings and sync records.")
 
 Container_Boundary(web_application, "CycleFar web application") {
-  Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Starts sync and displays its outcome without exposing the API key.")
-  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Selects up to two upcoming planned structured workouts/openers outside time off; upserts, deletes stale tracked events, then persists success.")
+  Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Uses the signed-in rider's active plan and profile; displays outcome without exposing the API key.")
+  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Checks plan/profile ownership; selects up to two eligible workouts and reconciles only this owner's tracked events.")
   Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Serializes canonical workout steps and FTP-derived values into the Intervals.icu event payload.")
   Component(client, "Client", "IntervalsIcu HTTP client", "Uses API-key Basic auth, five-second connect/read timeouts and one transient retry; parses JSON and maps errors.")
-  Component(models, "Plan, workout, settings and sync models", "Active Record", "Provides canonical steps, rider API-key access and CycleFar-owned external-ID sync records.")
+  Component(models, "User, plan, profile, workout and sync models", "Active Record", "Provides canonical steps and encrypted rider key; sync records retain required user_id after workout deletion.")
 }
 
 Rel(rider, controller, "Starts manual sync", "HTTP (local)")
 Rel(controller, sync, "Synchronizes active plan")
-Rel(sync, models, "Selects eligible workouts and reads sync records")
+Rel(sync, models, "Selects eligible workouts and this rider's linked/detached sync records")
 Rel(sync, serializer, "Builds event payloads")
 Rel(serializer, models, "Reads canonical steps and current FTP context")
 Rel(sync, client, "Bulk-upserts desired set, then bulk-deletes stale external IDs")

@@ -1,6 +1,6 @@
 # CycleFar Application Architecture
 
-Training architecture reviewed against the repository on 2026-09-24; authentication additions checked on 2026-09-27. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
+Training architecture reviewed against the repository on 2026-09-24; authentication and ownership additions checked through 2026-09-28. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
 
 ## Application identity and stack
 
@@ -14,7 +14,7 @@ There is no public registration route. `Accounts::Provision` and an operator-onl
 
 ## Planned independent-rider boundary (Milestone 12)
 
-Milestone 12 follows the still-open Milestone 11. The first independent-rider release uses controlled provisioning or invitations on the existing email/password `User`/`Session` scaffold. Public registration, Google/social sign-in, coaches, teams and shared plans are outside it. A second account is not enabled until the complete ownership and isolation gate passes.
+Milestone 12 follows the still-open Milestone 11. The first independent-rider release uses controlled provisioning on the existing email/password `User`/`Session` scaffold. Public registration, Google/social sign-in, coaches, teams and shared plans are outside it. Ownership and isolation code and the automated two-rider matrix are present. A second account is not enabled until the target database rehearsal, live SMTP verification and remaining Milestone 11 acceptance work pass.
 
 `Current.user` supplies Settings and active-plan controller queries; `RiderProfile.current`, the singleton profile ID and the global active-plan index have been removed. Settings locks the owning user row, and plan creation receives that user explicitly. Workout and adaptation-proposal lookups traverse the user's plans; time-off deletion loads from the user's active plan. Missing and foreign IDs receive the same empty 404 response. FTP-based services and helpers resolve future watts through `TrainingPlan#ftp_watts_for_planning`; completed snapshots use their recorded FTP. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state.
 
@@ -35,6 +35,7 @@ app/services/
   workouts/      # canonical definitions, generators, editing, adding and copying
   metrics/       # calculations over canonical steps
   adaptations/   # completion and explicit proposal acceptance/rejection
+  accounts/      # controlled operator provisioning and password setup delivery
   settings/      # transactional profile and FTP changes
   intervals_icu/ # serializer, HTTP client and next-two reconciliation
 ```
@@ -61,7 +62,7 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `Metrics::WorkoutCalculator` calculates representative one-second power, NP, IF, TSS and work from canonical steps plus FTP. `Workouts::ProfileBuilder` supplies percentage-based graph data. `CalendarHelper` renders inline SVG with power-zone colours; the detail graph uses the same canonical data at a larger size.
 
-`Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally and reports before/after values plus whether the documented material-change thresholds were crossed. A material Change creates a persisted optional proposal; `Planning::MaterialChangeReplanner` treats that changed workout as fixed and re-prescribes only the bounded following 14-day block on acceptance. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
+`Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally and reports before/after values plus whether the documented material-change thresholds were crossed. A material Change creates a persisted optional proposal through `Planning::MaterialChangeProposal`; `Planning::MaterialChangeReplanner` treats that changed workout as fixed and re-prescribes only the bounded following 14-day block on acceptance. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
 
 Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure. Destination regeneration and other remaining requirements are listed in REVIEW.md.
 
@@ -143,4 +144,4 @@ PlantUML sources describe the logical application, not an already deployed AWS e
 - [Plan changes](diagrams/cyclefar-plan-change-components.puml)
 - [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
 
-The diagrams were updated for authentication on 2026-09-27. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.
+The diagrams were updated for ownership and account access on 2026-09-28. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.

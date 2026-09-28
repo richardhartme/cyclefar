@@ -1,6 +1,6 @@
 # CycleFar — Rails Data Model
 
-The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-24. Rails authentication and required profile/plan ownership were added on 2026-09-27; the checked-in SQL schema dump includes their tables, indexes, foreign keys and completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-28. Rails authentication and required profile, plan and sync ownership are reflected in the checked-in SQL schema dump alongside completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
 This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
 
@@ -25,7 +25,7 @@ Validations:
 
 - FTP > 0
 
-CYF-68 provides the profile ownership schema; controlled account provisioning and full isolation remain later work.
+Controlled account provisioning and an automated two-rider isolation matrix are implemented. Additional account provisioning remains disabled pending the release prerequisites in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md).
 
 ## FtpReading
 
@@ -254,6 +254,7 @@ Track only events created by CycleFar.
 
 Fields:
 
+- `user_id: bigint, null: false` — foreign key to `User`; retained when the workout is deleted
 - `external_id: string, null: false` — stable CycleFar-owned ID sent to Intervals.icu (use a `cyclefar-` prefix)
 - `intervals_event_id: bigint, nullable`
 - `last_synced_at: datetime`
@@ -275,7 +276,7 @@ Prefer service/query objects for:
 
 ## Planned Milestone 12 ownership schema and migration contract
 
-This section records the independent-rider ownership design. CYF-67/68 delivered the explicit-owner backfill and required profile/plan constraints; CYF-71/72 added preview and sync isolation. Provisioning and the full release gate remain. [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
+This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered the explicit-owner backfill, required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. Deployment prerequisites remain in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md). [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|
@@ -289,4 +290,4 @@ Application associations and validations complement these database constraints. 
 
 The CYF-67/68 migrations preflight each target database, require an explicitly selected existing account for legacy training data, backfill profile, plans and sync rows, then enforce profile/plan `NOT NULL`, foreign keys and per-user uniqueness. CYF-72 derives any remaining linked sync owner from its plan, requires an explicit owner for unassigned detached rows, and enforces sync `NOT NULL` and a user foreign key. They preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. The local development authentication-table conflict has been resolved; production preflight and copy rehearsal remain deployment prerequisites. See [the migration runbook](LEGACY_OWNER_MIGRATION.md).
 
-Only enable a second rider after the ownership migration, controller/service scoping, preview isolation and sync isolation pass the two-user release gate. Until then the checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.
+The ownership, scoping, preview and sync code has automated two-rider coverage, but a second rider remains disabled pending target-data rehearsal, live mail verification and Milestone 11 acceptance. The checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.

@@ -1,5 +1,5 @@
 @startuml CycleFar Plan Generation Components
-' Reviewed against application source on 2026-09-25; scope and limitations: README.md
+' Ownership and preview isolation checked on 2026-09-28; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Plan Generation Components
@@ -10,21 +10,21 @@ Person(rider, "Rider", "Supplies their training goal, availability, FTP and opti
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent training data.")
 
 Container_Boundary(web_application, "CycleFar web application") {
-  Component(controller, "TrainingPlansController", "Ruby on Rails controller", "Accepts the plan configuration, renders the preview and confirms creation.")
-  Component(session, "Preview configuration draft", "Rails session", "Saves the last valid configuration, restores Back to edit and is consumed on confirmation; no plan is persisted by preview.")
+  Component(controller, "TrainingPlansController", "Ruby on Rails controller", "Uses Current.user to scope plan creation; previews, edits and confirms only that user's draft.")
+  Component(session, "Owner-bound preview draft", "Rails session", "Saves the last valid configuration with creator ID; clears a stale or foreign draft and consumes it on confirmation.")
   Component(home, "HomeController", "Ruby on Rails controller", "Materializes the rolling horizon on calendar requests.")
   Component(configuration, "PlanConfiguration", "Planning value object", "Validates and normalizes plan inputs and the weekly availability template.")
   Component(builder, "PlanBuilder", "Planning service", "Calculates phases, recovery and taper treatment, prescriptions, FTP-test placement, workload metrics and warnings for a deterministic preview.")
   Component(allocation, "PhaseAllocator and IntervalSelector", "Planning services", "Allocate phase dates and select broad interval subtypes using versioned V1 rules.")
   Component(presenter, "PreviewPresenter", "Planning presenter", "Formats a preview for the plan-creation interface.")
-  Component(creator, "PlanCreator", "Planning service", "Persists a confirmed preview in one transaction.")
+  Component(creator, "PlanCreator", "Planning service", "Persists a confirmed preview under the explicit user in one transaction.")
   Component(materializer, "HorizonMaterializer", "Planning service", "Structures planned executable outlines for today through today + 13; saves initial endurance profile choices and preserves existing structures.")
   Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical percentage-of-FTP steps, opener structures and estimated workout metrics.")
-  Component(models, "Plan and workout models", "Active Record", "Represents plans, phases, availability, events, planned workouts and canonical workout steps.")
+  Component(models, "User, plan and workout models", "Active Record", "Enforces per-user active-plan ownership and represents phases, availability, events, workouts and canonical steps.")
 }
 
 Rel(rider, controller, "Creates, previews and confirms a plan", "HTTP (local)")
-Rel(controller, session, "Saves valid preview inputs; restores or consumes draft")
+Rel(controller, session, "Binds draft to current user; restores, clears or consumes it")
 Rel(controller, configuration, "Builds from submitted inputs or saved draft")
 Rel(home, materializer, "Runs before calendar presentation")
 Rel(builder, allocation, "Allocates phases and selects interval subtypes")
@@ -34,7 +34,7 @@ Rel(builder, engine, "Generates prospective workout definitions and metrics")
 Rel(controller, presenter, "Wraps builder preview data for rendering")
 Rel(controller, creator, "Creates confirmed plan")
 Rel(creator, builder, "Rebuilds deterministic preview")
-Rel(creator, models, "Creates plan, phase, availability, event and workout records")
+Rel(creator, models, "Creates user-owned plan, phase, availability, event and workout records")
 Rel(creator, materializer, "Materializes near-term workouts")
 Rel(materializer, engine, "Generates canonical workout steps and metrics")
 Rel(materializer, models, "Updates workouts and saves steps")

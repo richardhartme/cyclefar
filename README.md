@@ -29,9 +29,13 @@ snapshots.
 - Archive and delete controls for a plan, plus an idempotent development seed
   for visual testing.
 
-CycleFar remains a single-rider app. The authentication scaffold has no
-registration or per-user training-data ownership. V1 has no ride imports,
-trainer control, notifications or automatic calendar syncing.
+CycleFar currently enables one rider. Profiles, plans, preview drafts and
+Intervals.icu sync records are scoped to the signed-in user, and an integrated
+two-rider test matrix exercises those boundaries. Additional rider provisioning
+remains disabled until the target database migration rehearsal, live mail
+delivery and open Milestone 11 acceptance work are complete. There is no public
+registration. V1 has no ride imports, trainer control, notifications or
+automatic calendar syncing.
 
 ## Local setup
 
@@ -55,12 +59,13 @@ The encryption-key files in `config/` are ignored by Git. Keep them with any
 local database backup: losing them prevents decryption of a saved Intervals.icu
 API key.
 
-The authentication generator added `users` and `sessions` migrations. Apply
-them with `bin/rails db:migrate` before signing in. There is no registration
-screen or seeded login, so create a local `User` through the Rails console.
-The checked-in `db/structure.sql` includes the authentication tables.
-Password-reset email still uses the generated placeholder sender and has no
-verified delivery setup.
+Prepare the database before signing in. There is no registration screen or
+seeded login, so create the first local `User` through the Rails console.
+The checked-in `db/structure.sql` includes authentication and user ownership
+constraints. Production password-reset delivery uses environment-configured
+SMTP; delivery through a live provider has not been verified. See the
+[account access guide](docs/ACCOUNT_ACCESS.md) for deployment settings and
+the provisioning gate.
 
 ```sh
 bin/rails console

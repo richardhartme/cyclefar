@@ -1,5 +1,5 @@
 @startuml CycleFar Component Diagram
-' Authentication updated against application source on 2026-09-27; scope and limitations: README.md
+' Ownership and account access checked on 2026-09-28; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Web Application Component Diagram
@@ -8,13 +8,15 @@ LAYOUT_LEFT_RIGHT()
 
 Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
+System_Ext(smtp, "SMTP provider", "Delivers setup and password-reset mail; live delivery remains unverified.")
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent data.")
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Rails controllers", "Ruby on Rails", "Handle authenticated requests for settings, plans, workouts, adaptations, availability, time off and sync.")
   Component(authentication, "Authentication concern and session/password controllers", "Rails authentication", "Require a signed login session by default; sign in/out and handle token-based password reset.")
-  Component(auth_models, "User, Session and Current", "Active Record / CurrentAttributes", "Store password digests and login sessions; expose the current user without owning training records.")
-  Component(password_mailer, "PasswordsMailer", "Action Mailer", "Builds reset emails; sender and delivery remain unverified placeholders.")
+  Component(auth_models, "User, Session and Current", "Active Record / CurrentAttributes", "Store password digests and login sessions; expose the owner for training requests.")
+  Component(account_access, "Accounts::Provision and operator task", "Service / Rake", "Creates a rider with a random password and sends a setup link behind a release flag.")
+  Component(password_mailer, "PasswordsMailer", "Action Mailer", "Builds setup and reset emails using configured sender and delivery.")
   Component(views, "Views and graph helpers", "ERB, Turbo, CalendarHelper", "Render full-page forms, calendar totals, weekly TSS chart and canonical-step SVG profiles.")
   Component(calendar, "Calendar presenter", "Planning::CalendarPresenter", "Builds the continuous calendar view from plans, workouts, phases and time off.")
   Component(plan_management, "Plan management services", "Planning services", "Validate configurations, build previews, create plans, prescribe future workouts and materialise the structured-workout horizon.")
@@ -31,6 +33,9 @@ Rel(rider, authentication, "Signs in, out or requests a password reset", "HTTP (
 Rel(controllers, authentication, "Require authentication before training actions")
 Rel(authentication, auth_models, "Validates credentials and creates/destroys sessions")
 Rel(authentication, password_mailer, "Queues reset email")
+Rel(account_access, auth_models, "Creates account")
+Rel(account_access, password_mailer, "Sends setup link immediately")
+Rel(password_mailer, smtp, "Delivers mail", "SMTP / STARTTLS")
 Rel(auth_models, database, "Persists users and sessions", "SQL")
 Rel(controllers, calendar, "Builds calendar views")
 Rel(controllers, plan_management, "Previews/creates plans; materializes horizon on home load")
@@ -41,6 +46,7 @@ Rel(controllers, sync, "Starts manual sync")
 Rel(controllers, views, "Renders pages with presenter data")
 Rel(views, workouts, "Builds graph data through ProfileBuilder")
 Rel(controllers, models, "Loads records; moves workouts, records FTP tests and archives/deletes plans")
+Rel(controllers, auth_models, "Scopes profile, plan and record queries to Current.user")
 Rel(calendar, models, "Reads calendar data")
 Rel(plan_management, workouts, "Generates workout structures and metrics")
 Rel(plan_management, models, "Creates and updates plans")
@@ -50,7 +56,7 @@ Rel(adaptations, models, "Records completions and schedule changes")
 Rel(settings, adaptations, "Recalculates future metrics after FTP changes")
 Rel(adaptations, workouts, "Applies accepted edits and calculates FTP metrics")
 Rel(settings, models, "Updates rider profile and FTP readings")
-Rel(sync, models, "Selects workouts and updates sync records")
+Rel(sync, models, "Selects owner-scoped workouts and updates owner-scoped sync records")
 Rel(sync, client, "Sends serialized events")
 Rel(client, intervals_icu, "Upserts and deletes CycleFar-owned events", "HTTPS / JSON")
 Rel(models, database, "Reads and writes", "SQL")

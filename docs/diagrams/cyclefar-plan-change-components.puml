@@ -1,5 +1,5 @@
 @startuml CycleFar Plan Change Components
-' Reviewed against application source on 2026-09-25; scope and limitations: README.md
+' Material-change and ownership flows checked on 2026-09-28; scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Completion, Adaptation and Replanning Components
@@ -10,12 +10,13 @@ Person(rider, "Rider", "Completes, edits, moves or misses workouts; changes avai
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent training data.")
 
 Container_Boundary(web_application, "CycleFar web application") {
-  Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Handle workout actions, adaptation decisions, availability changes, time off and settings updates.")
+  Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Scope workout, proposal and time-off lookups to Current.user; handle edits, feedback, schedule and settings.")
   Component(editor, "ManualEditor", "Workouts service", "Regenerates a planned structured workout after a rider-directed change or accepted adaptation.")
   Component(manual_creation, "Creator and Copier", "Workouts services", "Add a generated workout or copy canonical steps to an empty plan date using current FTP.")
   Component(completion, "CompletionRecorder", "Adaptations service", "Records feedback, freezes completed-workout snapshots and requests adaptation evaluation atomically.")
   Component(evaluator, "FeedbackEvaluator", "Adaptations service", "Proposes a level change to the next same-subtype structured workout and an optional intensity bias.")
   Component(proposals, "ProposalApplier", "Adaptations service", "Accepts or rejects an adaptation proposal atomically; accepted changes use ManualEditor.")
+  Component(material_change, "MaterialChangeProposal and Replanner", "Planning services", "Offer an optional proposal after material Change; acceptance keeps that workout fixed and re-prescribes the following bounded 14 days.")
   Component(schedule_changes, "Schedule-change services", "Planning services", "MissedWorkoutResolver, AvailabilityChanger and TimeOffPlanner preserve history while changing the future schedule.")
   Component(prescriber, "FuturePrescriber", "Planning service", "Re-prescribes affected future dates, accounts for time off and return ramps, and materializes the near-term horizon.")
   Component(plan_builder, "PlanBuilder and ExistingPlanConfiguration", "Planning services", "Rebuild deterministic prescriptions from the saved plan and supplied availability.")
@@ -27,6 +28,9 @@ Container_Boundary(web_application, "CycleFar web application") {
 
 Rel(rider, controllers, "Changes training and records feedback", "HTTP (local)")
 Rel(controllers, editor, "Edits planned structured workouts")
+Rel(controllers, material_change, "Creates optional material-change proposal")
+Rel(material_change, prescriber, "Re-prescribes following block on acceptance")
+Rel(material_change, models, "Reads proposal and preserves changed workout")
 Rel(controllers, models, "Moves date/phase directly; records FTP-test completion")
 Rel(controllers, manual_creation, "Adds and copies workouts")
 Rel(manual_creation, engine, "Generates definitions or recalculates copied metrics")
@@ -38,6 +42,7 @@ Rel(evaluator, models, "Reads comparable workouts and feedback")
 Rel(completion, models, "Creates proposal from evaluator result")
 Rel(controllers, proposals, "Accepts or rejects proposal")
 Rel(proposals, editor, "Applies accepted workout change")
+Rel(proposals, material_change, "Applies accepted material-change replan")
 Rel(proposals, models, "Updates progression state and proposal")
 Rel(controllers, schedule_changes, "Resolves misses, availability and time off")
 Rel(schedule_changes, prescriber, "Re-prescribes affected future dates")
@@ -64,8 +69,8 @@ note bottom of evaluator
   No upper 14-day bound or before/after summary yet.
 end note
 
-note bottom of editor
-  Material manual changes do not yet offer replanning.
+note bottom of material_change
+  Dismissal leaves the rest of the plan unchanged.
 end note
 
 SHOW_LEGEND()

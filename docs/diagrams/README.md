@@ -1,12 +1,12 @@
 # CycleFar C4 diagrams
 
-Training flows were reviewed against the application source on 2026-09-25, including the CYF-1 preview-draft fix. Authentication in the context, container and application-component views was updated on 2026-09-27. These diagrams describe the implemented local, single-rider application. They do not certify all V1 requirements; outstanding behaviour is tracked in [REVIEW.md](../REVIEW.md).
+Training flows were reviewed against application source through 2026-09-28, including owner-scoped requests and sync, account access, same-browser preview isolation and optional material-change replanning. These diagrams describe the implemented application while additional rider provisioning remains gated. They do not certify all V1 requirements; outstanding behaviour is tracked in [REVIEW.md](../REVIEW.md).
 
 | View | Scope |
 | --- | --- |
-| [System context](cyclefar-system-context.puml) | Rider, CycleFar sign-in boundary and the external Intervals.icu service |
-| [Containers](cyclefar-container.puml) | Rails application and PostgreSQL, including user/session records |
-| [Application components](cyclefar-component.puml) | Authentication, request handling, presentation, domain services and persistence |
+| [System context](cyclefar-system-context.puml) | Rider, owner-scoped CycleFar and the external Intervals.icu service |
+| [Containers](cyclefar-container.puml) | Rails application, PostgreSQL and configured SMTP provider |
+| [Application components](cyclefar-component.puml) | Authentication, controlled account access, request handling, presentation, domain services and persistence |
 | [Plan generation](cyclefar-plan-generation-components.puml) | Session draft, deterministic preview, confirmation and request-driven materialisation |
 | [Plan changes](cyclefar-plan-change-components.puml) | Manual edits, completion, proposals, schedule changes and FTP updates |
 | [Intervals.icu sync](cyclefar-intervals-icu-sync-components.puml) | Selection, serialization, HTTP calls and local reconciliation metadata |
@@ -17,9 +17,9 @@ The UI uses server-rendered ERB and Turbo navigation/forms. Stimulus is installe
 
 The generation diagram's session component represents the Rails session draft, which is distinct from the database-backed `Session` used for login. Confirmation consumes the saved configuration and rebuilds the preview before persisting a plan. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
-Authentication gates application controllers, but training records remain global to the singleton rider profile. There is no registration route or per-user data ownership. The checked-in SQL schema dump includes the auth tables; password-reset delivery and sign-out navigation remain unverified or absent.
+Authentication gates application controllers. Profiles, plans and sync records have required user ownership; training lookups, preview drafts and sync reconciliation use that owner. There is no registration route. Controlled provisioning is gated, sign-out is visible, and reset/setup mail uses configured SMTP. Live SMTP delivery and a target-data migration rehearsal remain release prerequisites; see [TWO_RIDER_RELEASE_GATE.md](../TWO_RIDER_RELEASE_GATE.md).
 
-The sync view describes the current cleanup scope, which excludes some stale linked events. Remote operations and the local metadata transaction are not one atomic transaction. The plan-change view records saved-but-unused progression bias and incomplete proposal bounds/expiry; see REVIEW.md for the full acceptance backlog.
+The sync view describes the current cleanup scope, which excludes some stale linked events. Remote operations and the local metadata transaction are not one atomic transaction. The plan-change view shows the implemented material Change proposal and records saved-but-unused progression bias and incomplete feedback-proposal bounds/expiry; see [REVIEW.md](../REVIEW.md) for the full acceptance backlog.
 
 AWS Terraform/CloudFormation templates are separate deployment preparation, with no deployed environment recorded. They are documented in [infra/README.md](../../infra/README.md), not represented as running containers here. Rails production cache/queue/cable database configuration does not imply separate implemented training workers.
 

@@ -4,7 +4,7 @@ This is the original milestone sequence, retained as the implementation and acce
 
 Rails authentication was generated on 2026-09-27 after this sequence. The milestone tasks below remain historical; [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) describe the current authentication scaffold and integration gaps.
 
-Milestone 12 below is a planned independent-rider release. Milestone 11 remains current until its own acceptance gaps and required gates pass; documenting Milestone 12 does not start or complete it.
+Milestone 12 below is a planned independent-rider release. Its CYF-66–74 code and automated two-rider matrix have been delivered, while target-data migration rehearsal and live mail verification remain. Milestone 11 remains current until its own acceptance gaps and required gates pass; this partial Milestone 12 work does not start or complete that milestone.
 
 Build vertical slices. Do not attempt the adaptive engine, calendar UI and external integration in one pass.
 
@@ -372,7 +372,7 @@ Implement in this order, with reviewable changes and the [USR-001–USR-008](REQ
 6. **Account access (CYF-73):** provide controlled provisioning/invitations, visible identity/sign-out and working password-reset delivery. Do not enable a second rider before owner boundaries pass.
 7. **Release gate (CYF-74):** run a two-user matrix across Settings, plan preview/creation/archive, calendar, workouts, feedback, missed resolution, availability/time off, FTP, completed history and Intervals.icu. Exercise foreign IDs, concurrent first profile/plan creation, detached sync cleanup and same-browser account switching.
 
-Exit criteria: required migration rehearsal and two-user coverage pass; `bundle exec rspec`, `bin/rails zeitwerk:check` and configured lint/security checks pass; only then update [STATUS.md](STATUS.md) to complete Milestone 12 and name the next current milestone. Milestone 11 must have completed its own gate before Milestone 12 becomes current.
+Exit criteria: target-data migration rehearsal and live SMTP delivery pass alongside two-user coverage; `bundle exec rspec`, `bin/rails zeitwerk:check` and configured lint/security checks pass; only then update [STATUS.md](STATUS.md) to complete Milestone 12 and name the next current milestone. Milestone 11 must have completed its own gate before Milestone 12 becomes current.
 
 ## Later additions already delivered
 

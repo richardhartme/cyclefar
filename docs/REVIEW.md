@@ -18,9 +18,9 @@ CYF-1 resolved PLN-013 on 2026-09-25: Back to edit now restores the saved previe
 
 CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creates an optional persisted proposal. Acceptance keeps the changed workout fixed and atomically re-prescribes the bounded following 14-day block using the effective availability template for each date; dismissal preserves the remaining plan.
 
-## Post-review authentication addition
+## Post-review authentication and ownership additions
 
-Rails authentication was generated on 2026-09-27. The sign-in gate initially broke existing request specs and the checked-in SQL schema dump lacked `User` and `Session` tables. Both were corrected in the subsequent spec repair: training request specs sign in, focused auth specs cover the basic boundary, and the SQL schema dump includes the auth tables. There is still no registration or per-user ownership of Settings/plans, no sign-out control in the layout, and no verified password-reset email delivery. These are follow-up findings, not changes to the training requirements or evidence of full authentication acceptance. See [STATUS.md](STATUS.md).
+Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. There is still no public registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, additional rider provisioning is disabled, and Milestone 11 acceptance work remains open. See [STATUS.md](STATUS.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 ## Open acceptance gaps
 
@@ -28,7 +28,6 @@ These are findings from source inspection, not newly added failing regression te
 
 | Area | Intended behaviour | Current evidence and follow-up |
 |---|---|---|
-
 | FBK-002: proposal review | Show affected workouts and before/after values. | [`FeedbackEvaluator`](../app/services/adaptations/feedback_evaluator.rb) stores IDs and target levels; the [calendar](../app/views/home/index.html.erb) shows only the reason and Accept/Reject. Add reviewable before/after details. |
 | FBK-002, GEN-001; engine §§12, 32, 47 | Accepted progression bias affects later generation. | [`ProposalApplier`](../app/services/adaptations/proposal_applier.rb) saves global `intensity_bias`; [`HorizonMaterializer`](../app/services/planning/horizon_materializer.rb) uses the outline level directly and does not read that state. The saved bias therefore does not affect newly materialised workouts. |
 | FBK-002; engine §§29–31 | Bound adaptations to 14 days, support comparable-family fallback and nearby hard-session reductions. | [`FeedbackEvaluator`](../app/services/adaptations/feedback_evaluator.rb) finds only the next same-subtype structured workout, without an upper date bound. Add/Copy/Move can leave structured workouts beyond 14 days. It proposes one target only and does not recheck the weekly cap. Easy-workout levels can be nil, so arithmetic on the target level also needs coverage for high-RPE Recovery/Endurance feedback. |

@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The current release remains a single-rider planner. Rails-generated email/password sign-in exists, profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning and SMTP configuration are implemented; a second account must not be enabled until the full two-user release gate passes.
+The current release remains a single-rider planner. Rails-generated email/password sign-in exists, profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are implemented; a second account must not be enabled until the target-data migration rehearsal, live mail check and Milestone 11 acceptance work pass.
 
 The assumed rider:
 
@@ -108,8 +108,8 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ### Explicitly out of scope
 
-- Self-service account registration and per-user training data
-- Multi-rider support
+- Self-service account registration
+- Enabling additional riders before the release gate
 - Coaches/social features
 - Running, strength or multisport training
 - Controlling a smart trainer
@@ -131,7 +131,7 @@ This describes intended V1 scope, including later additions. See [STATUS.md](STA
 
 ## Planned independent-rider release
 
-Milestone 12 is planned after the open Milestone 11. Its legacy preflight and profile/plan ownership schema have been implemented; full rider isolation has not. It will support independent riders using provisioned or invited email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there.
+Milestone 12 is planned after the open Milestone 11. Its ownership schema, owner-scoped application paths, controlled provisioning and automated two-rider matrix have been implemented, but the release gate remains open. It will enable independent riders using operator-provisioned email/password accounts. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. The target database copy rehearsal and live SMTP delivery remain unverified; additional account provisioning is disabled.
 
 The first independent-rider release excludes public self-registration, Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
 

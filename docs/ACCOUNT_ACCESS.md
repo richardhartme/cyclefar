@@ -1,6 +1,6 @@
 # Controlled rider account access
 
-CycleFar has no public registration route. An authorized operator provisions an account by email, and the rider sets a password through the emailed link. Keep rider provisioning disabled until the CYF-74 two-user isolation and migration cutover gates pass. Existing single-rider access remains available.
+CycleFar has no public registration route. An authorized operator provisions an account by email, and the rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; keep rider provisioning disabled until the target-data migration rehearsal, live SMTP verification and open Milestone 11 acceptance gate pass. Existing single-rider access remains available.
 
 ## Production mail settings
 

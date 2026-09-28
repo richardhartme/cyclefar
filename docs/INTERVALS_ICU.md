@@ -6,13 +6,13 @@ On explicit rider action, sync the next two upcoming structured cycling workouts
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter as reviewed on 2026-09-24, not a new live-API certification. Local specs stub HTTP. See [REVIEW.md](REVIEW.md) for reconciliation gaps.
+The request details below describe the implemented adapter and 2026-09-28 owner-scoped reconciliation, not a new live-API certification. Local specs stub HTTP. See [REVIEW.md](REVIEW.md) for reconciliation gaps.
 
 ## Authentication
 
 Use the rider's personal API key from Intervals.icu Settings. The client uses HTTP Basic auth with username `API_KEY` and the key as password.
 
-Intervals.icu documents API-key authentication and allows athlete id `0` to mean the authenticated athlete. Keep athlete-id assumptions isolated in the client so OAuth/multi-rider support can be added later.
+Intervals.icu documents API-key authentication and allows athlete id `0` to mean the authenticated athlete. Keep athlete-id assumptions isolated in the client so OAuth can be added later. Manual sync uses only the signed-in rider's profile and API key.
 
 Base API:
 
@@ -128,11 +128,11 @@ Current call order:
 
 1. Resolve the active plan's next-two eligible set (or fewer when fewer exist).
 2. Build payloads with stable external IDs and bulk-upsert the set.
-3. Find stale local sync records: detached records, plus records for still-planned future workouts in this plan that are no longer in the selected set.
+3. Find stale local sync records owned by this rider: detached records, plus records for still-planned future workouts in this plan that are no longer in the selected set.
 4. Bulk-delete those stale external IDs.
 5. After both remote operations succeed, transactionally save returned event IDs, digests and timestamps, then destroy stale local sync records.
 
-Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable foreign key, allowing later cleanup.
+Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider.
 
 The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open in REVIEW.md.
 
