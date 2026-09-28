@@ -34,12 +34,16 @@
             <p class="text-base-content/55 hidden text-xs font-medium tracking-wide sm:block">Plan smart. Ride far.</p>
           </div>
         </div>
-        <div class="navbar-end">
-          <ul class="menu menu-horizontal bg-base-200 border-base-300 rounded-box border p-1 shadow-inner">
-            <li><%= link_to "Calendar", root_path, class: "rounded-field #{'menu-active bg-base-100 shadow-sm' unless current_page?(settings_path)}", aria: ({ current: "page" } unless current_page?(settings_path)) %></li>
-            <li><%= link_to "Settings", settings_path, class: "rounded-field #{'menu-active bg-base-100 shadow-sm' if current_page?(settings_path)}", aria: ({ current: "page" } if current_page?(settings_path)) %></li>
-          </ul>
-        </div>
+        <% if authenticated? %>
+          <div class="navbar-end gap-3">
+            <ul class="menu menu-horizontal bg-base-200 border-base-300 rounded-box border p-1 shadow-inner">
+              <li><%= link_to "Calendar", root_path, class: "rounded-field #{'menu-active bg-base-100 shadow-sm' unless current_page?(settings_path)}", aria: ({ current: "page" } unless current_page?(settings_path)) %></li>
+              <li><%= link_to "Settings", settings_path, class: "rounded-field #{'menu-active bg-base-100 shadow-sm' if current_page?(settings_path)}", aria: ({ current: "page" } if current_page?(settings_path)) %></li>
+            </ul>
+            <span class="text-base-content/70 max-w-40 truncate text-sm" title="<%= Current.user.email_address %>"><%= Current.user.email_address %></span>
+            <%= button_to "Sign out", session_path, method: :delete, class: "btn btn-ghost btn-sm" %>
+          </div>
+        <% end %>
       </nav>
     </header>
 

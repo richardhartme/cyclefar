@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles and plans now have required user ownership in PostgreSQL, but complete request/service isolation, account provisioning and verified password-reset delivery remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has email/password sign-in, sign-out, password-reset routes and a default authentication check on application controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning and configured SMTP delivery are implemented, but the full two-user release gate and live mail delivery verification remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
 
 ## 0. Product identity
 

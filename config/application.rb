@@ -24,6 +24,7 @@ module CycleFar
     config.load_defaults 8.1
     config.beginning_of_week = :monday
     config.time_zone = "London"
+    config.x.mail_from = "CycleFar <no-reply@localhost>"
     # Preserve PostgreSQL history-protection triggers in schema loads.
     config.active_record.schema_format = :sql
 

@@ -163,7 +163,8 @@ RSpec.describe "USR-004 owner-scoped training routes", type: :request do
       expect(response).to redirect_to(root_path)
       own_plan = user.training_plans.active.sole
       own_phase = own_plan.plan_phases.first
-      completed = create(:planned_workout, :completed, training_plan: own_plan, plan_phase: own_phase, scheduled_on: own_plan.starts_on + 1)
+      free_date = (own_phase.starts_on..own_phase.ends_on).find { |date| !own_plan.planned_workouts.exists?(scheduled_on: date) }
+      completed = create(:planned_workout, :completed, training_plan: own_plan, plan_phase: own_phase, scheduled_on: free_date)
       expect(other_plan.reload).to be_active
 
       delete training_plan_path

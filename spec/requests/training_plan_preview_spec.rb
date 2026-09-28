@@ -20,8 +20,9 @@ RSpec.describe "Training plan preview", type: :request do
     get new_training_plan_path
     expect(response).to have_http_status(:ok)
     html = Nokogiri::HTML(response.body)
-    expect(html.at_css("form")).to be_present
-    expect(html.at_css("form")["data-turbo"]).to eq("false")
+    form = html.css("form").find { |element| element["action"] == preview_training_plan_path }
+    expect(form).to be_present
+    expect(form["data-turbo"]).to eq("false")
     expect(response.body).to include("Goal", "Discipline", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
     expect(response.body).to include(
       "Balances aerobic endurance with varied intensity",
