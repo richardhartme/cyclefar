@@ -27,6 +27,26 @@ RSpec.describe "Home", type: :request do
     end
   end
 
+  it "PLN-001 shows exactly four complete empty weeks across month boundaries" do
+    {
+      Date.new(2026, 10, 1) => [ Date.new(2026, 9, 21), Date.new(2026, 10, 18) ],
+      Date.new(2026, 2, 27) => [ Date.new(2026, 2, 16), Date.new(2026, 3, 15) ]
+    }.each do |today, (first_day, last_day)|
+      travel_to today do
+        get root_path
+
+        html = Nokogiri::HTML(response.body)
+        weeks = html.css('section[aria-label^="Week of"]')
+        expect(weeks.size).to eq(4)
+        expect(weeks.map { |week| week.css("div > strong").size }).to eq([ 7, 7, 7, 7 ])
+        expect(weeks.first["aria-label"]).to eq("Week of #{first_day.to_fs(:long)}")
+        expect(weeks.last["aria-label"]).to eq("Week of #{(last_day - 6).to_fs(:long)}")
+        expect(weeks.last.text).to include(last_day.strftime("%a %-d"))
+        expect(html.css('aside[aria-label^="Weekly summary for"], a[aria-label^="Add workout on"]')).to be_empty
+      end
+    end
+  end
+
   it "uses Monday-first calendar dates" do
     expect(Date.new(2026, 9, 13).beginning_of_week).to eq(Date.new(2026, 9, 7))
     expect(CycleFar::Application.module_parent_name).to eq("CycleFar")

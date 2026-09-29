@@ -2,7 +2,7 @@ module Planning
   class CalendarPresenter
     Week = Data.define(:starts_on, :ends_on, :days, :phase_label, :recovery_week, :duration_minutes, :estimated_tss, :estimated_work_kj)
 
-    def initialize(plan = nil, starts_on: Date.current.beginning_of_week - 7, ends_on: Date.current.end_of_month)
+    def initialize(plan = nil, starts_on: Date.current.beginning_of_week - 7, ends_on: starts_on.beginning_of_week + 27)
       @plan = plan
       @starts_on = plan&.starts_on || starts_on
       @ends_on = plan&.ends_on || ends_on

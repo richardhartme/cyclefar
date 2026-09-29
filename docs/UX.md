@@ -39,7 +39,7 @@ Content:
 - short CycleFar product sentence;
 - `Create training plan` primary button;
 - secondary link to Settings if FTP is not yet configured.
-- calendar starting Monday of the previous week and continuing through the end of the current month in the normal Monday–Sunday layout, without workout cards or weekly summaries.
+- four Monday–Sunday calendar weeks starting Monday of the previous week, without workout cards or weekly summaries.
 
 ## 2. Settings
 

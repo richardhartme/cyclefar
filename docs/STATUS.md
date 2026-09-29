@@ -65,6 +65,8 @@ Validation: 1,213 RSpec examples passed; Zeitwerk passed; RuboCop passed (139 fi
 
 2026-09-28: CYF-75 makes a valid plan-preview submission redirect to a session-backed GET preview, so refreshing the preview works without resubmitting the form or persisting a plan. Missing or foreign-account drafts return to the plan form; invalid submissions still show validation errors. Request specs cover refresh, draft ownership and the updated redirect flow. Validation: 1,287 RSpec examples passed; Zeitwerk and RuboCop passed (172 files); Brakeman reported no warnings; Bundler Audit and importmap audit found no vulnerabilities. Milestone 11 remains current for the other acceptance gaps.
 
+2026-09-29: CYF-16 makes the no-plan calendar exactly four complete Monday–Sunday weeks, beginning with the previous week, regardless of month length. PLN-001 and the UX/architecture descriptions now match; request coverage checks both longer and shorter month-boundary cases. Validation: 1,288 RSpec examples passed; Zeitwerk and RuboCop passed (172 files); Brakeman reported no warnings; Bundler Audit and importmap audit found no vulnerabilities. Milestone 11 remains current for the other acceptance gaps.
+
 ## Later feature changes
 
 After the original milestone delivery, the repository added:

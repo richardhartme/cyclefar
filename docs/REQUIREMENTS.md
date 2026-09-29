@@ -47,7 +47,7 @@ Settings allow an optional Intervals.icu API key.
 
 ### PLN-001 Empty home
 
-When there is no active plan, `/` shows a calendar from Monday of the previous week through the end of the current month with a clear `Create training plan` action. The no-plan calendar has no workout, time-off or weekly-summary controls.
+When there is no active plan, `/` shows four Monday–Sunday weeks starting on Monday of the previous week, with a clear `Create training plan` action. The no-plan calendar has no workout, time-off or weekly-summary controls.
 
 ## 3. Plan setup
 

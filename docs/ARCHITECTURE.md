@@ -50,7 +50,7 @@ Avoid repository layers, command buses, event sourcing, GraphQL and front-end SP
 - `Planning::PreviewPresenter` formats that preview for the view.
 - `Planning::PlanCreator#create!` rebuilds the same preview, then persists the plan, phases, template, optional target event and outlines in a transaction before materialising the horizon. There is no `PlanBuilder#create!` or separate `PrescriptionBuilder` class.
 - `Planning::HorizonMaterializer#call` structures planned executable outlines in `date..date+13`, defaulting to `Date.current`. It runs after creation, on home/calendar load, and after future re-prescription. It leaves existing structured, completed and missed records alone.
-- `Planning::CalendarPresenter` loads steps/phases with workouts, groups by date and derives week summaries. With no plan, it renders Monday of the previous week through the current month end. The weekly TSS chart uses the same summaries as the calendar, including empty weeks.
+- `Planning::CalendarPresenter` loads steps/phases with workouts, groups by date and derives week summaries. With no plan, it renders four Monday–Sunday weeks starting the previous week. The weekly TSS chart uses the same summaries as the calendar, including empty weeks.
 
 Forecast generation always passes an explicit variation. Initial endurance materialisation selects and saves a random profile under WKO-009. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
