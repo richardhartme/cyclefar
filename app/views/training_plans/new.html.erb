@@ -87,19 +87,23 @@
 
       <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
         <legend class="fieldset-legend px-2 text-lg">Fitness and progression</legend>
-        <div class="grid gap-5 md:grid-cols-2">
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">FTP (watts) <%= number_field_tag "plan_configuration[ftp_watts]", @configuration.ftp_watts, min: 1, required: true, class: "input w-full" %></label>
-          <label class="bg-base-100 border-base-300 flex cursor-pointer items-center gap-3 self-end rounded-box border p-4 font-semibold">
+          <label class="mt-5 bg-base-100 border-base-300 flex cursor-pointer items-center gap-3 self-end rounded-box border p-4">
             <%= hidden_field_tag "plan_configuration[include_base]", "0" %>
             <%= check_box_tag "plan_configuration[include_base]", "1", @configuration.include_base, class: "checkbox checkbox-primary" %>
-            Include Base phase
+            <span>
+                <span class="font-semibold">Include Base phase</span>
+                <span class="text-base-content/70 mt-1 block text-sm">You can skip the base phase if you are already well trained.</span>
+            </span>
           </label>
-        </div>
 
         <div class="mt-4 grid gap-3 md:grid-cols-2">
-          <label class="bg-base-100 border-base-300 flex cursor-pointer items-center gap-3 rounded-box border p-4 font-semibold">
+          <label class="bg-base-100 border-base-300 flex cursor-pointer items-center gap-3 rounded-box border p-4">
             <%= radio_button_tag "plan_configuration[progression_mode]", "continuous", @configuration.progression_mode == "continuous", class: "radio radio-primary radio-sm" %>
-            Continuous progression
+            <span>
+                <span class="font-semibold">Continuous progression</span>
+                <span class="text-base-content/70 mt-1 block text-sm">Progression continually increases with no rest weeks built in.</span>
+            </span>
           </label>
           <div class="bg-base-100 border-base-300 rounded-box border p-4">
             <label class="flex cursor-pointer items-center gap-3 font-semibold">
