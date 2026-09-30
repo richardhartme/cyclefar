@@ -2,7 +2,7 @@
 
 Reviewed the committed application at `a3a2310` against all supporting Markdown documents and six PlantUML sources in `docs/`, using routes, models, migrations, services, views, specs and recent history. The working tree was clean at the start. This review changes documentation only.
 
-The implementation contains all original milestone slices and several later additions, but it does not meet every documented acceptance criterion. Milestone 11 is reopened for hardening and acceptance follow-up. Requirements below remain authoritative; documenting a gap does not waive it.
+The implementation contains all original milestone slices and several later additions, but it does not meet every documented acceptance criterion. Hardening and acceptance follow-up are tracked in Jira. Requirements below remain authoritative; documenting a gap does not waive it.
 
 ## Confirmed later additions
 
@@ -20,7 +20,7 @@ CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creat
 
 ## Post-review authentication and ownership additions
 
-Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. A user-requested follow-up added a public homepage and registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, operator provisioning is disabled, and Milestone 11 acceptance work remains open. See the [release gate](TWO_RIDER_RELEASE_GATE.md).
+Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. A user-requested follow-up added a public homepage and registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, operator provisioning is disabled. See the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 ## Open acceptance gaps
 
@@ -63,4 +63,4 @@ All 53 local Markdown links resolved, whitespace checks passed, and all six Plan
 
 ## Next work
 
-Use milestone 11 to close the acceptance gaps above, prioritising progression/adaptation correctness, completion paths, schedule exclusions and remote reconciliation. Add regression coverage for each fix, then repeat the repository quality gates and the relevant browser flows before declaring V1 fully accepted. This review does not authorise changing the specified training constants or expanding the product scope.
+Close the acceptance gaps above, prioritising progression/adaptation correctness, completion paths, schedule exclusions and remote reconciliation. Add regression coverage for each fix, then repeat the repository quality gates and the relevant browser flows before declaring V1 fully accepted. This review does not authorise changing the specified training constants or expanding the product scope.

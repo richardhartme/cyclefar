@@ -33,7 +33,7 @@ CycleFar currently enables one rider. Profiles, plans, preview drafts and
 Intervals.icu sync records are scoped to the signed-in user, and an integrated
 two-rider test matrix exercises those boundaries. Additional rider provisioning
 remains disabled until the target database migration rehearsal, live mail
-delivery and open Milestone 11 acceptance work are complete. There is no public
+delivery are complete. There is no public
 registration. V1 has no ride imports, trainer control, notifications or
 automatic calendar syncing.
 

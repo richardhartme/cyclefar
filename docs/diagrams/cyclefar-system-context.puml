@@ -17,8 +17,8 @@ Rel(cyclefar, intervals_icu, "Manually exports up to two upcoming executable str
 
 note bottom of cyclefar
   Automated two-rider isolation coverage exists.
-  Target-data migration rehearsal, live SMTP delivery
-  and Milestone 11 acceptance remain open.
+  Target-data migration rehearsal and live SMTP
+  delivery remain open.
 end note
 
 SHOW_LEGEND()
