@@ -18,7 +18,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(models, "User, plan, profile, workout and sync models", "Active Record", "Provides canonical steps and encrypted rider key; sync records retain required user_id after workout deletion.")
 }
 
-Rel(rider, controller, "Starts manual sync", "HTTP (local)")
+Rel(rider, controller, "Starts manual sync", "HTTPS")
 Rel(controller, sync, "Synchronizes active plan")
 Rel(sync, models, "Selects eligible workouts and this rider's linked/detached sync records")
 Rel(sync, serializer, "Builds event payloads")

@@ -26,7 +26,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(models, "Plan and workout models", "Active Record", "Enforce validations and completed-workout immutability while persisting plans, workouts, steps, feedback, proposals, settings and time off.")
 }
 
-Rel(rider, controllers, "Changes training and records feedback", "HTTP (local)")
+Rel(rider, controllers, "Changes training and records feedback", "HTTPS")
 Rel(controllers, editor, "Edits planned structured workouts")
 Rel(controllers, material_change, "Creates optional material-change proposal")
 Rel(material_change, prescriber, "Re-prescribes following block on acceptance")

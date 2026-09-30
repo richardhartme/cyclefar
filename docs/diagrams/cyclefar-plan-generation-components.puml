@@ -23,7 +23,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(models, "User, plan and workout models", "Active Record", "Enforces per-user active-plan ownership and represents phases, availability, events, workouts and canonical steps.")
 }
 
-Rel(rider, controller, "Creates, previews and confirms a plan", "HTTP (local)")
+Rel(rider, controller, "Creates, previews and confirms a plan", "HTTPS")
 Rel(controller, session, "Binds draft to current user; restores, clears or consumes it")
 Rel(controller, configuration, "Builds from submitted inputs or saved draft")
 Rel(home, materializer, "Runs before calendar presentation")

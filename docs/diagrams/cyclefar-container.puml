@@ -16,7 +16,7 @@ System_Boundary(cyclefar_boundary, "CycleFar") {
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 System_Ext(smtp, "SMTP provider", "Configured outbound mail service for password setup and reset links; live delivery remains unverified.")
 
-Rel(rider, web_application, "Signs in and uses training planner", "HTTP (local)")
+Rel(rider, web_application, "Signs in and uses training planner", "HTTPS")
 Rel(web_application, database, "Reads and writes sessions and training data", "SQL / Active Record")
 Rel(web_application, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 Rel(web_application, smtp, "Sends password setup immediately and enqueues reset email", "SMTP / STARTTLS")
