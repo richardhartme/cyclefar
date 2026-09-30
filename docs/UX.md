@@ -24,11 +24,11 @@ The public homepage offers **Sign In** and **Register**. Private application req
 
 ## Independent-rider account flow
 
-Account access for independent riders and an automated two-rider request matrix are implemented, while deployment release checks remain open. Riders can register through the public homepage; an authorized operator can also provision a rider after the release flag is enabled following those checks. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI in the first independent-rider release.
+Account access for independent riders and an automated two-rider request matrix are implemented. Riders can register through the public homepage; an authorized operator can also provision a rider once live mail delivery is verified and the provisioning flag is enabled. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI in the first independent-rider release.
 
 After sign-in, Calendar, Settings, plan setup and all workout actions show only that account's profile and plan. Each rider can have one active plan; archived plans retain private completed history without adding a History page. Foreign workout, proposal and time-off links respond like missing records, without showing another rider's details. Intervals.icu sync uses only the signed-in rider's key and owned events.
 
-A preview draft belongs to the account that created it. If rider A signs out and rider B signs in in the same browser, B starts from B's own plan form and cannot open, edit or confirm A's preview. A's Back to edit and confirmation still work when A remains signed in. Request specs exercise these paths and the two-user UI routes; see the [release-gate matrix](TWO_RIDER_RELEASE_GATE.md).
+A preview draft belongs to the account that created it. If rider A signs out and rider B signs in in the same browser, B starts from B's own plan form and cannot open, edit or confirm A's preview. A's Back to edit and confirmation still work when A remains signed in. Request specs exercise these paths and the two-user UI routes.
 
 ## 1. No-plan home
 

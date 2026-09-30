@@ -25,7 +25,7 @@ Validations:
 
 - FTP > 0
 
-Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented locally. Deployment with additional riders remains pending the release prerequisites in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md); the operator provisioning task remains disabled by default.
+Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented locally. The operator provisioning task remains disabled by default.
 
 ## FtpReading
 
@@ -274,9 +274,9 @@ Prefer service/query objects for:
 - calendar month-boundary labels;
 - workout graph points.
 
-## Ownership schema and migration contract
+## Ownership schema
 
-This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered the explicit-owner backfill, required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. Deployment prerequisites remain in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md). [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
+This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|
@@ -288,6 +288,6 @@ This section records the independent-rider ownership design and its implementati
 
 Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.
 
-The CYF-67/68 migrations preflight each target database, require an explicitly selected existing account for legacy training data, backfill profile, plans and sync rows, then enforce profile/plan `NOT NULL`, foreign keys and per-user uniqueness. CYF-72 derives any remaining linked sync owner from its plan, requires an explicit owner for unassigned detached rows, and enforces sync `NOT NULL` and a user foreign key. They preserve completed snapshots, FTP history, the encrypted API-key value and `cyclefar-` external IDs. The local development authentication-table conflict has been resolved; production preflight and copy rehearsal remain deployment prerequisites. See [the migration runbook](LEGACY_OWNER_MIGRATION.md).
+The ownership migrations enforce profile/plan/sync `NOT NULL`, foreign keys and per-user uniqueness. No legacy single-rider data was migrated; all environments were reset to fresh databases when multi-rider support was added.
 
-The ownership, scoping, preview and sync code has automated two-rider coverage, but a second rider remains disabled pending target-data rehearsal and live mail verification. The checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.
+The ownership, scoping, preview and sync code has automated two-rider coverage, but operator provisioning remains disabled pending live mail verification. The checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.

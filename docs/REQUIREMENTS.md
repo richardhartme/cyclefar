@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, and live mail verification remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; live mail verification remains open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
 
 ## 0. Product identity
 
@@ -462,14 +462,13 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Independent-rider release
 
-These are the acceptance criteria for the independent-rider release. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal and live mail delivery. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for the independent-rider release. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; live mail delivery remains unverified. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Account registration and authentication
 
 - The public homepage offers Sign In and Register. A new rider can create an account with an email address and confirmed password, is signed in, and sees their private calendar. A signed-in rider cannot create another account through the registration form.
 - An authorized operator can also provision or invite an independent rider account. The rider signs in with the existing email/password session flow, can sign out through a visible control, and can receive a working password-reset email without account enumeration.
 - Do not expose Google/social sign-in, coach, team or shared-plan flows in this release.
-- Do not deploy multi-rider access against legacy global training data before USR-002 through USR-007 and the USR-008 isolation gate pass.
 
 Automated coverage target: public-home and registration request specs, plus authentication/provisioning specs for a second rider, sign-out and draft clearing, password-reset delivery with mail stubbed, old-session invalidation and indistinguishable reset-request responses.
 
@@ -510,17 +509,12 @@ Automated coverage target: request specs for A sign-out/B sign-in in one browser
 
 Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, next-two sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
 
-### USR-007 Explicit-owner legacy migration
+### USR-007 Explicit-owner legacy migration (retired)
 
-- Before adding required ownership constraints, inspect each target database's users, singleton profile, FTP readings, plans, completed workouts and linked or detached sync rows. Report counts and the selected existing owner without revealing API keys.
-- Require an explicitly selected existing account for legacy training data. Never infer the owner from the first user, current session or record order. If ownership is ambiguous or inconsistent, fail before partial assignment. Preserve completed structures, snapshots, FTP history and existing external IDs exactly.
-- Backfill profile, plans and sync rows to that owner, then enforce required foreign keys, unique profile ownership and per-user active-plan uniqueness. Rehearse on a representative database copy and document recovery before cutover; resolve the known local development users/sessions migration conflict without deleting rider data.
+No legacy single-rider data was migrated; all environments were reset when multi-rider support was added. The ID is retained so USR-008 references stay stable.
 
-Automated coverage target: migration/preflight specs for empty, valid single-owner, ambiguous and inconsistent data; preservation checks for completed snapshots, FTP readings and detached sync IDs; database-constraint specs and a documented copy-of-data rehearsal.
+### USR-008 Two-user isolation
 
-### USR-008 Two-user release gate
+- Owner schema, controller and service scoping, preview isolation, sync scoping and provisioning must work together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
 
-- Enable multiple rider accounts only after owner schema, controller and service scoping, preview isolation, sync scoping and provisioning are complete together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
-- Do not report per-user work as delivered until its release gate passes.
-
-Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before the independent-rider release is deployed.
+Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks.
