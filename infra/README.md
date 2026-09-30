@@ -98,4 +98,4 @@ terraform output database_username
 terraform output -raw database_password
 ```
 
-The EC2 Elastic IP will become Kamal's web host. The RDS values will later be supplied to the container as `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`; `RAILS_MASTER_KEY` remains a separate Kamal secret. Configure Docker, Kamal's registry, the production hostname, TLS and Rails force-SSL settings in a later change rather than through this Terraform configuration.
+The EC2 Elastic IP will become Kamal's web host. The RDS values will later be supplied to the container as `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`; `SECRET_KEY_BASE` remains a separate Kamal secret. Configure Docker, Kamal's registry, the production hostname, TLS and Rails force-SSL settings in a later change rather than through this Terraform configuration.

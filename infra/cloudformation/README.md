@@ -109,7 +109,7 @@ and the production hostname separately before running `bin/kamal setup`.
 Supply the stack's `DatabaseEndpoint`, `DatabasePort` and `DatabaseUsername` as `DB_HOST`,
 `DB_PORT` and `DB_USERNAME`. Retrieve the password privately using the Secrets Manager
 console and `DatabaseSecretArn`, and supply it as the `DB_PASSWORD` Kamal secret.
-`RAILS_MASTER_KEY` is a separate required secret. Never paste credentials into the template,
+`SECRET_KEY_BASE` is a separate required secret. Never paste credentials into the template,
 parameters, Git, or CloudFormation outputs. Changes to the secret alone do not update
 RDS or already-running containers: coordinate any future password rotation with both.
 

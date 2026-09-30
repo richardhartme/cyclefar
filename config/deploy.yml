@@ -45,7 +45,7 @@ registry:
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
   secret:
-    - RAILS_MASTER_KEY
+    - SECRET_KEY_BASE
     - DB_PASSWORD
     - ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
     - ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
@@ -106,7 +106,7 @@ builder:
   #   RUBY_VERSION: 3.3.5
   # secrets:
   #   - GITHUB_TOKEN
-  #   - RAILS_MASTER_KEY
+  #   - SECRET_KEY_BASE
 
 # Use a different ssh user than root
 ssh:
