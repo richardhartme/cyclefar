@@ -1,10 +1,10 @@
 # CycleFar Functional Requirements
 
-Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. See [STATUS.md](STATUS.md) and the [2026-09-24 implementation review](REVIEW.md) for verified behaviour and outstanding gaps.
+Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. See the [2026-09-24 implementation review](REVIEW.md) for verified behaviour and outstanding gaps.
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) and [STATUS.md](STATUS.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
 
 ## 0. Product identity
 
@@ -521,6 +521,6 @@ Automated coverage target: migration/preflight specs for empty, valid single-own
 ### USR-008 Two-user release gate
 
 - Enable multiple rider accounts only after owner schema, controller and service scoping, preview isolation, sync scoping and provisioning are complete together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
-- Keep the current Milestone 11 open until its own exit criteria and required gates pass. Update [STATUS.md](STATUS.md) when a milestone actually completes; do not report planned per-user work as delivered.
+- Keep the current Milestone 11 open until its own exit criteria and required gates pass. Do not report planned per-user work as delivered.
 
 Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before Milestone 12 completion.
