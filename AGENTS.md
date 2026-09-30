@@ -180,9 +180,8 @@ A useful sample:
 
 ## Do not implement yet
 
-Rails-generated authentication has already been added. Do not extend it into:
+Rails-generated authentication, self-registration and independent rider accounts have already been added. Do not extend them into coaches, teams, shared plans or social sign-in, or into:
 
-- self-service registration or multiple riders;
 - automatic ride imports;
 - trainer control;
 - notifications;
