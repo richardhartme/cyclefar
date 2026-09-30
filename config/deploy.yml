@@ -2,12 +2,13 @@
 #   KAMAL_WEB_HOST     IP address or hostname of the web server
 #   CYCLEFAR_DB_HOST   PostgreSQL (RDS) endpoint
 #   KAMAL_SSH_KEY      Path to the SSH private key (default ~/.ssh/id_ed25519)
+#   KAMAL_REGISTRY_USER  Container registry username
 
 # Name of your application. Used to uniquely configure containers.
 service: cycle_far
 
 # Name of the container image (use your-user/app-name on external registries).
-image: example-user/cycle_far
+image: <%= ENV.fetch("KAMAL_REGISTRY_USER") %>/cycle_far
 
 # Deploy to these servers.
 servers:
@@ -35,7 +36,7 @@ registry:
   # server: hub.docker.com
 
   # Needed for authenticated registries.
-  username: example-user
+  username: <%= ENV.fetch("KAMAL_REGISTRY_USER") %>
 
   # Always use an access token rather than real password when possible.
   password:
