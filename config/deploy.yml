@@ -1,3 +1,8 @@
+# Host details are read from the deploy shell so they are not committed:
+#   KAMAL_WEB_HOST     IP address or hostname of the web server
+#   CYCLEFAR_DB_HOST   PostgreSQL (RDS) endpoint
+#   KAMAL_SSH_KEY      Path to the SSH private key (default ~/.ssh/id_ed25519)
+
 # Name of your application. Used to uniquely configure containers.
 service: cycle_far
 
@@ -7,7 +12,7 @@ image: example-user/cycle_far
 # Deploy to these servers.
 servers:
   web:
-    - 203.0.113.10
+    - <%= ENV.fetch("KAMAL_WEB_HOST") %>
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -66,7 +71,7 @@ env:
 
     # Log everything from Rails
     # RAILS_LOG_LEVEL: debug
-    DB_HOST: db.example.test
+    DB_HOST: <%= ENV.fetch("CYCLEFAR_DB_HOST") %>
     DB_PORT: 5432
     DB_USERNAME: cyclefar
 
@@ -105,7 +110,7 @@ builder:
 # Use a different ssh user than root
 ssh:
   user: ubuntu
-  keys: ["~/.ssh/example.pem"]
+  keys: ["<%= ENV.fetch("KAMAL_SSH_KEY", "~/.ssh/id_ed25519") %>"]
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
