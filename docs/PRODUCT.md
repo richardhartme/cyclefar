@@ -81,7 +81,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 ### Included
 
-This describes intended V1 scope, including later additions. See [STATUS.md](STATUS.md) and [REVIEW.md](REVIEW.md) for implementation gaps.
+This describes intended V1 scope, including later additions. See [REVIEW.md](REVIEW.md) for implementation gaps.
 
 - Email/password registration, sign-in, sign-out and password reset
 - Settings with FTP and Intervals.icu API key

@@ -12,7 +12,7 @@ The implementation contains all original milestone slices and several later addi
 - Persisted random endurance profiles, deterministic forecasts and descriptive variation keys. Migration preserves legacy keys in completed history.
 - Production database environment configuration and separate Terraform/CloudFormation infrastructure preparation. No deployed service is recorded; Kamal remains a placeholder.
 
-These changes are reflected in PRODUCT, REQUIREMENTS, TRAINING_ENGINE, DATA_MODEL, ARCHITECTURE, UX and STATUS. The original bootstrap prompt and milestone plan are labelled historical.
+These changes are reflected in PRODUCT, REQUIREMENTS, TRAINING_ENGINE, DATA_MODEL, ARCHITECTURE, UX and the former status log. The original bootstrap prompt and milestone plan are labelled historical.
 
 CYF-1 resolved PLN-013 on 2026-09-25: Back to edit now restores the saved preview configuration. Request coverage checks edit, revised preview, confirmation and non-persistence before confirmation.
 
@@ -20,7 +20,7 @@ CYF-2 resolved WKO-005 on 2026-09-26: a material Change Workout action now creat
 
 ## Post-review authentication and ownership additions
 
-Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. A user-requested follow-up added a public homepage and registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, operator provisioning is disabled, and Milestone 11 acceptance work remains open. See [STATUS.md](STATUS.md) and the [release gate](TWO_RIDER_RELEASE_GATE.md).
+Rails authentication was generated on 2026-09-27. The sign-in gate initially broke request specs and the SQL schema dump lacked `User` and `Session` tables; both were repaired. CYF-67–72 then added explicit-owner migration, required profile/plan/sync ownership, owner-scoped requests and services, preview isolation and sync reconciliation. CYF-73/74 added gated provisioning, visible sign-out, configured SMTP and an integrated two-rider request matrix. A user-requested follow-up added a public homepage and registration. Live SMTP delivery and a target-data migration rehearsal remain unverified, operator provisioning is disabled, and Milestone 11 acceptance work remains open. See the [release gate](TWO_RIDER_RELEASE_GATE.md).
 
 ## Open acceptance gaps
 
@@ -59,7 +59,7 @@ On 2026-09-24:
 - `bin/bundler-audit`: no vulnerabilities reported.
 - `bin/importmap audit`: no vulnerable packages reported.
 
-All 53 local Markdown links resolved, whitespace checks passed, and all six PlantUML sources passed document-marker and relationship-reference checks. No application code was changed, so no new behavioural tests were added. No browser acceptance walkthrough, PlantUML rendering, live Intervals.icu contract check, upstream release verification or AWS deployment/validation was performed in this review. Infrastructure validation history remains in STATUS.md.
+All 53 local Markdown links resolved, whitespace checks passed, and all six PlantUML sources passed document-marker and relationship-reference checks. No application code was changed, so no new behavioural tests were added. No browser acceptance walkthrough, PlantUML rendering, live Intervals.icu contract check, upstream release verification or AWS deployment/validation was performed in this review. Infrastructure validation history is in git history.
 
 ## Next work
 

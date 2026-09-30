@@ -105,7 +105,6 @@ bin/importmap audit
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data model](docs/DATA_MODEL.md)
 - [UX guide](docs/UX.md)
-- [Implementation status](docs/STATUS.md)
 
 ## License
 
