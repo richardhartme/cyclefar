@@ -36,8 +36,7 @@ Start with [STATUS.md](STATUS.md). The [2026-09-24 review](REVIEW.md) distinguis
 6. `ARCHITECTURE.md` — service boundaries and application structure.
 7. `UX.md` — screens and interaction flows.
 8. `INTERVALS_ICU.md` — integration contract.
-9. `IMPLEMENTATION_PLAN.md` — build order.
-10. `SOURCES.md` — external references used when writing the specification.
+9. `SOURCES.md` — external references used when writing the specification.
 
 ## Core design constraints
 
