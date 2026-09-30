@@ -6,7 +6,7 @@ This document defines a pragmatic, deterministic V1 training engine for indoor E
 
 These rules are not a claim that there is one scientifically perfect training plan. They combine established power-training conventions with product heuristics suitable for a first implementation. Persist `engine_version = "v1"` so future versions can change rules deliberately.
 
-These remain the intended rules. The [implementation review](REVIEW.md) records gaps in load-cap enforcement, feedback, materialisation and schedule handling without redefining those rules.
+These remain the intended rules. Implementation gaps are tracked in Jira and do not redefine them.
 
 ## 2. Non-negotiable engine constraints
 

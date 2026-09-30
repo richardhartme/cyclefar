@@ -1,6 +1,6 @@
 # CycleFar — External References
 
-These references informed the initial V1 rules and integration design. They are not runtime dependencies or a current upstream-version/API verification record. The 2026-09-24 review checked repository behaviour and local tests; it did not revalidate external sources. Ruby/Rails versions below are repository pins, not claims about the latest available releases.
+These references informed the initial V1 rules and integration design. They are not runtime dependencies or a current upstream-version/API verification record. Ruby/Rails versions below are repository pins, not claims about the latest available releases.
 
 ## Rails / Ruby
 

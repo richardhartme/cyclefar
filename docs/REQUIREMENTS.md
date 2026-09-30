@@ -1,6 +1,6 @@
 # CycleFar Functional Requirements
 
-Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. See the [2026-09-24 implementation review](REVIEW.md) for verified behaviour and outstanding gaps.
+Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. Outstanding gaps are tracked in Jira.
 
 ## Current authentication scaffold
 
@@ -16,7 +16,7 @@ Acceptance criteria:
 
 - User-facing application chrome and primary product references use `CycleFar`.
 - The Rails application/project identifier is `cycle_far` and application module is `CycleFar`.
-- `cyclefar.com` is the owned future domain. The V1 application remains local; the separately added AWS infrastructure templates are documented in [infra/](../infra/README.md) and do not establish a deployed service.
+- `cyclefar.com` is the owned domain and the production host in `config/deploy.yml`. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
 - Core domain model/table names remain brand-neutral.
 - External ownership identifiers created by CycleFar, such as Intervals.icu `external_id`, use a stable `cyclefar-` namespace.
 

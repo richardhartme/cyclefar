@@ -1,5 +1,5 @@
 @startuml CycleFar System Context
-' Ownership and account access checked on 2026-09-28; scope and limitations: README.md
+' Scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 title CycleFar — System Context

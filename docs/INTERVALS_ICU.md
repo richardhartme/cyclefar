@@ -6,7 +6,7 @@ On explicit rider action, sync the next two upcoming structured cycling workouts
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter and 2026-09-28 owner-scoped reconciliation, not a new live-API certification. Local specs stub HTTP. See [REVIEW.md](REVIEW.md) for reconciliation gaps.
+The request details below describe the implemented adapter and owner-scoped reconciliation, not a live-API certification. Local specs stub HTTP.
 
 ## Authentication
 
@@ -134,7 +134,7 @@ Current call order:
 
 Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider.
 
-The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open in REVIEW.md.
+The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open and are tracked in Jira.
 
 ## Partial failure
 

@@ -89,7 +89,7 @@ The main AWS costs are the EC2 instance and EBS volume, Elastic IP when it is no
 
 ## Later Kamal connection
 
-Kamal remains unconfigured. After provisioning, use these outputs to prepare it manually:
+`config/deploy.yml` reads its host details from the deploy shell. After provisioning, use these outputs to supply them:
 
 ```sh
 terraform output application_server_public_ip
@@ -98,4 +98,4 @@ terraform output database_username
 terraform output -raw database_password
 ```
 
-The EC2 Elastic IP will become Kamal's web host. The RDS values will later be supplied to the container as `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`; `SECRET_KEY_BASE` remains a separate Kamal secret. Configure Docker, Kamal's registry, the production hostname, TLS and Rails force-SSL settings in a later change rather than through this Terraform configuration.
+The EC2 Elastic IP is Kamal's web host (`KAMAL_WEB_HOST`) and the RDS endpoint is `CYCLEFAR_DB_HOST`. `DB_PASSWORD` and `SECRET_KEY_BASE` are separate Kamal secrets. Docker, Kamal's registry, the production hostname and TLS are configured in `config/deploy.yml`, not through this Terraform configuration.

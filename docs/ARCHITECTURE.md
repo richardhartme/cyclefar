@@ -1,6 +1,6 @@
 # CycleFar Application Architecture
 
-Training architecture reviewed against the repository on 2026-09-24; authentication and ownership additions checked through 2026-09-28. This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in [REVIEW.md](REVIEW.md).
+This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define intended behaviour. Known differences are tracked in Jira.
 
 ## Application identity and stack
 
@@ -64,7 +64,7 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally and reports before/after values plus whether the documented material-change thresholds were crossed. A material Change creates a persisted optional proposal through `Planning::MaterialChangeProposal`; `Planning::MaterialChangeReplanner` treats that changed workout as fixed and re-prescribes only the bounded following 14-day block on acceptance. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
 
-Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure. Destination regeneration and other remaining requirements are listed in REVIEW.md.
+Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure.
 
 ## Completion, adaptations and schedule changes
 
@@ -130,9 +130,9 @@ API keys use Active Record Encryption and filtered parameters. Login passwords u
 
 ## Deployment preparation
 
-The application remains local, with registration and owner-scoped accounts implemented. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. No deployed environment is recorded; choose one infrastructure owner per environment.
+Kamal deployment is configured in `config/deploy.yml`. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. Choose one infrastructure owner per environment.
 
-Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` remains a Kamal placeholder; infrastructure provisioning does not deploy the app.
+Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` reads the web host, database host and registry user from the deploy shell and declares the runtime secrets; infrastructure provisioning does not deploy the app.
 
 ## Architecture diagrams
 
@@ -145,4 +145,4 @@ PlantUML sources describe the logical application, not an already deployed AWS e
 - [Plan changes](diagrams/cyclefar-plan-change-components.puml)
 - [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
 
-The diagrams were updated for ownership and account access on 2026-09-28. See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.
+See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.

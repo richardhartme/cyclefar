@@ -1,8 +1,8 @@
 # CycleFar — Rails Data Model
 
-The training model was reviewed against models, migrations and `db/structure.sql` on 2026-09-28. Rails authentication and required profile, plan and sync ownership are reflected in the checked-in SQL schema dump alongside completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
+Rails authentication and required profile, plan and sync ownership are reflected in the checked-in SQL schema dump alongside completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
-This describes the implemented persistence shape; [REVIEW.md](REVIEW.md) records service behaviour that still falls short of the requirements.
+This describes the implemented persistence shape;
 
 ## User and Session
 
@@ -53,7 +53,7 @@ Fields:
 - `progression_mode: enum` — `continuous`, `hard_recovery_cycle`
 - `hard_weeks_before_recovery: integer, nullable`
 - `initial_ftp_watts: integer`
-- `progression_state: jsonb, default: {}` — currently stores the accepted global `intensity_bias` (-2..+2); generation does not yet consume it (see REVIEW.md)
+- `progression_state: jsonb, default: {}` — currently stores the accepted global `intensity_bias` (-2..+2)
 - `engine_version: string` — e.g. `v1`
 - timestamps
 
@@ -177,7 +177,7 @@ Important:
 - Do not store planned target watts as the source of truth. Store percentage targets in steps and derive watts from current FTP.
 - On completion, snapshot watts/metrics so later FTP changes do not alter history.
 - Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes.
-- Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them; see REVIEW.md for the reporting decision still needed.
+- Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them.
 
 ## WorkoutStep
 
@@ -242,7 +242,7 @@ Fields:
 
 Feedback-proposal payloads contain `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
 
-On accept: check target/source workouts are still planned/structured, apply atomically, then destroy the proposal. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal. Expiry, full stale-content checks and before/after values are not yet implemented; see REVIEW.md.
+On accept: check target/source workouts are still planned/structured, apply atomically, then destroy the proposal. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal.
 
 No long-term proposal history is required.
 
