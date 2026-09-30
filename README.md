@@ -32,10 +32,10 @@ snapshots.
 CycleFar currently enables one rider. Profiles, plans, preview drafts and
 Intervals.icu sync records are scoped to the signed-in user, and an integrated
 two-rider test matrix exercises those boundaries. Additional rider provisioning
-remains disabled until the target database migration rehearsal, live mail
-delivery are complete. There is no public
-registration. V1 has no ride imports, trainer control, notifications or
-automatic calendar syncing.
+remains disabled until the target database migration rehearsal and live mail
+delivery are complete. Riders can self-register from the public homepage. V1
+has no ride imports, trainer control, notifications or automatic calendar
+syncing.
 
 ## Local setup
 
