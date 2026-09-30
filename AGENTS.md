@@ -30,7 +30,7 @@ Do not silently invent major product behaviour. If a small implementation detail
 
 - User-facing product name: **CycleFar**.
 - Rails application/project name: `cycle_far`; Ruby application module: `CycleFar`.
-- Future owned domain: `cyclefar.com`; do not add deployment/configuration for it in V1.
+- The application is live at `cyclefar.com`, deployed with Kamal (`config/deploy.yml`). Keep deployment configuration, secrets and host details out of the repository; read them from the environment.
 - Keep the CycleFar brand out of core model/table names. Use domain names such as `TrainingPlan` and `PlannedWorkout`.
 - For integration ownership identifiers, use a stable `cyclefar-` namespace.
 
@@ -54,7 +54,7 @@ Useful test-only/support gems are allowed when justified, e.g.:
 - `webmock` for Intervals.icu client specs
 - `timecop` only if Rails time helpers are insufficient; prefer ActiveSupport time helpers first
 
-Do not add React/Vue/Svelte, a CSS component framework, GraphQL, Sidekiq, Redis, Devise or an LLM SDK in V1.
+Tailwind CSS is used with the daisyUI component plugin. Do not add React/Vue/Svelte, another CSS component framework, GraphQL, Sidekiq, Redis, Devise or an LLM SDK in V1.
 
 ## Rails conventions
 
