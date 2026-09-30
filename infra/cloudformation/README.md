@@ -21,8 +21,8 @@ not an import of Terraform-managed resources. No stack has been deployed.
 
 There are no NAT gateways, load balancers, containers orchestrators or deployment
 pipelines. Stack creation provisions infrastructure, not a running Rails application.
-Docker installation and Rails deployment remain separate Kamal tasks. The current
-`config/deploy.yml` is still a development placeholder.
+Docker installation and Rails deployment remain separate Kamal tasks configured in
+`config/deploy.yml`.
 
 ## Prerequisites and parameters
 

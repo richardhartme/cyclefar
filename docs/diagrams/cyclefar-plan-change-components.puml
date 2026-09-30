@@ -1,5 +1,5 @@
 @startuml CycleFar Plan Change Components
-' Material-change and ownership flows checked on 2026-09-28; scope and limitations: README.md
+' Scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title CycleFar — Completion, Adaptation and Replanning Components

@@ -1,12 +1,11 @@
 # CycleFar UX Specification
 
-This document combines the intended interaction design with current implementation notes from the 2026-09-24 review. Outstanding acceptance gaps are tracked in [REVIEW.md](REVIEW.md); proposed controls below must not be assumed to exist.
+This document combines the intended interaction design with current implementation notes. Outstanding acceptance gaps are tracked in Jira; proposed controls below must not be assumed to exist.
 
 ## Branding
 
 - Display the product name as **CycleFar** in the application shell/header.
 - Keep branding restrained; the calendar remains the primary visual focus.
-- Do not expose `cyclefar.com` as though the local V1 were already a hosted service.
 
 ## Navigation
 
@@ -162,7 +161,7 @@ Include:
 
 ### Weekly load chart
 
-A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts; REVIEW.md records the reporting question this raises.
+A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts.
 
 ### Phase bands
 
@@ -189,7 +188,7 @@ Show enough to understand it without opening:
 - TSS / IF / kJ in compact form;
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details.
 
-Current cards show name, duration, TSS, IF and a profile graph. Main-set summary, watt range and work kJ remain detail-view information rather than card fields; see REVIEW.md.
+Current cards show name, duration, TSS, IF and a profile graph. Main-set summary, watt range and work kJ remain detail-view information rather than card fields.
 
 ### High-level workout card (>14 days)
 
@@ -242,7 +241,7 @@ Actions:
 - Complete
 - Missed (when relevant)
 
-Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form (see REVIEW.md).
+Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form.
 
 ## 7. Shuffle controls
 

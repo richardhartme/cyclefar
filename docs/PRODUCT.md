@@ -81,7 +81,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 ### Included
 
-This describes intended V1 scope, including later additions. See [REVIEW.md](REVIEW.md) for implementation gaps.
+This describes intended V1 scope, including later additions. Known implementation gaps are tracked in Jira.
 
 - Email/password registration, sign-in, sign-out and password reset
 - Settings with FTP and Intervals.icu API key
@@ -150,6 +150,6 @@ Do not implement these now, but avoid architecture that blocks them:
 ## Brand / naming
 
 - Canonical product name: **CycleFar**.
-- Domain owned by the project: `cyclefar.com`. The V1 application remains local. Separate Terraform and CloudFormation templates now prepare a possible AWS deployment; no deployed service is recorded. See [infrastructure documentation](../infra/README.md).
+- Domain owned by the project: `cyclefar.com`. `config/deploy.yml` configures Kamal deployment to that host, and separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
 - User-facing copy should call the application **CycleFar**, not generic names such as “Cycling Trainer App”.
 - Do not couple persistence/domain classes to the brand name; concepts should remain `TrainingPlan`, `PlannedWorkout`, etc.
