@@ -19,11 +19,11 @@ RSpec.describe "accounts:provision" do
     task.reenable
   end
 
-  it "keeps provisioning disabled until the release gate is explicitly enabled" do
+  it "keeps provisioning disabled until it is explicitly enabled" do
     ENV.delete("CYCLEFAR_RIDER_PROVISIONING_ENABLED")
     ENV["EMAIL_ADDRESS"] = "new@example.com"
 
-    expect { expect { task.invoke }.to raise_error(SystemExit) }.to output(/disabled until the two-user release gate/).to_stderr
+    expect { expect { task.invoke }.to raise_error(SystemExit) }.to output(/disabled until CYCLEFAR_RIDER_PROVISIONING_ENABLED/).to_stderr
     expect(User.where(email_address: "new@example.com")).not_to exist
   end
 
