@@ -5,8 +5,6 @@ Status: Reopened after the 2026-09-24 documentation review; known V1 acceptance 
 
 ## Milestones
 
-Numbering follows `IMPLEMENTATION_PLAN.md` and `CODEX_TASK_01.md`.
-
 - [x] Milestone 0 — Bootstrap and guardrails
 - [x] Milestone 1 — Settings and core persistence
 - [x] Milestone 2 — Pure workout engine

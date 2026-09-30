@@ -15,7 +15,6 @@ Read these files in order:
 5. `ARCHITECTURE.md`
 6. `UX.md`
 7. `INTERVALS_ICU.md`
-8. `IMPLEMENTATION_PLAN.md`
 
 If documents appear to conflict, use this precedence:
 
@@ -196,6 +195,6 @@ Rails-generated authentication has already been added. Do not extend it into:
 
 ## Working style
 
-Implement in the milestone order in `IMPLEMENTATION_PLAN.md`. Keep commits/changes small enough that the training rules can be reviewed independently from UI code.
+Keep commits/changes small enough that the training rules can be reviewed independently from UI code.
 
 At the start of a task, read docs/STATUS.md. Only work on the current milestone unless explicitly instructed otherwise. When a milestone is complete and all tests pass, update docs/STATUS.md to mark it complete and set the next milestone as current.
