@@ -106,3 +106,7 @@ bin/importmap audit
 - [Data model](docs/DATA_MODEL.md)
 - [UX guide](docs/UX.md)
 - [Implementation status](docs/STATUS.md)
+
+## License
+
+CycleFar is released under the [MIT License](LICENSE).
