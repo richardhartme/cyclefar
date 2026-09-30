@@ -1,6 +1,6 @@
 # CycleFar
 
-CycleFar is a local, single-rider cycling training planner. It turns a rider's
+CycleFar is a cycling training planner, live at <https://cyclefar.com>. It turns a rider's
 goal, availability, FTP and target event into a deterministic training plan,
 then keeps the calendar practical as training is completed, missed or changed.
 

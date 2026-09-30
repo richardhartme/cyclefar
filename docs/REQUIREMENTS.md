@@ -16,7 +16,7 @@ Acceptance criteria:
 
 - User-facing application chrome and primary product references use `CycleFar`.
 - The Rails application/project identifier is `cycle_far` and application module is `CycleFar`.
-- `cyclefar.com` is the owned domain and the production host in `config/deploy.yml`. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
+- The application is live at `cyclefar.com`, the production host in `config/deploy.yml`. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
 - Core domain model/table names remain brand-neutral.
 - External ownership identifiers created by CycleFar, such as Intervals.icu `external_id`, use a stable `cyclefar-` namespace.
 
@@ -462,7 +462,7 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Independent-rider release
 
-These are the acceptance criteria for the independent-rider release. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; live mail delivery remains unverified. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for the independent-rider release. Ownership and isolation code, public registration and automated two-rider coverage are implemented. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Account registration and authentication
 

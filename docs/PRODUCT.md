@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The original V1 release was a single-rider planner. Email/password sign-in and self-registration are now implemented locally, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are also implemented. Operator provisioning stays disabled until live mail delivery is verified.
+The original V1 release was a single-rider planner. Email/password sign-in and self-registration are implemented, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are also implemented. Operator provisioning stays disabled until live mail delivery is verified.
 
 The assumed rider:
 
@@ -125,11 +125,10 @@ This describes intended V1 scope, including later additions. Known implementatio
 - Multiple active plans
 - Multiple target events
 - AI-generated plans or workouts
-- Hosted-service operation (separate infrastructure preparation is described below)
 
 ## Independent-rider release
 
-The independent-rider release's ownership schema, owner-scoped application paths, public registration, controlled provisioning and automated two-rider matrix have been implemented locally. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery remains unverified; operator provisioning remains disabled by default.
+The independent-rider release's ownership schema, owner-scoped application paths, public registration, controlled provisioning and automated two-rider matrix are implemented. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery remains unverified; operator provisioning remains disabled by default.
 
 The first independent-rider release excludes Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) for the acceptance and test contract.
 
@@ -150,6 +149,6 @@ Do not implement these now, but avoid architecture that blocks them:
 ## Brand / naming
 
 - Canonical product name: **CycleFar**.
-- Domain owned by the project: `cyclefar.com`. `config/deploy.yml` configures Kamal deployment to that host, and separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
+- The application is live at `cyclefar.com`. `config/deploy.yml` configures Kamal deployment to that host, and separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
 - User-facing copy should call the application **CycleFar**, not generic names such as “Cycling Trainer App”.
 - Do not couple persistence/domain classes to the brand name; concepts should remain `TrainingPlan`, `PlannedWorkout`, etc.

@@ -28,8 +28,8 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, adaptations, settings and sync records.")
 }
 
-Rel(rider, controllers, "Uses CycleFar", "HTTP (local)")
-Rel(rider, authentication, "Registers, signs in/out or requests a password reset", "HTTP (local)")
+Rel(rider, controllers, "Uses CycleFar", "HTTPS")
+Rel(rider, authentication, "Registers, signs in/out or requests a password reset", "HTTPS")
 Rel(controllers, authentication, "Require authentication before training actions")
 Rel(authentication, auth_models, "Validates credentials and creates/destroys sessions")
 Rel(authentication, password_mailer, "Queues reset email")

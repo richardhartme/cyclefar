@@ -128,15 +128,15 @@ Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar
 
 API keys use Active Record Encryption and filtered parameters. Login passwords use `has_secure_password` digests; signed, permanent, HttpOnly, SameSite=Lax cookies identify database sessions. The checked-in `db/structure.sql` includes the generated `users` and `sessions` tables. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
 
-## Deployment preparation
+## Deployment
 
-Kamal deployment is configured in `config/deploy.yml`. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS. Choose one infrastructure owner per environment.
+The application is live at `cyclefar.com`, deployed with Kamal using `config/deploy.yml`. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS for that environment. Choose one infrastructure owner per environment.
 
 Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` reads the web host, database host and registry user from the deploy shell and declares the runtime secrets; infrastructure provisioning does not deploy the app.
 
 ## Architecture diagrams
 
-PlantUML sources describe the logical application, not an already deployed AWS environment:
+PlantUML sources describe the logical application, not the AWS infrastructure:
 
 - [System context](diagrams/cyclefar-system-context.puml)
 - [Containers](diagrams/cyclefar-container.puml)

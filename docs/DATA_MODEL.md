@@ -25,7 +25,7 @@ Validations:
 
 - FTP > 0
 
-Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented locally. The operator provisioning task remains disabled by default.
+Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented. The operator provisioning task remains disabled by default.
 
 ## FtpReading
 
