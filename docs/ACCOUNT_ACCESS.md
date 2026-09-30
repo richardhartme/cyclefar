@@ -1,6 +1,6 @@
 # Rider account access
 
-The public homepage offers Sign In and Register. Registration creates a rider account with a confirmed password and signs them in. An authorized operator can also provision an account by email, and that rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; deployment with additional riders still requires the target-data migration rehearsal, and live SMTP verification. Operator provisioning stays disabled until then.
+The public homepage offers Sign In and Register. Registration creates a rider account with a confirmed password and signs them in. An authorized operator can also provision an account by email, and that rider sets a password through the emailed link. An automated two-user isolation matrix covers the ownership boundaries; live SMTP delivery has not been verified. Operator provisioning stays disabled until it has been.
 
 ## Production mail settings
 
@@ -25,7 +25,7 @@ Production also needs `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `ACTIVE_RECORD_ENC
 
 The test environment uses Action Mailer's test delivery adapter. Request specs verify the delivered link, account setup, identical reset-request responses for known and unknown addresses, and invalidation of old sessions. These tests do not establish delivery through a live SMTP provider; check that with the configured provider before enabling additional riders.
 
-## Provision a rider after the release gate
+## Provision a rider
 
 Run the task in the deployed environment with the provisioning flag and intended address:
 

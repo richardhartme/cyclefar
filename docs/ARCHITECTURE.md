@@ -14,7 +14,7 @@ The application module is `CycleFar`, the project is `cycle_far`, and domain cla
 
 ## Independent-rider boundary
 
-The first independent-rider release uses public registration and controlled provisioning on the existing email/password `User`/`Session` scaffold. Google/social sign-in, coaches, teams and shared plans are outside it. Ownership and isolation code and the automated two-rider matrix are present. Deployment with additional riders remains pending the target database rehearsal and live SMTP verification.
+The first independent-rider release uses public registration and controlled provisioning on the existing email/password `User`/`Session` scaffold. Google/social sign-in, coaches, teams and shared plans are outside it. Ownership and isolation code and the automated two-rider matrix are present. Live SMTP verification remains open.
 
 `Current.user` supplies Settings and active-plan controller queries; `RiderProfile.current`, the singleton profile ID and the global active-plan index have been removed. Settings locks the owning user row, and plan creation receives that user explicitly. Workout and adaptation-proposal lookups traverse the user's plans; time-off deletion loads from the user's active plan. Missing and foreign IDs receive the same empty 404 response. FTP-based services and helpers resolve future watts through `TrainingPlan#ftp_watts_for_planning`; completed snapshots use their recorded FTP. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state.
 
@@ -22,7 +22,7 @@ The session-backed preview configuration is bound to its authenticated creator o
 
 `IntervalsIcu::SyncNextTwo` receives the signed-in rider's profile, plan and owner-scoped sync relation. A direct `IntervalsIcuSync.user_id` identifies detached records after a workout is deleted, so cleanup cannot consume another rider's stale record. The existing durable `cyclefar-workout-<id>` identity remains stable. API keys and remote operations never cross owner boundaries.
 
-The ownership migrations inventory legacy data and require an explicitly selected existing owner; ambiguous data fails before partial assignment. They backfill profile, plans and linked/detached sync rows, then enforce required profile/plan/sync foreign keys and per-user profile/active-plan indexes. Archived plans and immutable completed records stay attached to their selected owner. [DATA_MODEL.md](DATA_MODEL.md#ownership-schema-and-migration-contract) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) lists the remaining release gate.
+The ownership migrations enforce required profile/plan/sync foreign keys and per-user profile/active-plan indexes. Archived plans and immutable completed records stay attached to their owner. [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) lists the acceptance criteria.
 
 Services and presenters currently live under `app/services/`:
 

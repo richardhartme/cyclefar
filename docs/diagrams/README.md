@@ -17,7 +17,7 @@ The UI uses server-rendered ERB and Turbo navigation/forms. Stimulus is installe
 
 The generation diagram's session component represents the Rails session draft, which is distinct from the database-backed `Session` used for login. Confirmation consumes the saved configuration and rebuilds the preview before persisting a plan. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
-Authentication gates private application controllers, while the homepage offers registration and sign-in. Profiles, plans and sync records have required user ownership; training lookups, preview drafts and sync reconciliation use that owner. Controlled provisioning is gated, sign-out is visible, and reset/setup mail uses configured SMTP. Live SMTP delivery and a target-data migration rehearsal remain deployment prerequisites; see [TWO_RIDER_RELEASE_GATE.md](../TWO_RIDER_RELEASE_GATE.md).
+Authentication gates private application controllers, while the homepage offers registration and sign-in. Profiles, plans and sync records have required user ownership; training lookups, preview drafts and sync reconciliation use that owner. Controlled provisioning is gated, sign-out is visible, and reset/setup mail uses configured SMTP. Live SMTP delivery remains unverified; see [ACCOUNT_ACCESS.md](../ACCOUNT_ACCESS.md).
 
 The sync view describes the current cleanup scope, which excludes some stale linked events. Remote operations and the local metadata transaction are not one atomic transaction. The plan-change view shows the implemented material Change proposal and records saved-but-unused progression bias and incomplete feedback-proposal bounds/expiry; see [REVIEW.md](../REVIEW.md) for the full acceptance backlog.
 

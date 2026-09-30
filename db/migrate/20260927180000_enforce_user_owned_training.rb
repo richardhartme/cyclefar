@@ -1,7 +1,5 @@
 class EnforceUserOwnedTraining < ActiveRecord::Migration[8.1]
   def up
-    LegacyOwnership::Backfill.new(connection: connection, owner_id: ENV["CYCLEFAR_LEGACY_OWNER_USER_ID"]).backfill!
-
     change_column_null :rider_profiles, :user_id, false
     add_foreign_key :rider_profiles, :users
     add_index :rider_profiles, :user_id, unique: true

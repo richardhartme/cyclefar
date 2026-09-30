@@ -29,12 +29,10 @@ snapshots.
 - Archive and delete controls for a plan, plus an idempotent development seed
   for visual testing.
 
-CycleFar currently enables one rider. Profiles, plans, preview drafts and
-Intervals.icu sync records are scoped to the signed-in user, and an integrated
-two-rider test matrix exercises those boundaries. Additional rider provisioning
-remains disabled until the target database migration rehearsal and live mail
-delivery are complete. Riders can self-register from the public homepage. V1
-has no ride imports, trainer control, notifications or automatic calendar
+Profiles, plans, preview drafts and Intervals.icu sync records are scoped to
+the signed-in user, and an integrated two-rider test matrix exercises those
+boundaries. Riders can self-register from the public homepage. Operator
+provisioning stays disabled until live mail delivery is verified. V1 has no ride imports, trainer control, notifications or automatic calendar
 syncing.
 
 ## Local setup
@@ -64,7 +62,7 @@ your rider account or **Sign In** if you already have one. The checked-in
 `db/structure.sql` includes authentication and user ownership constraints.
 Production password-reset delivery uses environment-configured SMTP; delivery
 through a live provider has not been verified. See the [account access
-guide](docs/ACCOUNT_ACCESS.md) for deployment settings and the release gate.
+guide](docs/ACCOUNT_ACCESS.md) for deployment settings.
 
 ## Development sample plan
 

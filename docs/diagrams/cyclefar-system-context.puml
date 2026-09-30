@@ -17,8 +17,7 @@ Rel(cyclefar, intervals_icu, "Manually exports up to two upcoming executable str
 
 note bottom of cyclefar
   Automated two-rider isolation coverage exists.
-  Target-data migration rehearsal and live SMTP
-  delivery remain open.
+  Live SMTP delivery remains unverified.
 end note
 
 SHOW_LEGEND()
