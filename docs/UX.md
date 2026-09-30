@@ -22,9 +22,9 @@ No History page in V1.
 
 The public homepage offers **Sign In** and **Register**. Private application requests redirect to the generated sign-in page. It accepts an email address and password and links to **Forgot password?** and **Register**. The registration screen accepts an email address, password and confirmation, then signs in the new rider. The reset-request page accepts an email address and displays the same confirmation whether or not it matches a user; a delivered token link opens the password-update form. The layout shows the signed-in account and a **Sign out** control on authenticated pages; Calendar and Settings navigation are hidden on public pages. Production SMTP is configured through environment variables, with live provider delivery still to be verified.
 
-## Planned independent-rider account flow
+## Independent-rider account flow
 
-The account-access portion of Milestone 12 and an automated two-rider request matrix are implemented, while deployment release checks remain open. Riders can register through the public homepage; an authorized operator can also provision a rider after the release flag is enabled following those checks. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI in the first independent-rider release.
+Account access for independent riders and an automated two-rider request matrix are implemented, while deployment release checks remain open. Riders can register through the public homepage; an authorized operator can also provision a rider after the release flag is enabled following those checks. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI in the first independent-rider release.
 
 After sign-in, Calendar, Settings, plan setup and all workout actions show only that account's profile and plan. Each rider can have one active plan; archived plans retain private completed history without adding a History page. Foreign workout, proposal and time-off links respond like missing records, without showing another rider's details. Intervals.icu sync uses only the signed-in rider's key and owned events.
 

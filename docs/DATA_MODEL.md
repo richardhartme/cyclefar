@@ -274,9 +274,9 @@ Prefer service/query objects for:
 - calendar month-boundary labels;
 - workout graph points.
 
-## Planned Milestone 12 ownership schema and migration contract
+## Ownership schema and migration contract
 
-This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered the explicit-owner backfill, required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. Deployment prerequisites remain in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md). [USR-001–USR-008](REQUIREMENTS.md#16-planned-independent-rider-release) define the full acceptance contract.
+This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered the explicit-owner backfill, required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. Deployment prerequisites remain in [TWO_RIDER_RELEASE_GATE.md](TWO_RIDER_RELEASE_GATE.md). [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|

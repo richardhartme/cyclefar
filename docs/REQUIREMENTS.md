@@ -460,9 +460,9 @@ See `INTERVALS_ICU.md`.
 - Workout scheduling: date only; no preferred time-of-day feature.
 - Store date concepts as Rails `date` where possible to avoid timezone drift.
 
-## 16. Planned independent-rider release
+## 16. Independent-rider release
 
-These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal, and live mail delivery. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for the independent-rider release. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal and live mail delivery. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Account registration and authentication
 
@@ -521,6 +521,6 @@ Automated coverage target: migration/preflight specs for empty, valid single-own
 ### USR-008 Two-user release gate
 
 - Enable multiple rider accounts only after owner schema, controller and service scoping, preview isolation, sync scoping and provisioning are complete together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
-- Do not report planned per-user work as delivered.
+- Do not report per-user work as delivered until its release gate passes.
 
-Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before Milestone 12 completion.
+Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before the independent-rider release is deployed.

@@ -128,11 +128,11 @@ This describes intended V1 scope, including later additions. See [REVIEW.md](REV
 - AI-generated plans or workouts
 - Hosted-service operation (separate infrastructure preparation is described below)
 
-## Planned independent-rider release
+## Independent-rider release
 
 The independent-rider release's ownership schema, owner-scoped application paths, public registration, controlled provisioning and automated two-rider matrix have been implemented locally, but the deployment release gate remains open. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. The target database copy rehearsal and live SMTP delivery remain unverified; operator provisioning remains disabled by default.
 
-The first independent-rider release excludes Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-planned-independent-rider-release) for the acceptance and test contract.
+The first independent-rider release excludes Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. Existing single-rider data will be assigned only to an explicitly selected existing account after a preflight; ambiguous ownership must stop the migration. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) for the acceptance and test contract.
 
 ## Future-friendly seams
 
