@@ -1,6 +1,6 @@
 # Rider account access
 
-The public homepage offers Sign In and Register. Registration creates a rider account with a confirmed password and signs them in. An authorized operator can also provision an account by email, and that rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; deployment with additional riders still requires the target-data migration rehearsal, live SMTP verification and open Milestone 11 acceptance gate. Operator provisioning stays disabled until then.
+The public homepage offers Sign In and Register. Registration creates a rider account with a confirmed password and signs them in. An authorized operator can also provision an account by email, and that rider sets a password through the emailed link. The automated CYF-74 two-user isolation matrix has passed locally; deployment with additional riders still requires the target-data migration rehearsal, and live SMTP verification. Operator provisioning stays disabled until then.
 
 ## Production mail settings
 

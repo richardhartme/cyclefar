@@ -4,7 +4,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 ## Current authentication scaffold
 
-Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, live mail verification and Milestone 11 acceptance work remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
+Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; the target-data rehearsal, and live mail verification remain open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
 
 ## 0. Product identity
 
@@ -462,7 +462,7 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Planned independent-rider release
 
-These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal, live mail delivery and open Milestone 11 work. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for planned Milestone 12. Much of the ownership and isolation code, public registration and automated two-rider coverage are present locally; deployment with additional riders remains pending the target-data migration rehearsal, and live mail delivery. This section does not advance the current milestone. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Account registration and authentication
 
@@ -521,6 +521,6 @@ Automated coverage target: migration/preflight specs for empty, valid single-own
 ### USR-008 Two-user release gate
 
 - Enable multiple rider accounts only after owner schema, controller and service scoping, preview isolation, sync scoping and provisioning are complete together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
-- Keep the current Milestone 11 open until its own exit criteria and required gates pass. Do not report planned per-user work as delivered.
+- Do not report planned per-user work as delivered.
 
 Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks before Milestone 12 completion.

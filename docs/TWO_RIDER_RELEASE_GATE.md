@@ -23,9 +23,8 @@ On 2026-09-28, `legacy_ownership:preflight` passed in both local development and
 
 Before enabling another rider in a deployment:
 
-1. Complete the still-open Milestone 11 acceptance gate.
-2. Inventory the target database, choose and record its existing legacy owner, and rehearse the migration on a restorable copy of that target's data as described in the runbook. Check counts, ownership, completed snapshots, FTP history, encrypted profile data and linked/detached external IDs after migration.
-3. Verify configured SMTP delivery and password setup/reset links with the deployed host and queue worker.
-4. Re-run the suite and migration checks against the release revision; only then deploy public registration, enable controlled provisioning.
+1. Inventory the target database, choose and record its existing legacy owner, and rehearse the migration on a restorable copy of that target's data as described in the runbook. Check counts, ownership, completed snapshots, FTP history, encrypted profile data and linked/detached external IDs after migration.
+2. Verify configured SMTP delivery and password setup/reset links with the deployed host and queue worker.
+3. Re-run the suite and migration checks against the release revision; only then deploy public registration and enable controlled provisioning.
 
 No production-data copy or live SMTP provider was available for this local gate. Operator provisioning remains disabled, and the public registration route should not be deployed with additional riders until the deployment gate passes.

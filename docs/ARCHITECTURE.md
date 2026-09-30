@@ -14,7 +14,7 @@ The application module is `CycleFar`, the project is `cycle_far`, and domain cla
 
 ## Planned independent-rider boundary (Milestone 12)
 
-Milestone 12 follows the still-open Milestone 11. The first independent-rider release uses public registration and controlled provisioning on the existing email/password `User`/`Session` scaffold. Google/social sign-in, coaches, teams and shared plans are outside it. Ownership and isolation code and the automated two-rider matrix are present. Deployment with additional riders remains pending the target database rehearsal, live SMTP verification and remaining Milestone 11 acceptance work.
+The first independent-rider release uses public registration and controlled provisioning on the existing email/password `User`/`Session` scaffold. Google/social sign-in, coaches, teams and shared plans are outside it. Ownership and isolation code and the automated two-rider matrix are present. Deployment with additional riders remains pending the target database rehearsal, and live SMTP verification.
 
 `Current.user` supplies Settings and active-plan controller queries; `RiderProfile.current`, the singleton profile ID and the global active-plan index have been removed. Settings locks the owning user row, and plan creation receives that user explicitly. Workout and adaptation-proposal lookups traverse the user's plans; time-off deletion loads from the user's active plan. Missing and foreign IDs receive the same empty 404 response. FTP-based services and helpers resolve future watts through `TrainingPlan#ftp_watts_for_planning`; completed snapshots use their recorded FTP. Pure `Training::V1` and `Planning::V1` calculations remain independent of request-global state.
 
