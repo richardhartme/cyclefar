@@ -33,6 +33,10 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Encrypted credentials stay on the developer's machine. See config/credentials.yml.enc.example.
+/config/credentials.yml.enc
+/config/credentials/
+
 # Terraform state, provider cache, plans and local variable files may contain
 # infrastructure details or secrets. The committed example is intentionally safe.
 **/.terraform/*
