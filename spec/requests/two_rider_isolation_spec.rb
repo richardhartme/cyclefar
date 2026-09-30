@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "USR-008 two-rider release gate", type: :request do
+RSpec.describe "USR-008 two-rider isolation", type: :request do
   before { travel_to Time.zone.local(2026, 9, 28, 12) }
   after { travel_back }
 
