@@ -2,6 +2,7 @@ module Workouts
   class ManualEditor
     Snapshot = Data.define(:kind, :subtype, :duration_minutes, :estimated_if, :estimated_tss)
     Result = Data.define(:workout, :material_change, :before, :after)
+    Preview = Data.define(:kind, :definition, :metrics, :before, :after)
     INTENSITY_SUBTYPES = %w[tempo sweet_spot threshold vo2_max over_under].freeze
 
     def initialize(workout)
@@ -9,7 +10,7 @@ module Workouts
       raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && (workout.workout? || workout.opener?)
     end
 
-    def apply!(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
+    def preview(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
       before = snapshot_for(@workout)
       subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
@@ -20,7 +21,13 @@ module Workouts
         duration_minutes: definition.duration_minutes,
         estimated_if: metrics.estimated_if,
         estimated_tss: metrics.estimated_tss)
-      material_change = material_change?(before, after)
+      Preview.new(kind: kind, definition: definition, metrics: metrics, before: before, after: after)
+    end
+
+    def apply!(**attributes)
+      proposed = preview(**attributes)
+      kind, definition, metrics = proposed.kind, proposed.definition, proposed.metrics
+      material_change = material_change?(proposed.before, proposed.after)
       @workout.transaction do
         @workout.workout_steps.destroy_all
         @workout.assign_attributes(
@@ -39,7 +46,7 @@ module Workouts
         definition.steps.each { |step| @workout.workout_steps.build(step.to_h) }
         @workout.save!
       end
-      Result.new(workout: @workout, material_change: material_change, before: before, after: after)
+      Result.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
     end
 
     private
@@ -72,7 +79,7 @@ module Workouts
       when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
       when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
       when "change" then [ current_level, Variations.for_generation(subtype), Integer(duration_minutes), subtype.to_s ]
-      when "adapt" then [ Integer(progression_level), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
+      when "adapt" then [ Integer(progression_level).clamp(1, 7), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
       end
       raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::V1::Rules::MINIMUM_DURATION_MINUTES
