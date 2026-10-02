@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "USR-008 two-rider isolation", type: :request do
+RSpec.describe "USR-008 two-rider isolation", type: :request, generated_workouts: true do
   before { travel_to Time.zone.local(2026, 9, 28, 12) }
   after { travel_back }
 
@@ -19,8 +19,8 @@ RSpec.describe "USR-008 two-rider isolation", type: :request do
     second_profile = create(:rider_profile, user: second, ftp_watts: 310, intervals_icu_api_key: "second-rider-key")
     first_plan, first_phase = plan_for(first)
     second_plan, second_phase = plan_for(second)
-    completed = create(:planned_workout, :structured, training_plan: first_plan, plan_phase: first_phase, scheduled_on: Date.current + 1, intent: :intervals, subtype: :threshold)
-    adaptation_target = create(:planned_workout, :structured, training_plan: first_plan, plan_phase: first_phase, scheduled_on: Date.current + 3, intent: :intervals, subtype: :threshold, progression_level: 2)
+    completed = generated_workout(plan: first_plan, phase: first_phase, date: Date.current + 1, level: 4, duration: 90)
+    adaptation_target = generated_workout(plan: first_plan, phase: first_phase, date: Date.current + 3, level: 5, duration: 90)
     missed = create(:planned_workout, :structured, training_plan: first_plan, plan_phase: first_phase, scheduled_on: Date.current - 1)
     second_workout = create(:planned_workout, :structured, training_plan: second_plan, plan_phase: second_phase, scheduled_on: Date.current + 1, name: "Private second-rider workout")
     second_history = create(:planned_workout, :completed, training_plan: second_plan, plan_phase: second_phase, scheduled_on: Date.current - 2)
@@ -45,6 +45,7 @@ RSpec.describe "USR-008 two-rider isolation", type: :request do
     post accept_adaptation_proposal_path(proposal)
     expect(response).to redirect_to(root_path)
     expect(first_plan.adaptation_proposals).to be_empty
+    # The sparse preceding hard week also caps the generated adaptation load.
     expect(adaptation_target.reload.progression_level).to eq(1)
 
     post miss_planned_workout_path(missed), params: { resolution: "leave_unchanged" }

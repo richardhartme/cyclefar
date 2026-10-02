@@ -10,10 +10,22 @@ module Workouts
       raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && (workout.workout? || workout.opener?)
     end
 
-    def preview(action:, subtype: nil, duration_minutes: nil, progression_level: nil)
+    def preview(action:, subtype: nil, duration_minutes: nil, progression_level: nil, lower_targets: false)
       before = snapshot_for(@workout)
       subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
+      if lower_targets
+        raise ArgumentError, "Only easy feedback targets can be lowered" unless action.to_s == "adapt" && %w[recovery endurance].include?(@workout.subtype)
+
+        # Keep the existing easy profile and narrow each prescribed range to its
+        # lower endpoint; this also preserves any earlier re-entry reductions.
+        steps = @workout.workout_steps.map do |step|
+          Workouts::StepDefinition.from(step).with(
+            target_high_pct_ftp: step.target_low_pct_ftp,
+            end_target_high_pct_ftp: step.end_target_low_pct_ftp)
+        end
+        definition = definition.with(steps: steps)
+      end
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.ftp_watts_for_planning).call
       after = Snapshot.new(
         kind: kind.to_s,
