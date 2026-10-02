@@ -20,6 +20,17 @@ module Workouts
     end
 
     def copy_to!(destination:)
+      plan.with_lock do
+        @workout.reload
+        raise ArgumentError, "Only planned structured workouts can be copied" unless @workout.planned? && @workout.structured? && @workout.workout?
+
+        copy_under_lock!(destination: destination)
+      end
+    end
+
+    private
+
+    def copy_under_lock!(destination:)
       raise ArgumentError, "Choose an empty date inside this plan" unless destination.between?(plan.starts_on, plan.ends_on)
       raise ArgumentError, "That date already has a workout" if plan.planned_workouts.exists?(scheduled_on: destination)
 
@@ -32,8 +43,6 @@ module Workouts
         copy
       end
     end
-
-    private
 
     def plan
       @workout.training_plan

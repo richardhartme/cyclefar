@@ -38,6 +38,17 @@ module Workouts
     end
 
     def apply!(**attributes)
+      @workout.training_plan.with_lock do
+        @workout.reload
+        raise ArgumentError, "Only planned structured workouts can be edited" unless @workout.planned? && @workout.structured?
+
+        apply_under_lock!(**attributes)
+      end
+    end
+
+    private
+
+    def apply_under_lock!(**attributes)
       proposed = preview(**attributes)
       kind, definition, metrics = proposed.kind, proposed.definition, proposed.metrics
       material_change = material_change?(proposed.before, proposed.after)
@@ -65,8 +76,6 @@ module Workouts
       end
       Result.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
     end
-
-    private
 
     def definition_for(action, subtype, duration_minutes, progression_level)
       if action.to_s == "change" && subtype == :opener
