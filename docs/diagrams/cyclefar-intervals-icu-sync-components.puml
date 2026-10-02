@@ -13,7 +13,7 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Uses the signed-in rider's active plan and profile; displays outcome without exposing the API key.")
   Component(sync, "SyncNextTwo", "IntervalsIcu service", "Checks plan/profile ownership; selects up to two eligible workouts and reconciles only this owner's tracked events.")
-  Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Serializes canonical workout steps and FTP-derived values into the Intervals.icu event payload.")
+  Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Exports flat canonical percentage steps, ramp midpoints, current FTP and stored estimated metrics into event payloads.")
   Component(client, "Client", "IntervalsIcu HTTP client", "Uses API-key Basic auth, five-second connect/read timeouts and one transient retry; parses JSON and maps errors.")
   Component(models, "User, plan, profile, workout and sync models", "Active Record", "Provides canonical steps and encrypted rider key; sync records retain required user_id after workout deletion.")
 }
@@ -34,6 +34,8 @@ note bottom of sync
   future workouts outside the selected set. Linked
   missed/completed/past workouts are not yet cleaned up.
   No remote listing, automatic sync or activity import.
+  Remote calls and local persistence are separate transactions;
+  failed cleanup retains metadata for an idempotent retry.
 end note
 
 SHOW_LEGEND()

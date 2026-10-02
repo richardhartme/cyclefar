@@ -6,13 +6,13 @@ On explicit rider action, sync the next two upcoming structured cycling workouts
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter and owner-scoped reconciliation, not a live-API certification. Local specs stub HTTP.
+The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-02, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were checked for athlete `0`, bulk upsert/delete, and event field names/types. This is not a live authenticated sync certification. Local specs stub HTTP.
 
 ## Authentication
 
 Use the rider's personal API key from Intervals.icu Settings. The client uses HTTP Basic auth with username `API_KEY` and the key as password.
 
-Intervals.icu documents API-key authentication and allows athlete id `0` to mean the authenticated athlete. Keep athlete-id assumptions isolated in the client so OAuth can be added later. Manual sync uses only the signed-in rider's profile and API key.
+Intervals.icu documents API-key authentication and allows athlete id `0` to mean the authenticated athlete. Keep athlete-id assumptions isolated in the client so OAuth can be added later. Manual sync uses only the signed-in rider's profile and API key. The [interactive API reference](https://intervals.icu/api-docs.html) loads the public schema linked above.
 
 Base API:
 
@@ -34,7 +34,7 @@ POST /api/v1/athlete/0/events/bulk?upsert=true
 
 The Intervals.icu guide describes `external_id` as a way for external applications to upsert their own calendar events without duplicating them.
 
-The client deletes by external ID using `PUT /api/v1/athlete/0/events/bulk-delete` with a JSON array such as `[{"external_id":"cyclefar-workout-123"}]`. It does not list or search unrelated remote events.
+The client deletes by external ID using `PUT /api/v1/athlete/0/events/bulk-delete` with a JSON array such as `[{"external_id":"cyclefar-workout-123"}]`. It does not list or search unrelated remote events. The upstream guide says missing events are ignored; the schema returns a `DeleteEventsResponse`, whereas upsert returns an array of `Event` records. The adapter ignores the remote delete count and reports the number of stale local records removed.
 
 Never delete/update calendar events that lack CycleFar's ownership marker/sync record.
 
@@ -54,7 +54,7 @@ If integer DB ids are used locally, prefix them clearly to avoid collisions with
 
 Select the first two by `scheduled_on` where:
 
-- plan is active;
+- plan is the signed-in rider's active plan (selected by the controller; the service itself does not validate plan status);
 - status = planned;
 - detail_status = structured;
 - scheduled_on >= Date.current;
@@ -88,7 +88,9 @@ Send at least:
 
 Treat optional metric fields as convenience metadata. The structured description is the key executable representation.
 
-When changing the adapter, verify the upstream API schema and adapt this boundary rather than changing the Rails domain model. The payload above matches the current serializer; its metric units have not been revalidated against the live API in this documentation review.
+The payload above matches the current serializer's shape. The public schema's `EventEx` accepts these fields: durations/FTP/load/joules are integers and `icu_intensity` is a float. The serializer sends seconds for `moving_time`, watts for `icu_ftp`, rounded TSS for `icu_training_load`, fractional IF for `icu_intensity` and kJ multiplied by 1,000 for `joules`. The schema supplies no unit descriptions for those fields; live interpretation of the optional metrics, particularly fractional IF, remains unverified. Keep any needed conversion at this adapter boundary.
+
+The schema also marks `upsertOnUid` and `updatePlanApplied` query flags required, while the official upload guide demonstrates only `upsert=true`. The current client follows the guide. Verify this discrepancy against the live API when changing or certifying the adapter.
 
 ## Structured workout serialization
 
@@ -132,7 +134,7 @@ Current call order:
 4. Bulk-delete those stale external IDs.
 5. After both remote operations succeed, transactionally save returned event IDs, digests and timestamps, then destroy stale local sync records.
 
-Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider.
+Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider. The serializer exports stored estimated metrics; current FTP is passed separately and percentage steps remain canonical.
 
 The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open and are tracked in Jira.
 

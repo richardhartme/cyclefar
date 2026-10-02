@@ -4,7 +4,7 @@ This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.m
 
 ## Application identity and stack
 
-The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS and plain Ruby domain services. Stimulus is installed, but only the generated example controller is present. Rails-generated authentication gates private application requests. There is no automatic Intervals.icu sync.
+The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The repository pins Ruby 4.0.6 and Rails 8.1.4. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS with daisyUI and plain Ruby domain services. JavaScript uses import maps. Stimulus is installed, but only the generated example controller is present. Rails-generated authentication gates private application requests. There is no automatic Intervals.icu sync.
 
 ## Authentication boundary
 
@@ -29,12 +29,12 @@ Services and presenters currently live under `app/services/`:
 ```text
 app/services/
   planning/       # configuration, previews, persistence, calendar and replanning
-    v1/rules.rb  # plan constants and interval-selection cycles
+    v1/          # plan rules, shared load context and weekly load cap
   training/
-    v1/rules.rb  # workout constants, power bands and progression ladders
+    v1/          # workout rules, power bands, ladders and pure progression calculation
   workouts/      # canonical definitions, generators, editing, adding and copying
   metrics/       # calculations over canonical steps
-  adaptations/   # completion and explicit proposal acceptance/rejection
+  adaptations/   # completion, feedback, comparisons, load limiting and acceptance/rejection
   accounts/      # controlled operator provisioning and password setup delivery
   settings/      # transactional profile and FTP changes
   intervals_icu/ # serializer, HTTP client and next-two reconciliation
@@ -67,15 +67,15 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `ManualEditor#preview` returns an in-memory definition and metrics without persistence. `apply!` uses the same path, including explicit variation, level clamping and exact-duration fitting, so feedback comparisons match accepted results when inputs remain unchanged.
 
-Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure.
+Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure. Regeneration for moves across a phase boundary or by more than seven days remains unimplemented (TRAINING_ENGINE.md §35). Move also lacks the time-off/target-event destination exclusions enforced by Add/Copy.
 
 ## Completion, adaptations and schedule changes
 
-- `Adaptations::CompletionRecorder` saves feedback and immutable FTP/target/metric snapshots in a transaction, then persists a proposal if `FeedbackEvaluator` returns one. FTP tests have a separate protocol-free completion action.
-- `Adaptations::FeedbackEvaluator` reads persisted feedback and upcoming workouts; it is not a pure calculation object. It selects planned structured targets only within today through day 13, preferring the same subtype, then the documented intensity family, then broad Intervals when the source was engine-selected. Struggled/failed feedback can also reduce nearby hard sessions within two calendar days. Easy feedback narrows existing percentage ranges to their lower endpoints without assigning intensity levels. No-op or load-increasing reductions are omitted; the existing global intensity bias remains supported.
+- `Adaptations::CompletionRecorder` saves feedback and immutable FTP/target/metric snapshots in a transaction, then persists a proposal if `FeedbackEvaluator` returns one. This path accepts regular planned structured workouts; openers cannot currently be completed through it. FTP tests have a separate protocol-free completion action.
+- `Adaptations::FeedbackEvaluator` reads persisted feedback and upcoming workouts; it is not a pure calculation object. It selects regular planned structured targets only within today through day 13, preferring the same subtype, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals when the source intent was Intervals. Struggled feedback additionally reduces nearby broad Intervals; failed feedback can reduce any nearby intensity session. Nearby means after the source date and within two calendar days, still inside the current horizon. High-RPE, struggled or failed easy feedback narrows the next same-subtype ride's existing percentage ranges to their lower endpoints without assigning intensity levels. No-op or load-increasing reductions are omitted. Late feedback is suppressed if any later-dated workout has already been completed. Repeated-pattern detection reads the last three completed workouts of the source subtype and proposes a change to the existing global intensity bias.
 - `Adaptations::ProposalComparison` validates the full feedback source/target set through the owning plan, sorts targets by date, and calculates current/proposed prescriptions at that plan's FTP alongside the effective global bias transition. `FeedbackLoadLimiter` shares reduced-load ceilings and comparable-week rules through `Planning::V1::LoadContext` with horizon generation and rechecks the weekly cap against fixed workouts and forecasts. Preview and acceptance use the same bounded prescriptions; acceptance rejects targets moved outside the current horizon. The calendar renders these comparisons read-only; invalid payloads show a generic unavailable message with Reject all and no Accept action. Material-change proposals keep their separate replan controls.
-- `Adaptations::ProposalApplier` locks the plan and then the proposal, validates through `ProposalComparison`, applies accepted changes through `ManualEditor`, saves the same clamped `intensity_bias` (-2..+2), and destroys the proposal in one transaction. Reject only destroys it. Full expiry/staleness checks (CYF-6) remain outstanding; comparison/apply equivalence assumes unchanged inputs. Future horizon generation consumes the saved bias; per-family/subtype state in TRAINING_ENGINE.md §32 remains unimplemented; CYF-5 addresses near-term feedback scope and comparable-workout selection.
-- `Planning::MissedWorkoutResolver` supports `leave_unchanged`, `move` and `replan`. Leave/replan retain a missed record; replan replaces upcoming planned training through `FuturePrescriber`.
+- `Adaptations::ProposalApplier` locks the plan and then the proposal, validates through `ProposalComparison`, applies accepted changes through `ManualEditor`, saves the same clamped `intensity_bias` (-2..+2), and destroys the proposal in one transaction. Reject only destroys it. Seven-day expiry timestamps are stored but are not enforced; full staleness checks (CYF-6) remain outstanding. Comparison/apply equivalence assumes unchanged inputs. Future horizon generation consumes the saved bias; per-family/subtype state in TRAINING_ENGINE.md §32 remains unimplemented. CYF-3, CYF-4 and CYF-5 delivered comparisons, bias consumption and bounded comparable-workout selection respectively.
+- `Planning::MissedWorkoutResolver` supports `leave_unchanged`, `move` and `replan`. Leave/replan retain a missed record; replan replaces upcoming planned training through `FuturePrescriber` in today through day 13, bounded by plan end. It currently uses the template effective today for the whole block; material-change and time-off replanning instead select the effective template per date.
 - `Planning::AvailabilityChanger` versions weekly templates and re-prescribes affected future dates. `ExistingPlanConfiguration` feeds the existing plan back through the preview engine.
 - `Planning::TimeOffPlanner` adds/removes time off and selects the applicable availability template for each future date, respecting one-week overrides and later schedule changes.
 - `Planning::FuturePrescriber` replaces future planned prescriptions under the plan lock, accounts for time off and return ramps, preserves completed/missed records and materialises the horizon. It retains the unbiased baseline separately from an effective post-break ceiling, avoiding feedback-bias stacking. Availability/time-off mutations and proposal acceptance acquire the plan lock before changing children.
@@ -93,6 +93,7 @@ The authoritative route definitions are in [`config/routes.rb`](../config/routes
 
 ```ruby
 resource :session
+resource :registration, only: [:new, :create]
 resources :passwords, param: :token
 root "home#index"
 resource :settings, only: [:show, :update]
@@ -128,7 +129,7 @@ resource :intervals_icu_sync, only: :create
 
 Use transactions for multi-record mutations. Database constraints enforce one profile and at most one active plan per user, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. The SQL schema dump is `db/structure.sql`.
 
-Scheduling uses `date` and `Date.current`; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`.
+Scheduling uses `date` and `Date.current` in the configured London time zone; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1`; `PlannedWorkout#generation_context` retains unbiased baseline levels, automatic load/level references and ceilings separately from one-off edits.
 
 API keys use Active Record Encryption and filtered parameters. Login passwords use `has_secure_password` digests; signed, permanent, HttpOnly, SameSite=Lax cookies identify database sessions. The checked-in `db/structure.sql` includes the generated `users` and `sessions` tables. Client errors use generic messages rather than reflecting external responses or secrets. Domain operations should remain explicit services rather than model callbacks.
 
@@ -137,6 +138,8 @@ API keys use Active Record Encryption and filtered parameters. Login passwords u
 The application is live at `cyclefar.com`, deployed with Kamal using `config/deploy.yml`. Separate [Terraform](../infra/README.md) and [CloudFormation](../infra/cloudformation/README.md) alternatives describe one EC2 application server, private RDS and optional Route 53 DNS for that environment. Choose one infrastructure owner per environment.
 
 Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` reads the web host, database host and registry user from the deploy shell and declares the runtime secrets; infrastructure provisioning does not deploy the app.
+
+Solid Cache, Solid Queue and Solid Cable use their PostgreSQL databases. Kamal sets `SOLID_QUEUE_IN_PUMA=true`, enabling the Solid Queue supervisor through Puma for queued password-reset delivery. Operator provisioning sends mail synchronously. There are no scheduled training-generation or integration-sync jobs; the recurring configuration contains only queue housekeeping. The container view groups Puma and its supervised worker as one deployment unit rather than implying a separate job server.
 
 ## Architecture diagrams
 

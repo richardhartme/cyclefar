@@ -2,7 +2,9 @@
 
 `cyclefar.yaml` is an alternative to the Terraform configuration in `infra/`.
 Choose one tool to own an environment; this template creates a new environment,
-not an import of Terraform-managed resources. No stack has been deployed.
+not an import of Terraform-managed resources. CycleFar is live at `cyclefar.com`;
+these templates do not record which tool owns the live resources. Check the
+environment's existing resource ownership before creating a stack.
 
 ## Architecture
 
@@ -19,7 +21,7 @@ not an import of Terraform-managed resources. No stack has been deployed.
 - Optional DNS: create a public Route 53 zone and A record, use an existing zone,
   or leave DNS disabled.
 
-There are no NAT gateways, load balancers, containers orchestrators or deployment
+There are no NAT gateways, load balancers, container orchestrators or deployment
 pipelines. Stack creation provisions infrastructure, not a running Rails application.
 Docker installation and Rails deployment remain separate Kamal tasks configured in
 `config/deploy.yml`.
@@ -106,10 +108,16 @@ Use `ApplicationPublicIP` for the Kamal host and `ubuntu` as the SSH user. Confi
 accessible container registry, the existing AMD64 image build, Docker setup, TLS/proxy,
 and the production hostname separately before running `bin/kamal setup`.
 
-Supply the stack's `DatabaseEndpoint`, `DatabasePort` and `DatabaseUsername` as `DB_HOST`,
-`DB_PORT` and `DB_USERNAME`. Retrieve the password privately using the Secrets Manager
+Export `KAMAL_WEB_HOST` from `ApplicationPublicIP` and `CYCLEFAR_DB_HOST` from
+`DatabaseEndpoint` in the deploy shell. Kamal maps the latter to the container's
+`DB_HOST`; it currently fixes `DB_PORT=5432` and `DB_USERNAME=cyclefar`, so reconcile
+those settings with `DatabasePort` and `DatabaseUsername` if you override template
+defaults. Export `KAMAL_REGISTRY_USER` and optionally `KAMAL_SSH_KEY` for registry
+and SSH configuration. Retrieve the password privately using the Secrets Manager
 console and `DatabaseSecretArn`, and supply it as the `DB_PASSWORD` Kamal secret.
-`SECRET_KEY_BASE` is a separate required secret. Never paste credentials into the template,
+`SECRET_KEY_BASE`, the Active Record Encryption keys and SMTP credentials are also
+required runtime secrets; see [account access](../../docs/ACCOUNT_ACCESS.md).
+Never paste credentials into the template,
 parameters, Git, or CloudFormation outputs. Changes to the secret alone do not update
 RDS or already-running containers: coordinate any future password rotation with both.
 

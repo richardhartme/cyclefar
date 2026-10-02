@@ -11,9 +11,11 @@ Person(rider, "Rider", "Creates and manages a cycling training plan, records wor
 System(cyclefar, "CycleFar", "A cycling training planner with public registration and private user-owned profiles, plans and sync records.")
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
+System_Ext(smtp, "SMTP provider", "Delivers account setup and password-reset links.")
 
 Rel(rider, cyclefar, "Registers or signs in; creates and manages plans; completes workouts; reviews adaptations", "Web browser")
 Rel(cyclefar, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
+Rel(cyclefar, smtp, "Sends password setup and reset links", "SMTP / STARTTLS")
 
 note bottom of cyclefar
   Automated two-rider isolation coverage exists.

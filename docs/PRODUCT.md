@@ -69,6 +69,8 @@ The rider should not need to decide whether today's threshold session is 3x8, 4x
 
 The plan should not silently regenerate every time anything changes. Adaptation is targeted and visible. Proposed changes require acceptance.
 
+Current feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Full proposal expiry/staleness handling and per-family progression bias remain implementation gaps; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
+
 ### Near-term specificity, long-term flexibility
 
 Only the next 14 days are fully structured. The rest of the plan stores purpose/type/duration/phase so future detailed workouts can reflect newer FTP and feedback.
@@ -149,6 +151,6 @@ Do not implement these now, but avoid architecture that blocks them:
 ## Brand / naming
 
 - Canonical product name: **CycleFar**.
-- The application is live at `cyclefar.com`. `config/deploy.yml` configures Kamal deployment to that host, and separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
+- The application is live at `cyclefar.com`. `config/deploy.yml` configures that public TLS hostname and reads the application server and database endpoints from the deploy environment. Separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
 - User-facing copy should call the application **CycleFar**, not generic names such as “Cycling Trainer App”.
 - Do not couple persistence/domain classes to the brand name; concepts should remain `TrainingPlan`, `PlannedWorkout`, etc.

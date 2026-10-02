@@ -8,6 +8,14 @@ These rules are not a claim that there is one scientifically perfect training pl
 
 These remain the intended rules. Implementation gaps are tracked in Jira and do not redefine them.
 
+### Current implementation
+
+Versioned constants live in `Training::V1::Rules` and `Planning::V1::Rules`. The pure `Training::V1::Progression` calculation applies accepted global intensity bias once to eligible outlines under the plan lock, clamps levels to 1–7, and respects saved recovery/taper/re-entry/load ceilings. Materialisation persists canonical steps, the fitted effective level and generation references atomically. Forecasts use explicit variations; initial endurance profiles are sampled and saved. Existing structured and completed workouts remain stable when the horizon rolls or FTP changes.
+
+Feedback proposals now target regular planned structured workouts in today through day 13. They prefer the same subtype, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals when the source used that intent. Nearby reductions use two calendar days after the source date: broad Intervals for struggled completion, any intensity session for failure, always within the current horizon. Difficult easy rides can lower the next same-subtype ride's existing ranges without changing its duration or turning it into intensity. `ProposalComparison` and `FeedbackLoadLimiter` generate read-only comparisons and recheck load ceilings/caps before atomic acceptance.
+
+The accepted bias is still global, although repeated-pattern detection reads the last three completed workouts of the source subtype; per-family/subtype stored bias (§32) and bias-driven subtype substitution (§11) remain unimplemented. Seven-day proposal expiry is stored but not enforced; full stale-input handling remains open (CYF-6). Move retains structure even across phases or beyond seven days (§35). The shared weekly cap currently lowers intensity levels; the full sequence of alternate-variation/target/subtype reductions in §27 remains intended behaviour. Current late-feedback suppression blocks a proposal whenever any later-dated workout is already completed. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries and [UX.md](UX.md) for presentation limits.
+
 ## 2. Non-negotiable engine constraints
 
 1. No AI/LLM calls.
@@ -637,6 +645,8 @@ For the initial <30 seconds, either:
 - use the first 30-second average once available.
 
 Choose one approach, document it in code and lock it with tests. Since all V1 workouts are >=30 minutes, the edge has negligible plan-level effect.
+
+The implemented calculator uses a progressively growing window for the first 29 samples, then a rolling 30-second window across step boundaries. Metrics specs lock this choice.
 
 Call the result `estimated_np_watts` in code/UI where displayed.
 

@@ -2,9 +2,11 @@
 
 Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. Outstanding gaps are tracked in Jira.
 
-## Current authentication scaffold
+## Current implementation
 
 Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; live mail verification remains open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
+
+Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Expiry/full staleness handling, per-family bias, complete workout-card fields (CAL-002), move regeneration across phase/distance boundaries and all stale linked sync-event cases (ICU-001) remain gaps. These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -16,7 +18,7 @@ Acceptance criteria:
 
 - User-facing application chrome and primary product references use `CycleFar`.
 - The Rails application/project identifier is `cycle_far` and application module is `CycleFar`.
-- The application is live at `cyclefar.com`, the production host in `config/deploy.yml`. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
+- The application is live at `cyclefar.com`, the public TLS hostname in `config/deploy.yml`; server endpoints come from the deployment environment. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
 - Core domain model/table names remain brand-neutral.
 - External ownership identifiers created by CycleFar, such as Intervals.icu `external_id`, use a stable `cyclefar-` namespace.
 
@@ -24,7 +26,7 @@ Acceptance criteria:
 
 ### SET-001 Current FTP
 
-The application stores each rider's current FTP in their user-owned settings/profile record. The original V1 release has one enabled rider.
+The application stores each rider's current FTP in their user-owned settings/profile record.
 
 Acceptance criteria:
 
@@ -131,7 +133,7 @@ The rider may go back and edit the configuration, then confirm to create the pla
 
 ### PLN-014 One active plan
 
-Only one active plan may exist per rider. The original V1 release has one enabled rider.
+Only one active plan may exist per rider.
 
 Major plan settings are immutable after confirmation:
 

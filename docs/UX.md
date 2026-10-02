@@ -17,7 +17,7 @@ Keep navigation minimal:
 
 No History page in V1.
 
-## Authentication screens currently generated
+## Authentication and registration screens
 
 The public homepage offers **Sign In** and **Register**. Private application requests redirect to the generated sign-in page. It accepts an email address and password and links to **Forgot password?** and **Register**. The registration screen accepts an email address, password and confirmation, then signs in the new rider. The reset-request page accepts an email address and displays the same confirmation whether or not it matches a user; a delivered token link opens the password-update form. The layout shows the signed-in account and a **Sign out** control on authenticated pages; Calendar and Settings navigation are hidden on public pages. Production SMTP is configured through environment variables, with live provider delivery still to be verified.
 
@@ -241,7 +241,7 @@ Actions:
 - Complete
 - Missed (when relevant)
 
-Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form.
+Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form and service path. Move retains structure regardless of distance or phase; its destination checks currently cover plan bounds and workout collisions, without Add/Copy's time-off and event exclusions.
 
 ## 7. Shuffle controls
 
@@ -293,7 +293,9 @@ If adaptation is warranted, next show an adaptation proposal:
 - before/after summary;
 - Accept all / Reject all.
 
-Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accepted bias affects eligible intensity outlines as they enter the next 14 days, subject to duration, reduced-load and weekly growth limits; already structured workouts remain stable. Accept all / Reject all remain beside the comparison. Feedback targets are bounded to the next 14 days, including comparable-family fallbacks and nearby hard-session reductions where warranted. High-RPE easy rides can reduce the next comparable easy ride within its existing power ranges. Comparisons recheck reduced-load ceilings and weekly load limits, preserving type/intent and duration. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Full expired/stale-proposal handling remains outstanding (CYF-6).
+Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accepted bias affects eligible intensity outlines as they enter the next 14 days, subject to duration, reduced-load and weekly growth limits; already structured workouts remain stable. Accept all / Reject all remain beside the comparison.
+
+Feedback targets are bounded to today through day 13, including comparable-family fallbacks and nearby hard-session reductions where warranted. High-RPE, struggled or failed easy rides can reduce the next same-subtype easy ride within its existing power ranges. Comparisons recheck reduced-load ceilings and weekly load limits, preserving type/intent and duration. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Proposal expiry timestamps are stored but not enforced; full expired/stale-proposal handling remains outstanding (CYF-6).
 
 ## 10. Awaiting-status flow
 
