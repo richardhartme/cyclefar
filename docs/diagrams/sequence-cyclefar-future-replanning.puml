@@ -1,0 +1,58 @@
+@startuml CycleFar Future Replanning Sequence
+title CycleFar — Change future training
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "Owner-scoped\nchange controller" as Controller
+control "Planning change service" as ChangeService
+control "FuturePrescriber" as Prescriber
+control "ExistingPlanConfiguration" as ExistingConfiguration
+control "PlanBuilder" as Builder
+control "HorizonMaterializer" as Materializer
+database "PostgreSQL" as Database
+
+note over ChangeService
+  Entry service is AvailabilityChanger, TimeOffPlanner or
+  MissedWorkoutResolver, according to the rider's action.
+end note
+
+Rider -> Controller: submit change to an owned plan/workout
+alt change availability
+  Controller -> ChangeService: AvailabilityChanger.apply!
+  ChangeService -> Database: lock plan; version availability template
+  ChangeService -> ChangeService: choose one week or from-date range
+else add or remove time off
+  Controller -> ChangeService: TimeOffPlanner.add! / remove!
+  ChangeService -> Database: lock plan; save or remove time-off period
+  ChangeService -> ChangeService: group future dates by effective template
+else replan after a missed workout
+  Controller -> ChangeService: MissedWorkoutResolver.resolve!(replan)
+  ChangeService -> Database: lock plan; retain source as missed
+  ChangeService -> ChangeService: choose today through day 13 and today's template
+end
+
+loop each affected range and its selected availability slots
+  ChangeService -> Prescriber: replace!(dates, slots)
+  Prescriber -> Database: lock plan; read future planned workouts
+  Prescriber -> Database: remove affected replaceable planned workouts
+  Prescriber -> ExistingConfiguration: build from saved plan and slots
+  ExistingConfiguration --> Prescriber: existing-plan configuration
+  Prescriber -> Builder: preview(configuration)
+  Builder --> Prescriber: deterministic prescriptions and forecasts
+  Prescriber -> Prescriber: apply time-off and return-ramp rules
+  Prescriber -> Database: create replacement outlines and forecasts
+  Prescriber -> Materializer: call(plan)
+  Materializer -> Database: lock plan; read eligible outlines
+  Materializer -> Database: save canonical steps and current-FTP metrics
+end
+ChangeService --> Controller: change applied
+Controller --> Rider: redirect to calendar
+
+note over Prescriber, Database
+  Only future planned records in the affected dates are replaceable.
+  Completed and missed workouts, plan phases and event date remain.
+  Missed leave/move actions do not enter this re-prescription flow.
+end note
+@enduml

@@ -1,0 +1,69 @@
+@startuml CycleFar Plan Creation Sequence
+title CycleFar — Create a training plan
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "TrainingPlansController" as Controller
+collections "Owner-bound\nRails session draft" as Draft
+control "PlanConfiguration" as Configuration
+control "PlanBuilder" as Builder
+control "Workout engine +\nweekly load cap" as Engine
+control "PreviewPresenter" as Presenter
+control "PlanCreator" as Creator
+control "HorizonMaterializer" as Materializer
+database "PostgreSQL" as Database
+
+== Preview: no plan records are written ==
+Rider -> Controller: POST preview with configuration
+Controller -> Configuration: normalize and validate inputs
+alt invalid configuration
+  Controller --> Rider: 422 with form errors
+else valid configuration
+  Controller -> Draft: save inputs with Current.user.id
+  Controller --> Rider: redirect to GET preview
+  Rider -> Controller: GET preview
+  Controller -> Draft: read draft for Current.user
+  alt missing or different owner
+    Controller -> Draft: clear stale draft
+    Controller --> Rider: redirect to plan form
+  else owned draft
+    Controller -> Configuration: validate restored inputs
+    Controller -> Builder: preview(configuration)
+    Builder -> Builder: allocate phases, recovery, taper and FTP tests
+    Builder -> Engine: forecast workouts, metrics and weekly load
+    Engine --> Builder: in-memory prescriptions and warnings
+    Builder --> Controller: in-memory preview
+    Controller -> Presenter: format preview
+    Controller --> Rider: show review screen
+  end
+end
+
+== Confirmation: create plan and near-term detail ==
+Rider -> Controller: POST create plan
+Controller -> Draft: read and consume owner-bound draft
+Controller -> Configuration: validate restored inputs
+alt missing or invalid draft
+  Controller --> Rider: redirect to plan form
+else valid draft
+  Controller -> Creator: create!(configuration, Current.user)
+  Creator -> Builder: rebuild deterministic preview
+  Builder --> Creator: phases, outlines and forecasts
+  group database transaction
+    Creator -> Database: create owned plan, phases, template, event and outlines
+    Creator -> Materializer: structure today's 14-day horizon
+    Materializer -> Database: lock plan and read eligible outlines
+    Materializer -> Engine: generate canonical steps and current-FTP metrics
+    Engine --> Materializer: fitted definitions and metrics
+    Materializer -> Database: save steps, variation and effective load references
+  end
+  Creator --> Controller: created plan
+  Controller --> Rider: redirect to training calendar
+end
+
+note over Builder, Database
+  Forecasts use explicit variations. Initial endurance profiles are
+  sampled only when a workout is materialized and then saved.
+end note
+@enduml

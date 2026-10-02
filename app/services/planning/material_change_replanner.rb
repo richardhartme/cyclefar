@@ -1,4 +1,5 @@
 module Planning
+  # Replans future workouts in response to a material change proposal, respecting availability.
   class MaterialChangeReplanner
     def initialize(proposal)
       @proposal = proposal

@@ -1,4 +1,5 @@
 module Planning
+  # Prescribes future workouts for date ranges respecting availability and constraints.
   class FuturePrescriber
     attr_reader :slots
 

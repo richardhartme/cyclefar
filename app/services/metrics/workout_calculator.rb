@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "../workouts/step_sequence"
 
 module Metrics
+  # Calculates workout metrics (power, NP, IF, TSS, work) from step definitions and FTP.
   class WorkoutCalculator
     Result = Data.define(:duration_seconds, :average_power_watts, :estimated_np_watts, :estimated_if, :estimated_tss, :estimated_work_kj)
 

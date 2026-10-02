@@ -1,4 +1,5 @@
 module Workouts
+  # Copies structured planned workouts to new dates within a plan.
   class Copier
     STEP_ATTRIBUTES = %i[
       position

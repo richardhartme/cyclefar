@@ -1,4 +1,5 @@
 module Workouts
+  # Edits and shuffles existing structured workouts (easier, harder, shorter, longer, adapt).
   class ManualEditor
     Snapshot = Data.define(:kind, :subtype, :duration_minutes, :estimated_if, :estimated_tss)
     Result = Data.define(:workout, :material_change, :before, :after)

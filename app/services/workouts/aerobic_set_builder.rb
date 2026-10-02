@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "step_definition"
 
 module Workouts
+  # Builds aerobic/endurance main set segments with variations (steady, alternating, undulating, ramps).
   class AerobicSetBuilder
     def initialize(subtype:, duration_seconds:, variation_key:)
       @subtype = subtype.to_sym

@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "step_definition"
 
 module Workouts
+  # Builds cool-down segments with duration and subtype variations.
   class CoolDownBuilder
     def initialize(subtype:, duration_minutes:, compact: false)
       @subtype = subtype.to_sym

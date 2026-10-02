@@ -1,4 +1,5 @@
 module Planning
+  # Handles missed workouts: mark, move to another date, or replan forward.
   class MissedWorkoutResolver
     def initialize(workout)
       @workout = workout

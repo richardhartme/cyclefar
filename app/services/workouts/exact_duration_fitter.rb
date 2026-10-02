@@ -4,6 +4,7 @@ require_relative "main_set_builder"
 require_relative "aerobic_set_builder"
 
 module Workouts
+  # Fits workout steps to exact duration by adjusting progression and fill.
   class ExactDurationFitter
     Result = Data.define(:steps, :progression_level, :name_suffix, :summary, :shortened, :compressed)
 

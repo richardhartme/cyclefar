@@ -145,11 +145,18 @@ Solid Cache, Solid Queue and Solid Cable use their PostgreSQL databases. Kamal s
 
 PlantUML sources describe the logical application, not the AWS infrastructure:
 
-- [System context](diagrams/cyclefar-system-context.puml)
-- [Containers](diagrams/cyclefar-container.puml)
-- [Application components](diagrams/cyclefar-component.puml)
-- [Plan generation](diagrams/cyclefar-plan-generation-components.puml)
-- [Plan changes](diagrams/cyclefar-plan-change-components.puml)
-- [Intervals.icu sync](diagrams/cyclefar-intervals-icu-sync-components.puml)
+- [System context](diagrams/context-cyclefar-system.puml)
+- [Containers](diagrams/container-cyclefar.puml)
+- [Application components](diagrams/component-cyclefar-application.puml)
+- [Plan generation](diagrams/component-cyclefar-plan-generation.puml)
+- [Plan changes](diagrams/component-cyclefar-plan-change.puml)
+- [Intervals.icu sync](diagrams/component-cyclefar-intervals-icu-sync.puml)
+
+Sequence views show request order and the boundaries between in-memory previews, persistence and accepted changes:
+
+- [Create a plan](diagrams/sequence-cyclefar-plan-creation.puml)
+- [Change future training](diagrams/sequence-cyclefar-future-replanning.puml)
+- [Feedback proposal](diagrams/sequence-cyclefar-feedback-proposal.puml)
+- [Material Change Workout proposal](diagrams/sequence-cyclefar-material-change-proposal.puml)
 
 See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.

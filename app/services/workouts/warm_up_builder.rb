@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "step_definition"
 
 module Workouts
+  # Builds warm-up segments with optional primer efforts and settlement.
   class WarmUpBuilder
     def initialize(subtype:, compact: false)
       @subtype = subtype.to_sym

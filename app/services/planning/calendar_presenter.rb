@@ -1,4 +1,5 @@
 module Planning
+  # Formats plan into weekly calendar view with load metrics and phase labels.
   class CalendarPresenter
     Week = Data.define(:starts_on, :ends_on, :days, :phase_label, :recovery_week, :duration_minutes, :estimated_tss, :estimated_work_kj)
 

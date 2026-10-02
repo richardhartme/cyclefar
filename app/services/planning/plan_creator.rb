@@ -1,4 +1,5 @@
 module Planning
+  # Creates a new TrainingPlan record and all associated phases, workouts and event.
   class PlanCreator
     def initialize(configuration, user:)
       @configuration = configuration

@@ -3,6 +3,7 @@ require "net/http"
 require "uri"
 
 module IntervalsIcu
+  # HTTP client for Intervals.icu API; bulk upsert and delete events.
   class Client
     BASE_URL = "https://intervals.icu/api/v1".freeze
     TIMEOUT_SECONDS = 5

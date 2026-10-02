@@ -1,4 +1,5 @@
 module Planning
+  # Formats preview data for display: labels, descriptions and aggregated metrics.
   class PreviewPresenter
     GOAL_LABELS = {
       "general_fitness" => "General Fitness", "increase_ftp" => "Increase FTP", "improve_endurance" => "Improve Endurance",

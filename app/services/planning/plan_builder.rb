@@ -8,6 +8,7 @@ require_relative "v1/rules"
 require_relative "v1/weekly_load_cap"
 
 module Planning
+  # Builds a training plan preview with workouts, weeks, FTP tests and load enforcement.
   class PlanBuilder
     Prescription = Data.define(
       :scheduled_on,
