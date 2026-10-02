@@ -69,7 +69,7 @@ The rider should not need to decide whether today's threshold session is 3x8, 4x
 
 The plan should not silently regenerate every time anything changes. Adaptation is targeted and visible. Proposed changes require acceptance.
 
-Current feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Full proposal expiry/staleness handling and per-family progression bias remain implementation gaps; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
+Current feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Feedback and material-change proposals enforce their seven-day expiry and validate proposal-time canonical inputs before acceptance. Stale or unverifiable proposals can be dismissed without changing completed history. Per-family progression bias remains an implementation gap; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
 
 ### Near-term specificity, long-term flexibility
 

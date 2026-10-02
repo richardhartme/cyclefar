@@ -22,6 +22,7 @@ class PlannedWorkoutsController < ApplicationController
 
   def show
     @material_change_proposal = material_change_proposal
+    @material_change_error = Adaptations::ProposalFreshness.new(@material_change_proposal).unavailability_message if @material_change_proposal
   end
 
   def shuffle
@@ -33,7 +34,7 @@ class PlannedWorkoutsController < ApplicationController
 
   def change
     proposal = nil
-    PlannedWorkout.transaction do
+    @workout.training_plan.with_lock do
       result = Workouts::ManualEditor.new(@workout).apply!(action: :change, subtype: params.require(:subtype), duration_minutes: params.require(:duration_minutes))
       proposal = Planning::MaterialChangeProposal.new(@workout).replace!(material_change: result.material_change)
     end
@@ -43,6 +44,15 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def move
+    @workout.training_plan.with_lock do
+      @workout.reload
+      move_under_lock!
+    end
+  rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
+    redirect_to planned_workout_path(@workout), alert: error.message
+  end
+
+  def move_under_lock!
     raise ArgumentError, "Completed workouts cannot be moved" unless @workout.planned?
 
     destination = Date.iso8601(params.require(:scheduled_on))
@@ -52,9 +62,8 @@ class PlannedWorkoutsController < ApplicationController
     phase = @workout.training_plan.plan_phases.find { |item| destination.between?(item.starts_on, item.ends_on) }
     @workout.update!(scheduled_on: destination, plan_phase: phase)
     redirect_to root_path, notice: "Workout moved to #{destination.to_fs(:long)}."
-  rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
-    redirect_to planned_workout_path(@workout), alert: error.message
   end
+  private :move_under_lock!
 
   def copy
     destination = Date.iso8601(params.require(:scheduled_on))
@@ -72,9 +81,12 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def complete_test
-    raise ArgumentError, "Only a planned FTP test can be marked done" unless @workout.planned? && @workout.ftp_test?
+    @workout.training_plan.with_lock do
+      @workout.reload
+      raise ArgumentError, "Only a planned FTP test can be marked done" unless @workout.planned? && @workout.ftp_test?
 
-    @workout.update!(status: :completed, completed_at: Time.current)
+      @workout.update!(status: :completed, completed_at: Time.current)
+    end
     redirect_to settings_path, notice: "FTP test recorded. Update your current FTP from the result."
   rescue ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to planned_workout_path(@workout), alert: error.message

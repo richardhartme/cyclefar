@@ -9,11 +9,16 @@ class HomeController < ApplicationController
       @load_warnings = Planning::HorizonMaterializer.new(plan).call
       @plan = Current.user.training_plans.includes(:target_event, :plan_phases, :time_off_periods, :adaptation_proposals).find(plan.id)
       @has_completed_workouts = @plan.planned_workouts.completed.exists?
+      @proposal_errors = {}
       @proposal_comparisons = @plan.adaptation_proposals.to_h do |proposal|
-        comparison = unless proposal.material_change_replan?
+        comparison = if proposal.material_change_replan?
+          @proposal_errors[proposal.id] = Adaptations::ProposalFreshness.new(proposal).unavailability_message
+          nil
+        else
           begin
             Adaptations::ProposalComparison.new(proposal).call
-          rescue ArgumentError
+          rescue ArgumentError => error
+            @proposal_errors[proposal.id] = error.message
             nil
           end
         end

@@ -36,7 +36,7 @@
       </p>
     <% end %>
   <% else %>
-    <p role="status"><%= Adaptations::ProposalComparison::UNAVAILABLE_MESSAGE %></p>
+    <p role="status"><%= @proposal_errors[proposal.id] || Adaptations::ProposalComparison::UNAVAILABLE_MESSAGE %></p>
   <% end %>
 
   <div class="flex flex-wrap gap-2">
