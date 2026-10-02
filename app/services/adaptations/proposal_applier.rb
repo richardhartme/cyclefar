@@ -30,18 +30,16 @@ module Adaptations
     end
 
     def apply_feedback_adaptation!
-      @proposal.payload.fetch("changes", []).each do |change|
-        workout = @proposal.training_plan.planned_workouts.find(change.fetch("planned_workout_id"))
-        raise ArgumentError, "Proposal is stale" unless workout.planned? && workout.structured?
-
-        Workouts::ManualEditor.new(workout).apply!(action: :adapt, progression_level: [ change.fetch("progression_level").to_i, 7 ].min)
+      @proposal.training_plan.lock!
+      comparison = ProposalComparison.new(@proposal).call
+      comparison.changes.each do |change|
+        Workouts::ManualEditor.new(change.workout).apply!(action: :adapt, progression_level: change.requested_level)
       end
-      bias = @proposal.payload.fetch("progression_bias", 0).to_i
-      return unless bias.nonzero?
+      return if comparison.bias.delta.zero?
 
       state = @proposal.training_plan.progression_state.deep_dup
       key = "intensity_bias"
-      state[key] = [ [ state.fetch(key, 0).to_i + bias, -2 ].max, 2 ].min
+      state[key] = comparison.bias.after
       @proposal.training_plan.update!(progression_state: state)
     end
   end

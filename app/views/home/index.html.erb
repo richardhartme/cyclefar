@@ -30,6 +30,7 @@
     </header>
 
     <% @plan.adaptation_proposals.each do |proposal| %>
+      <% if proposal.material_change_replan? %>
       <section class="alert alert-warning items-start sm:items-center" aria-label="Adaptation proposal">
         <div>
           <strong class="block"><%= proposal.material_change_replan? ? "Optional upcoming replan" : "Adaptation proposal" %></strong>
@@ -40,6 +41,9 @@
           <%= button_to proposal.material_change_replan? ? "Keep rest of plan unchanged" : "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, form: { data: { turbo_confirm: proposal.material_change_replan? ? nil : "Reject this adaptation proposal?" } }, class: "btn btn-ghost btn-sm" %>
         </div>
       </section>
+      <% else %>
+        <%= render "adaptation_proposal", proposal: proposal, comparison: @proposal_comparisons[proposal.id] %>
+      <% end %>
     <% end %>
   <% else %>
     <div class="hero bg-base-100 rounded-box shadow-sm">

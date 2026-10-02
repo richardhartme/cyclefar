@@ -293,7 +293,7 @@ If adaptation is warranted, next show an adaptation proposal:
 - before/after summary;
 - Accept all / Reject all.
 
-Current proposals appear on the calendar with a reason and Accept all / Reject all buttons. Per-workout before/after summaries are outstanding (FBK-002).
+Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accept all / Reject all remain beside the comparison. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Full expired/stale-proposal handling remains outstanding (CYF-6).
 
 ## 10. Awaiting-status flow
 
