@@ -13,6 +13,7 @@ RSpec.describe "Feedback proposal comparisons", type: :request, generated_workou
   let(:proposal) do
     create(
       :adaptation_proposal,
+      :fresh,
       training_plan: plan,
       reason: "Reduce the next two threshold sessions.",
       expires_at: 7.days.from_now,
@@ -21,6 +22,7 @@ RSpec.describe "Feedback proposal comparisons", type: :request, generated_workou
   let(:other_proposal) do
     create(
       :adaptation_proposal,
+      :fresh,
       training_plan: other_plan,
       reason: "Private other-rider adaptation",
       expires_at: 7.days.from_now,
@@ -139,9 +141,85 @@ RSpec.describe "Feedback proposal comparisons", type: :request, generated_workou
   end
 
   it "retains the separate material-change proposal controls" do
-    create(:adaptation_proposal, training_plan: plan, payload: { "type" => AdaptationProposal::MATERIAL_CHANGE_REPLAN, "source_workout_id" => target.id })
+    Planning::MaterialChangeProposal.new(target).replace!(material_change: true)
     get root_path
     expect(comparison_section.text).to include("Optional upcoming replan", "Replan upcoming workouts", "Keep rest of plan unchanged")
     expect(comparison_section.css("table")).to be_empty
+  end
+
+  it "CYF-6 hides acceptance for expired feedback, explains direct rejection, and dismisses only the owner's proposal" do
+    own_history = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 2)
+    create(:planned_workout, :completed, training_plan: other_plan, plan_phase: other_phase, scheduled_on: Date.current - 2)
+    proposal
+    other_proposal
+    histories = [ own_history.attributes, own_history.workout_steps.map(&:attributes), own_history.workout_feedback.attributes ]
+    other_before = persisted_state(other_plan)
+    travel_to proposal.expires_at, with_usec: true
+    before = persisted_state(plan)
+    get root_path
+    expect(comparison_section.text).to include(Adaptations::ProposalFreshness::EXPIRED_MESSAGE, "Reject all")
+    expect(comparison_section.text).not_to include("Accept all", "Current", "Proposed")
+    post accept_adaptation_proposal_path(proposal)
+    expect(flash[:alert]).to eq(Adaptations::ProposalFreshness::EXPIRED_MESSAGE)
+    expect(persisted_state(plan)).to eq(before)
+    delete reject_adaptation_proposal_path(proposal)
+    expect(AdaptationProposal).not_to exist(proposal.id)
+    expect(persisted_state(other_plan)).to eq(other_before)
+    expect([ own_history.reload.attributes, own_history.workout_steps.map(&:attributes), own_history.workout_feedback.attributes ]).to eq(histories)
+  end
+
+  it "CYF-6 shows stale guidance after an in-horizon move and preserves both riders on direct acceptance" do
+    proposal
+    other_proposal
+    post move_planned_workout_path(target), params: { scheduled_on: (target.scheduled_on + 1).iso8601 }
+    before = [ persisted_state(plan), persisted_state(other_plan) ]
+    get root_path
+    expect(comparison_section.text).to include(Adaptations::ProposalFreshness::STALE_MESSAGE, "Reject all")
+    expect(comparison_section.text).not_to include("Accept all")
+    post accept_adaptation_proposal_path(proposal)
+    expect(flash[:alert]).to eq(Adaptations::ProposalFreshness::STALE_MESSAGE)
+    expect([ persisted_state(plan), persisted_state(other_plan) ]).to eq(before)
+  end
+
+  it "CYF-6 renders expired material replans consistently on the calendar and workout page" do
+    replan = Planning::MaterialChangeProposal.new(target).replace!(material_change: true)
+    other_proposal
+    other_before = persisted_state(other_plan)
+    travel_to replan.expires_at, with_usec: true
+    before = persisted_state(plan)
+    get root_path
+    expect(comparison_section.text).to include(Adaptations::ProposalFreshness::EXPIRED_MESSAGE, "Keep rest of plan unchanged", "change the workout again")
+    expect(comparison_section.css("form").map { |form| form["action"] }).not_to include(accept_adaptation_proposal_path(replan))
+    get planned_workout_path(target)
+    section = Nokogiri::HTML(response.body).css('section[aria-label="Optional upcoming replan"]').first
+    expect(section.text).to include(Adaptations::ProposalFreshness::EXPIRED_MESSAGE, "Keep rest of plan unchanged")
+    expect(section.css("form").map { |form| form["action"] }).not_to include(accept_adaptation_proposal_path(replan))
+    post accept_adaptation_proposal_path(replan)
+    expect(flash[:alert]).to eq(Adaptations::ProposalFreshness::EXPIRED_MESSAGE)
+    expect(persisted_state(plan)).to eq(before)
+    delete session_path
+    sign_in_as(other_user)
+    [ [ :post, :accept_adaptation_proposal_path ], [ :delete, :reject_adaptation_proposal_path ] ].each do |method, route|
+      public_send(method, public_send(route, replan))
+      expect(response).to have_http_status(:not_found)
+      foreign = response.body
+      public_send(method, public_send(route, 0))
+      expect(response).to have_http_status(:not_found)
+      expect(response.body).to eq(foreign)
+    end
+    expect(persisted_state(other_plan)).to eq(other_before)
+  end
+
+  it "CYF-6 does not disclose a foreign source in a material replan payload" do
+    replan = Planning::MaterialChangeProposal.new(target).replace!(material_change: true)
+    replan.update!(payload: replan.payload.merge("source_workout_id" => other_target.id))
+    other_target.update!(name: "Private foreign source")
+    before = [ persisted_state(plan), persisted_state(other_plan) ]
+    get root_path
+    expect(comparison_section.text).to include(Adaptations::ProposalFreshness::UNAVAILABLE_MESSAGE)
+    expect(response.body).not_to include("Private foreign source", "410 W")
+    post accept_adaptation_proposal_path(replan)
+    expect(flash[:alert]).to eq(Adaptations::ProposalFreshness::UNAVAILABLE_MESSAGE)
+    expect([ persisted_state(plan), persisted_state(other_plan) ]).to eq(before)
   end
 end
