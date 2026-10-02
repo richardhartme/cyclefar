@@ -64,13 +64,16 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally and reports before/after values plus whether the documented material-change thresholds were crossed. A material Change creates a persisted optional proposal through `Planning::MaterialChangeProposal`; `Planning::MaterialChangeReplanner` treats that changed workout as fixed and re-prescribes only the bounded following 14-day block on acceptance. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
 
+`ManualEditor#preview` returns an in-memory definition and metrics without persistence. `apply!` uses the same path, including explicit variation, level clamping and exact-duration fitting, so feedback comparisons match accepted results when inputs remain unchanged.
+
 Move currently lives in `PlannedWorkoutsController` and `Planning::MissedWorkoutResolver`. It validates plan dates/collisions and changes date/phase while retaining structure.
 
 ## Completion, adaptations and schedule changes
 
 - `Adaptations::CompletionRecorder` saves feedback and immutable FTP/target/metric snapshots in a transaction, then persists a proposal if `FeedbackEvaluator` returns one. FTP tests have a separate protocol-free completion action.
 - `Adaptations::FeedbackEvaluator` reads persisted feedback and upcoming workouts; it is not a pure calculation object. It currently proposes a change to the next structured workout of the same subtype and can propose a global intensity bias.
-- `Adaptations::ProposalApplier` applies accepted changes through `ManualEditor`, clamps saved `intensity_bias` to -2..+2, and destroys the proposal in one transaction. Reject only destroys it. Full expiry/staleness checks and consumption of the saved bias are outstanding.
+- `Adaptations::ProposalComparison` validates the full feedback source/target set through the owning plan, sorts targets by date, and calculates current/proposed prescriptions at that plan's FTP alongside the effective global bias transition. The calendar renders these comparisons read-only; invalid payloads show a generic unavailable message with Reject all and no Accept action. Material-change proposals keep their separate replan controls.
+- `Adaptations::ProposalApplier` locks the proposal and feedback plan, validates through `ProposalComparison`, applies accepted changes through `ManualEditor`, saves the same clamped `intensity_bias` (-2..+2), and destroys the proposal in one transaction. Reject only destroys it. Full expiry/staleness checks (CYF-6) and consumption of the saved bias (CYF-4) are outstanding; comparison/apply equivalence assumes unchanged inputs.
 - `Planning::MissedWorkoutResolver` supports `leave_unchanged`, `move` and `replan`. Leave/replan retain a missed record; replan replaces upcoming planned training through `FuturePrescriber`.
 - `Planning::AvailabilityChanger` versions weekly templates and re-prescribes affected future dates. `ExistingPlanConfiguration` feeds the existing plan back through the preview engine.
 - `Planning::TimeOffPlanner` adds/removes time off and selects the applicable availability template for each future date, respecting one-week overrides and later schedule changes.

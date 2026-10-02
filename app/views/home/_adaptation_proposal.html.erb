@@ -1,0 +1,48 @@
+<section class="bg-base-100 border-base-300 rounded-box border p-5 space-y-5" aria-label="Adaptation proposal">
+  <header>
+    <h2 class="text-xl font-semibold">Adaptation proposal</h2>
+    <p class="mt-1"><%= proposal.reason %></p>
+  </header>
+
+  <% if comparison %>
+    <p class="text-sm">Estimates use your current FTP of <%= comparison.ftp_watts %> W.</p>
+    <% comparison.changes.each do |change| %>
+      <% workout = change.workout %>
+      <% definition = change.preview.definition %>
+      <div class="overflow-x-auto">
+        <table class="table table-sm w-full" aria-label="Changes to <%= workout.name %> on <%= workout.scheduled_on.to_fs(:long) %>">
+          <caption class="pb-2 text-left font-semibold">
+            <%= workout.scheduled_on.to_fs(:long) %> · <%= link_to workout.name, planned_workout_path(workout), class: "link link-primary" %>
+          </caption>
+          <thead>
+            <tr><th scope="col">Prescription</th><th scope="col">Current</th><th scope="col">Proposed</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Workout</th><td><%= workout.name %></td><td><%= definition.name %></td></tr>
+            <tr><th scope="row">Progression level</th><td><%= workout.progression_level || "Not applicable" %></td><td><%= definition.progression_level || "Not applicable" %></td></tr>
+            <tr><th scope="row">Duration</th><td><%= workout.duration_minutes %> min</td><td><%= definition.duration_minutes %> min</td></tr>
+            <tr><th scope="row">Estimated TSS</th><td><%= change.current_metrics.estimated_tss.round(1) %></td><td><%= change.preview.metrics.estimated_tss.round(1) %></td></tr>
+            <tr><th scope="row">Intensity factor</th><td><%= format("%.2f", change.current_metrics.estimated_if) %></td><td><%= format("%.2f", change.preview.metrics.estimated_if) %></td></tr>
+            <tr><th scope="row">Estimated work</th><td><%= change.current_metrics.estimated_work_kj.round %> kJ</td><td><%= change.preview.metrics.estimated_work_kj.round %> kJ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+    <% if proposal.payload.fetch("progression_bias", 0).to_i.nonzero? %>
+      <p>
+        Long-term progression bias: <strong><%= comparison.bias.before %> → <%= comparison.bias.after %></strong>
+        (change <%= format("%+d", comparison.bias.delta) %>).
+        This saves a progression adjustment intended for later workout generation. Your distant calendar stays unchanged.
+      </p>
+    <% end %>
+  <% else %>
+    <p role="status"><%= Adaptations::ProposalComparison::UNAVAILABLE_MESSAGE %></p>
+  <% end %>
+
+  <div class="flex flex-wrap gap-2">
+    <% if comparison %>
+      <%= button_to "Accept all", accept_adaptation_proposal_path(proposal), class: "btn btn-success btn-sm" %>
+    <% end %>
+    <%= button_to "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, form: { data: { turbo_confirm: "Reject this adaptation proposal?" } }, class: "btn btn-ghost btn-sm" %>
+  </div>
+</section>

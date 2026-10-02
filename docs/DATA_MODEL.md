@@ -242,6 +242,8 @@ Fields:
 
 Feedback-proposal payloads contain `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
 
+Feedback comparisons are derived in memory from canonical steps and the owning plan's current FTP; no before/after watt targets or new ownership columns are persisted. Existing feedback payloads with no `type` or `type = feedback` remain supported. The comparison resolves all source/target IDs through the proposal's plan and shows effective generated levels, metrics and clamped global bias. Invalid references make the whole comparison unavailable without exposing a partial target set.
+
 On accept: check target/source workouts are still planned/structured, apply atomically, then destroy the proposal. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal.
 
 No long-term proposal history is required.
