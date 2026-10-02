@@ -23,7 +23,7 @@ RSpec.describe Adaptations::ProposalComparison, type: :service, generated_workou
     second = described_class.new(proposal).call
     expect(first.changes.first.preview).to eq(second.changes.first.preview)
     expect(first.changes.first.workout.id).to eq(target.id)
-    expect(first.changes.first.preview.definition.progression_level).to eq(3)
+    expect(first.changes.first.preview.definition.progression_level).to eq(2)
     expect([ target.reload.attributes, target.workout_steps.reload.map(&:attributes), plan.reload.attributes, proposal.reload.attributes ]).to eq(before)
   end
 
@@ -144,5 +144,40 @@ RSpec.describe Adaptations::ProposalComparison, type: :service, generated_workou
     Adaptations::ProposalApplier.new(proposal).reject!
     expect([ target.reload.attributes, canonical_steps(target), plan.reload.attributes ]).to eq(before)
     expect(AdaptationProposal.exists?(proposal.id)).to be(false)
+  end
+
+  it "FBK-002 rechecks the horizon at acceptance after a target moves outside it" do
+    proposal = proposal_for
+    target.update!(scheduled_on: Date.current + 14)
+    before = [ target.attributes, canonical_steps(target), plan.attributes ]
+    expect { Adaptations::ProposalApplier.new(proposal).accept! }.to raise_error(ArgumentError)
+    expect([ target.reload.attributes, canonical_steps(target), plan.reload.attributes ]).to eq(before)
+    expect(proposal.reload).to be_persisted
+  end
+
+  it "LOAD-002 shares level ceilings between comparison and acceptance" do
+    target.update!(generation_context: { "maximum_level" => 2 })
+    proposal = proposal_for(changes: [ { "planned_workout_id" => target.id, "progression_level" => 7 } ])
+    comparison = described_class.new(proposal).call
+    expect(comparison.changes.first.preview.definition.progression_level).to eq(2)
+    Adaptations::ProposalApplier.new(proposal).accept!
+    expect(target.reload.progression_level).to eq(2)
+    expect(canonical_steps(target)).to eq(comparison.changes.first.preview.definition.steps.map(&:to_h))
+  end
+
+  it "LOAD-002 rechecks fixed load added after a proposal was created without changing that fixed workout" do
+    plan_with_reference = create(:training_plan, starts_on: Date.current.beginning_of_week - 14, ends_on: Date.current + 83, progression_mode: :continuous, hard_weeks_before_recovery: nil)
+    reference_phase = create(:plan_phase, training_plan: plan_with_reference, starts_on: plan_with_reference.starts_on, ends_on: plan_with_reference.ends_on)
+    reference = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current.beginning_of_week - 7, level: 5, duration: 90)
+    changed = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current, level: 5, duration: 90)
+    own_proposal = create(:adaptation_proposal, training_plan: plan_with_reference, payload: { "changes" => [ { "planned_workout_id" => changed.id, "progression_level" => 6 } ] })
+    expect(described_class.new(own_proposal).call.changes.first.requested_level).to eq(6)
+    fixed = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current + 1, subtype: :recovery, duration: 30)
+    before = [ fixed.attributes, canonical_steps(fixed) ]
+    comparison = described_class.new(own_proposal).call
+    expect(comparison.changes.first.preview.metrics.estimated_tss + fixed.estimated_tss).to be <= reference.estimated_tss * 1.08
+    Adaptations::ProposalApplier.new(own_proposal).accept!
+    expect(changed.reload.estimated_tss + fixed.estimated_tss).to be <= reference.estimated_tss * 1.08
+    expect([ fixed.reload.attributes, canonical_steps(fixed) ]).to eq(before)
   end
 end

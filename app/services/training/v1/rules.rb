@@ -14,6 +14,17 @@ module Training
       MINIMUM_STEP_SECONDS = 30
       PROGRESSION_LEVELS = (1..7).freeze
       PROGRESSION_BIAS_BOUNDS = [ -2, 2 ].freeze
+      FEEDBACK_HORIZON_DAYS = 14
+      NEARBY_HARD_SESSION_DAYS = 2
+      RPE_BANDS = deep_freeze(
+        "recovery" => 1..3,
+        "endurance" => 2..4,
+        "tempo" => 4..6,
+        "sweet_spot" => 5..7,
+        "threshold" => 7..9,
+        "vo2_max" => 8..10,
+        "over_under" => 7..9)
+      COMPARABLE_FAMILIES = deep_freeze([ %w[tempo sweet_spot threshold], %w[vo2_max over_under] ])
       MAXIMUM_TARGET_PCT = 120
       INTENSITY_VARIATION_KEYS = %w[standard redistributed_recovery].freeze
       RECOVERY_VARIATION_KEYS = %w[steady gentle_ramp].freeze
