@@ -2,7 +2,7 @@
 
 Rails authentication and required profile, plan and sync ownership are reflected in the checked-in SQL schema dump alongside completed-history triggers. Enums use string values. JSONB holds progression state, proposal payloads and immutable completion snapshots.
 
-This describes the implemented persistence shape;
+This describes the implemented persistence shape in [`db/structure.sql`](../db/structure.sql); [REQUIREMENTS.md](REQUIREMENTS.md) defines intended behaviour.
 
 ## User and Session
 
@@ -182,7 +182,7 @@ Important:
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
 
-The plan's existing global `intensity_bias` is now consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains outside the CYF-5 near-term scope fix. Existing pending proposal payloads remain compatible.
+The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep
 
@@ -241,11 +241,11 @@ Ephemeral persistence so a proposed multi-workout change can survive a page rend
 Fields:
 
 - `reason: string`
-- `payload: jsonb` — proposed deterministic changes and before/after values
+- `payload: jsonb` — proposed changes, source identity and optional bias delta; before/after comparisons are derived at read/accept time
 - `expires_at: datetime`
 - timestamps
 
-Feedback-proposal payloads contain `changes` (workout ID and proposed progression level, plus optional `lower_targets: true` for Recovery/Endurance), `progression_bias`, and `source_workout_id`. Easy reductions keep a compatibility level in the payload, but persist no intensity progression level; their canonical steps narrow existing target ranges to the lower endpoints. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
+Feedback-proposal payloads contain `changes` (workout ID and proposed progression level, plus optional `lower_targets: true` for Recovery/Endurance), `progression_bias`, and `source_workout_id`. Easy reductions keep a compatibility level in the payload, but persist no intensity progression level; their canonical steps narrow existing target ranges to the lower endpoints. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths store a seven-day `expires_at`; current comparison/acceptance does not enforce that timestamp. Full expiry and stale-input handling remain outstanding (CYF-6).
 
 Feedback comparisons are derived in memory from canonical steps and the owning plan's current FTP; no before/after watt targets or new ownership columns are persisted. Existing feedback payloads with no `type` or `type = feedback` remain supported. The comparison resolves all source/target IDs through the proposal's plan and shows effective generated levels, metrics and clamped global bias. Invalid references make the whole comparison unavailable without exposing a partial target set.
 
@@ -265,7 +265,7 @@ Fields:
 - `external_id: string, null: false` — stable CycleFar-owned ID sent to Intervals.icu (use a `cyclefar-` prefix)
 - `intervals_event_id: bigint, nullable`
 - `last_synced_at: datetime`
-- `payload_digest: string` — detect whether a changed workout needs update
+- `payload_digest: string` — records the last successfully exported payload; current sync still upserts on every call
 - timestamps
 
 Unique indexes on `external_id` and `planned_workout_id`.

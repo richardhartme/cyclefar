@@ -18,7 +18,10 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(allocation, "PhaseAllocator and IntervalSelector", "Planning services", "Allocate phase dates and select broad interval subtypes using versioned V1 rules.")
   Component(presenter, "PreviewPresenter", "Planning presenter", "Formats a preview for the plan-creation interface.")
   Component(creator, "PlanCreator", "Planning service", "Persists a confirmed preview under the explicit user in one transaction.")
-  Component(materializer, "HorizonMaterializer", "Planning service", "Structures planned executable outlines for today through today + 13; saves initial endurance profile choices and preserves existing structures.")
+  Component(materializer, "HorizonMaterializer", "Planning service", "Under the plan lock, structures executable outlines for today through day 13; applies accepted bias once and saves fitted levels, steps and generation references.")
+  Component(progression, "Progression", "Training::V1 pure calculation", "Applies global intensity bias, clamps levels to 1-7 and respects generation ceilings.")
+  Component(load_cap, "WeeklyLoadCap", "Planning::V1 pure calculation", "Lowers highest-load adjustable intensity levels to the 8% comparable hard-week growth target.")
+  Component(load_context, "LoadContext", "Planning::V1 service", "Identifies comparable weeks and recovery, taper, re-entry and stored generation ceilings.")
   Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical percentage-of-FTP steps, opener structures and estimated workout metrics.")
   Component(models, "User, plan and workout models", "Active Record", "Enforces per-user active-plan ownership and represents phases, availability, events, workouts and canonical steps.")
 }
@@ -31,14 +34,25 @@ Rel(builder, allocation, "Allocates phases and selects interval subtypes")
 Rel(controller, builder, "Requests preview")
 Rel(builder, configuration, "Reads normalized inputs")
 Rel(builder, engine, "Generates prospective workout definitions and metrics")
+Rel(builder, load_cap, "Caps preview hard-week load")
 Rel(controller, presenter, "Wraps builder preview data for rendering")
 Rel(controller, creator, "Creates confirmed plan")
 Rel(creator, builder, "Rebuilds deterministic preview")
 Rel(creator, models, "Creates user-owned plan, phase, availability, event and workout records")
 Rel(creator, materializer, "Materializes near-term workouts")
 Rel(materializer, engine, "Generates canonical workout steps and metrics")
-Rel(materializer, models, "Updates workouts and saves steps")
+Rel(materializer, progression, "Combines unbiased baseline and latest accepted bias")
+Rel(materializer, load_context, "Reads comparable-week rules and reduced-load ceilings")
+Rel(materializer, load_cap, "Limits new intensity workouts against fixed load and forecasts")
+Rel(load_context, models, "Reads plan, phases, time off and generation context")
+Rel(materializer, models, "Atomically saves steps, profile choice, effective level and load references")
 Rel(models, database, "Reads and writes", "SQL")
+
+note bottom of materializer
+  Existing structured, completed and missed records remain stable.
+  Initial endurance profiles are sampled; forecasts are deterministic.
+  Manual edits retain automatic references for future load baselines.
+end note
 
 SHOW_LEGEND()
 @enduml

@@ -9,17 +9,22 @@ LAYOUT_LEFT_RIGHT()
 Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
 
 System_Boundary(cyclefar_boundary, "CycleFar") {
-  Container(web_application, "Web application", "Ruby on Rails, ERB, Turbo, Tailwind CSS", "Authenticates requests and serves the desktop-first training workflows, including manual Intervals.icu sync.")
-  ContainerDb(database, "Database", "PostgreSQL", "Stores users and sessions, user-owned profiles, plans and sync metadata, and their training records; schema dump includes ownership constraints.")
+  Container(web_application, "Web application", "Ruby 4.0.6, Rails 8.1.4, ERB, Turbo, Tailwind CSS / daisyUI", "Authenticates and serves desktop-first training workflows and manual sync; Puma supervises Solid Queue for reset mail in the Kamal deployment.")
+  ContainerDb(database, "Databases", "PostgreSQL", "Primary stores user-owned training data, sessions and immutable history; cache, queue and cable databases support Solid adapters.")
 }
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 System_Ext(smtp, "SMTP provider", "Configured outbound mail service for password setup and reset links; live delivery remains unverified.")
 
-Rel(rider, web_application, "Signs in and uses training planner", "HTTPS")
+Rel(rider, web_application, "Registers/signs in and uses training planner", "HTTPS")
 Rel(web_application, database, "Reads and writes sessions and training data", "SQL / Active Record")
 Rel(web_application, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 Rel(web_application, smtp, "Sends password setup immediately and enqueues reset email", "SMTP / STARTTLS")
+
+note bottom of web_application
+  Horizon generation runs on creation, calendar requests and replanning.
+  No scheduled training-generation or integration-sync worker.
+end note
 
 SHOW_LEGEND()
 @enduml

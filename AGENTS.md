@@ -8,13 +8,13 @@ Build **CycleFar**, the V1 cycling training planner described in this repository
 
 Read these files in order:
 
-1. `PRODUCT.md`
-2. `REQUIREMENTS.md`
-3. `TRAINING_ENGINE.md`
-4. `DATA_MODEL.md`
-5. `ARCHITECTURE.md`
-6. `UX.md`
-7. `INTERVALS_ICU.md`
+1. `docs/PRODUCT.md`
+2. `docs/REQUIREMENTS.md`
+3. `docs/TRAINING_ENGINE.md`
+4. `docs/DATA_MODEL.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/UX.md`
+7. `docs/INTERVALS_ICU.md`
 
 If documents appear to conflict, use this precedence:
 
@@ -39,7 +39,7 @@ Do not silently invent major product behaviour. If a small implementation detail
 Use:
 
 - Ruby 4.0.6 initially
-- Rails 8.1.3.1 initially
+- Rails 8.1.3.1 initially; currently pinned to 8.1.4 in `Gemfile` / `Gemfile.lock`
 - PostgreSQL
 - Hotwire/Turbo
 - Stimulus

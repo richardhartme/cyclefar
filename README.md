@@ -13,13 +13,15 @@ snapshots.
 
 - Guided plan creation with a preview for general fitness, FTP, endurance,
   climbing and event goals.
-- Rails-generated email/password sign-in, sign-out and password-reset scaffolding.
+- Email/password registration, sign-in, sign-out and password reset built on
+  Rails-generated authentication, with independent rider accounts.
 - A deterministic, versioned workout engine for endurance, tempo, Sweet Spot,
   threshold, VO2 max, over-under and recovery sessions.
 - A continuous calendar with workout details, editable future workouts and
   inline power-profile graphs.
 - Completion feedback, overdue and missed-workout resolution, and explicit
-  adaptation proposals.
+  adaptation proposals with owner-scoped before/after comparisons and a
+  14-day target window. Accepted progression bias affects later generation.
 - Availability changes, planned time off and a gradual return after illness or
   recovery time.
 - FTP history and recalculation of future workout watt targets without changing
@@ -32,14 +34,17 @@ snapshots.
 Profiles, plans, preview drafts and Intervals.icu sync records are scoped to
 the signed-in user, and an integrated two-rider test matrix exercises those
 boundaries. Riders can self-register from the public homepage. Operator
-provisioning stays disabled until live mail delivery is verified. V1 has no ride imports, trainer control, notifications or automatic calendar
-syncing.
+provisioning stays disabled until live mail delivery is verified. V1 has no
+ride imports, trainer control, notifications or automatic calendar syncing.
 
 ## Local setup
 
-CycleFar requires Ruby **4.0.6**, Bundler and a running PostgreSQL **17+**
+The repository pins Ruby **4.0.6** and Rails **8.1.4**, and uses Tailwind CSS
+with daisyUI. Local setup requires Bundler, libvips and a running PostgreSQL **17+**
 server with `psql` and `pg_dump` on `PATH`. Your local PostgreSQL role must be
-able to create the development and test databases. Set `PGHOST`, `PGPORT`,
+able to create the development and test databases. libvips supports the configured
+Active Storage image-processing backend; CI installs its development package
+before preparing Rails. Set `PGHOST`, `PGPORT`,
 `PGUSER` and `PGPASSWORD` if your PostgreSQL installation needs them.
 
 ```sh
@@ -103,6 +108,15 @@ bin/importmap audit
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data model](docs/DATA_MODEL.md)
 - [UX guide](docs/UX.md)
+- [Architecture diagrams and rendering guide](docs/diagrams/README.md)
+- [Intervals.icu adapter and reconciliation limits](docs/INTERVALS_ICU.md)
+- [Account access and production mail](docs/ACCOUNT_ACCESS.md)
+- [AWS infrastructure](infra/README.md) and [CloudFormation alternative](infra/cloudformation/README.md)
+- [External references](docs/SOURCES.md)
+
+Requirements and training rules describe intended V1 behaviour. Architecture,
+data-model and UX implementation notes describe the current code and identify
+remaining differences, including proposal expiry/staleness and sync cleanup.
 
 ## License
 
