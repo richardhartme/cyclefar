@@ -13,6 +13,7 @@ module Training
       MINIMUM_DURATION_MINUTES = 30
       MINIMUM_STEP_SECONDS = 30
       PROGRESSION_LEVELS = (1..7).freeze
+      PROGRESSION_BIAS_BOUNDS = [ -2, 2 ].freeze
       MAXIMUM_TARGET_PCT = 120
       INTENSITY_VARIATION_KEYS = %w[standard redistributed_recovery].freeze
       RECOVERY_VARIATION_KEYS = %w[steady gentle_ramp].freeze

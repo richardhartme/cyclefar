@@ -6,6 +6,7 @@ module Adaptations
 
     def accept!
       TrainingPlan.transaction do
+        @proposal.training_plan.lock!
         @proposal.lock!
         case @proposal.payload["type"]
         when AdaptationProposal::MATERIAL_CHANGE_REPLAN
@@ -30,7 +31,6 @@ module Adaptations
     end
 
     def apply_feedback_adaptation!
-      @proposal.training_plan.lock!
       comparison = ProposalComparison.new(@proposal).call
       comparison.changes.each do |change|
         Workouts::ManualEditor.new(change.workout).apply!(action: :adapt, progression_level: change.requested_level)

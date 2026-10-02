@@ -5,7 +5,7 @@ module Planning
     end
 
     def add!(attributes)
-      TrainingPlan.transaction do
+      @plan.with_lock do
         period = @plan.time_off_periods.create!(attributes)
         re_prescribe!(period.starts_on)
         period
@@ -15,7 +15,7 @@ module Planning
     def remove!(period)
       raise ArgumentError, "Time off belongs to a different plan" unless period.training_plan == @plan
 
-      TrainingPlan.transaction do
+      @plan.with_lock do
         starts_on = period.starts_on
         period.destroy!
         re_prescribe!(starts_on)

@@ -156,7 +156,8 @@ Fields:
 - `purpose: string`
 - `detail_status: enum` — `outline`, `structured`
 - `status: enum` — `planned`, `missed`, `completed`
-- `progression_level: integer, nullable`
+- `progression_level: integer, nullable` — outline prescription level before materialisation; fitted effective level once structured
+- `generation_context: jsonb, default: {}` — baseline level, effective generation ceiling and generated load/level reference
 - `variation_key: string, nullable` — persisted descriptive profile key; Same shuffle rotates deterministically, while initial endurance generation randomly selects a profile (TRAINING_ENGINE.md §15)
 - `estimated_np_watts: decimal, nullable`
 - `estimated_if: decimal, nullable`
@@ -178,6 +179,10 @@ Important:
 - On completion, snapshot watts/metrics so later FTP changes do not alter history.
 - Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes.
 - Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them.
+
+`generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
+
+The plan's existing global `intensity_bias` is now consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that remaining granularity is coordinated with CYF-5. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep
 

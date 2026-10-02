@@ -161,7 +161,7 @@ Include:
 
 ### Weekly load chart
 
-A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts.
+A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. The calendar also displays a non-blocking warning when generated level reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration.
 
 ### Phase bands
 
@@ -293,7 +293,7 @@ If adaptation is warranted, next show an adaptation proposal:
 - before/after summary;
 - Accept all / Reject all.
 
-Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accept all / Reject all remain beside the comparison. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Full expired/stale-proposal handling remains outstanding (CYF-6).
+Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accepted bias affects eligible intensity outlines as they enter the next 14 days, subject to duration, reduced-load and weekly growth limits; already structured workouts remain stable. Accept all / Reject all remain beside the comparison. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Full expired/stale-proposal handling remains outstanding (CYF-6).
 
 ## 10. Awaiting-status flow
 
