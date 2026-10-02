@@ -44,6 +44,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     future = outline(date: today + 14)
     proposal = create(
       :adaptation_proposal,
+      :fresh,
       training_plan: plan,
       payload: {
             "changes" => [ { "planned_workout_id" => target.id, "progression_level" => 2 } ], "progression_bias" => -1 })
@@ -61,7 +62,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
   it "FBK-002 leaves pending and rejected bias unapplied" do
     target = generated_workout(plan: plan, phase: phase, date: today + 1, duration: 90)
     future = outline(date: today + 14)
-    proposal = create(:adaptation_proposal, training_plan: plan, payload: { "changes" => [], "progression_bias" => -1 })
+    proposal = create(:adaptation_proposal, :fresh, training_plan: plan, payload: { "changes" => [], "progression_bias" => -1 })
     described_class.new(plan).call
     Adaptations::ProposalApplier.new(proposal).reject!
     described_class.new(plan, date: today + 1).call

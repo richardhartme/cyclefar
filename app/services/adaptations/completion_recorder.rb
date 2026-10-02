@@ -8,11 +8,12 @@ module Adaptations
     end
 
     def call
-      raise ArgumentError, "Only planned structured workouts can be completed" unless @workout.planned? && @workout.structured? && @workout.workout?
-
       proposal = nil
 
-      PlannedWorkout.transaction do
+      @workout.training_plan.with_lock do
+        @workout.reload
+        raise ArgumentError, "Only planned structured workouts can be completed" unless @workout.planned? && @workout.structured? && @workout.workout?
+
         @workout.create_workout_feedback!(rpe: @rpe, completion_quality: @completion_quality)
         ftp = @workout.training_plan.ftp_watts_for_planning
 
@@ -35,7 +36,7 @@ module Adaptations
         @workout.update!(status: :completed, completed_at: Time.current, completed_ftp_watts: ftp, completed_target_snapshot: snapshot)
 
         evaluation = FeedbackEvaluator.new(@workout).call
-        proposal = @workout.training_plan.adaptation_proposals.create!(reason: evaluation[:reason], payload: evaluation[:payload], expires_at: 7.days.from_now) if evaluation
+        proposal = ProposalCreator.new(@workout.training_plan).create!(**evaluation) if evaluation
       end
       proposal
     end

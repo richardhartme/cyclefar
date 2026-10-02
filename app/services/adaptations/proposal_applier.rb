@@ -9,6 +9,7 @@ module Adaptations
       TrainingPlan.transaction do
         @proposal.training_plan.lock!
         @proposal.lock!
+        ProposalFreshness.new(@proposal).validate!
         case @proposal.payload["type"]
         when AdaptationProposal::MATERIAL_CHANGE_REPLAN
           apply_material_change_replan!
@@ -22,7 +23,10 @@ module Adaptations
     end
 
     def reject!
-      @proposal.destroy!
+      @proposal.training_plan.with_lock do
+        @proposal.lock!
+        @proposal.destroy!
+      end
     end
 
     private
