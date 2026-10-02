@@ -7,6 +7,17 @@ module Planning
     end
 
     def resolve!(mode:, destination: nil)
+      @workout.training_plan.with_lock do
+        @workout.reload
+        raise ArgumentError, "Only planned workouts can be resolved as missed" unless @workout.planned?
+
+        resolve_under_lock!(mode: mode, destination: destination)
+      end
+    end
+
+    private
+
+    def resolve_under_lock!(mode:, destination:)
       case mode.to_s
       when "leave_unchanged"
         mark_missed!
@@ -21,8 +32,6 @@ module Planning
         raise ArgumentError, "Choose a missed-workout resolution"
       end
     end
-
-    private
 
     def mark_missed!
       @workout.update!(status: :missed)

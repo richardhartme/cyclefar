@@ -18,7 +18,8 @@ module Adaptations
       return if changes.empty?
 
       proposal = @workout.training_plan.adaptation_proposals.build(payload: { "changes" => changes })
-      comparison = ProposalComparison.new(proposal).call
+      # This is an unsaved candidate; freshness is captured after evaluation.
+      comparison = ProposalComparison.new(proposal).call(validate_freshness: false)
       # A level boundary or exact-duration fit may leave the prescription
       # unchanged. A failed ride must never produce extra generated load.
       changes = comparison.changes.filter_map do |change|

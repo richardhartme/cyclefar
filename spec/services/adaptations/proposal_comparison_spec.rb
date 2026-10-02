@@ -9,7 +9,7 @@ RSpec.describe Adaptations::ProposalComparison, type: :service, generated_workou
     payload = { "changes" => changes || [ { "planned_workout_id" => target.id, "progression_level" => 3 } ], "progression_bias" => bias }
     payload["source_workout_id"] = source.id if source
     payload["type"] = type if type
-    create(:adaptation_proposal, training_plan: plan, payload: payload, expires_at: 7.days.from_now)
+    create(:adaptation_proposal, :fresh, training_plan: plan, payload: payload, expires_at: 7.days.from_now)
   end
 
   def canonical_steps(workout)
@@ -165,15 +165,19 @@ RSpec.describe Adaptations::ProposalComparison, type: :service, generated_workou
     expect(canonical_steps(target)).to eq(comparison.changes.first.preview.definition.steps.map(&:to_h))
   end
 
-  it "LOAD-002 rechecks fixed load added after a proposal was created without changing that fixed workout" do
+  it "LOAD-002 invalidates a proposal when fixed load is added, then caps a fresh proposal without editing fixed load" do
     plan_with_reference = create(:training_plan, starts_on: Date.current.beginning_of_week - 14, ends_on: Date.current + 83, progression_mode: :continuous, hard_weeks_before_recovery: nil)
     reference_phase = create(:plan_phase, training_plan: plan_with_reference, starts_on: plan_with_reference.starts_on, ends_on: plan_with_reference.ends_on)
     reference = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current.beginning_of_week - 7, level: 5, duration: 90)
     changed = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current, level: 5, duration: 90)
-    own_proposal = create(:adaptation_proposal, training_plan: plan_with_reference, payload: { "changes" => [ { "planned_workout_id" => changed.id, "progression_level" => 6 } ] })
+    own_proposal = create(:adaptation_proposal, :fresh, training_plan: plan_with_reference, payload: { "changes" => [ { "planned_workout_id" => changed.id, "progression_level" => 6 } ] })
     expect(described_class.new(own_proposal).call.changes.first.requested_level).to eq(6)
     fixed = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current + 1, subtype: :recovery, duration: 30)
     before = [ fixed.attributes, canonical_steps(fixed) ]
+    expect { described_class.new(own_proposal).call }.to raise_error(Adaptations::ProposalFreshness::Unavailable, Adaptations::ProposalFreshness::STALE_MESSAGE)
+    expect { Adaptations::ProposalApplier.new(own_proposal).accept! }.to raise_error(Adaptations::ProposalFreshness::Unavailable)
+    Adaptations::ProposalApplier.new(own_proposal).reject!
+    own_proposal = Adaptations::ProposalCreator.new(plan_with_reference).create!(reason: "Reassess current load", payload: own_proposal.payload.except("freshness"))
     comparison = described_class.new(own_proposal).call
     expect(comparison.changes.first.preview.metrics.estimated_tss + fixed.estimated_tss).to be <= reference.estimated_tss * 1.08
     Adaptations::ProposalApplier.new(own_proposal).accept!

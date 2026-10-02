@@ -138,7 +138,14 @@ FactoryBot.define do
     training_plan
     reason { "Recent workout was harder than expected" }
     payload { { "changes" => [] } }
-    expires_at { Time.zone.local(2026, 9, 9, 12) }
+    expires_at { 7.days.from_now }
+
+    trait :fresh do
+      created_at { Time.current }
+      after(:build) do |proposal|
+        proposal.payload = proposal.payload.merge("freshness" => Adaptations::ProposalFreshness.new(proposal).capture)
+      end
+    end
   end
 
   factory :intervals_icu_sync do
