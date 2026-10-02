@@ -16,7 +16,7 @@ module Planning
     def call
       @plan.with_lock do
         @ftp = @plan.ftp_watts_for_planning
-        @periods = @plan.time_off_periods.to_a
+        @load_context = V1::LoadContext.new(@plan)
         candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + 13).end_of_week)
           .includes(:plan_phase, :workout_steps).order(:scheduled_on).map { |workout| candidate_for(workout) }
         candidates, warnings = limit_load(candidates)
@@ -67,28 +67,18 @@ module Planning
       return 1 unless Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
 
       context = workout.generation_context
-      maximum = context["maximum_level"]
-      # Positive feedback never removes a taper, recovery or re-entry ceiling.
-      highest_level = Training::V1::Rules::PROGRESSION_LEVELS.end
-      maximum = [ maximum || highest_level, workout.progression_level || 1 ].min if reduced_context?(workout)
-      maximum = [ maximum || highest_level, V1::Rules::RECOVERY_MAXIMUM_LEVEL ].min if recovery_week?(workout.scheduled_on.beginning_of_week)
-      maximum = [ maximum || highest_level, V1::Rules::PHASE_LEVELS[:taper].end ].min if workout.plan_phase&.kind_taper?
+      maximum = @load_context.maximum_level(workout)
       Training::V1::Progression.level(
         baseline: context["baseline_level"] || workout.progression_level || 1,
         bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
         maximum: maximum)
     end
 
-    def reduced_context?(workout)
-      workout.plan_phase&.kind_taper? || recovery_week?(workout.scheduled_on.beginning_of_week) ||
-        @periods.any? { |period| period.return_ramp_days && workout.scheduled_on.between?(period.ends_on + 1, period.ends_on + period.return_ramp_days) }
-    end
-
     def limit_load(candidates)
       reference = nil
       warnings = []
       candidates.group_by { |item| item.scheduled_on.beginning_of_week }.each do |week_start, items|
-        next unless comparable_week?(week_start, items)
+        next unless @load_context.comparable_week?(week_start, items.map(&:workout))
 
         in_horizon = week_start <= @date + 13 && week_start + 6 >= @date
         if reference && in_horizon
@@ -106,23 +96,6 @@ module Planning
         reference = items.sum(&:reference_tss)
       end
       [ candidates, warnings ]
-    end
-
-    def comparable_week?(week_start, items)
-      return false if week_start < @plan.starts_on || week_start + 6 > @plan.ends_on
-      return false if recovery_week?(week_start) || items.any? { |item| item.workout.ftp_test? }
-      return false if @plan.plan_phases.any? { |phase| phase.kind_taper? && phase.starts_on <= week_start + 6 && phase.ends_on >= week_start }
-
-      @periods.none? do |period|
-        period.starts_on <= week_start + 6 && period.ends_on + period.return_ramp_days.to_i >= week_start
-      end
-    end
-
-    def recovery_week?(week_start)
-      return false unless @plan.hard_recovery_cycle?
-
-      index = ((week_start - @plan.starts_on.beginning_of_week) / 7).to_i
-      index % (@plan.hard_weeks_before_recovery + 1) == @plan.hard_weeks_before_recovery
     end
 
     def persist!(candidate)

@@ -33,7 +33,7 @@ module Adaptations
     def apply_feedback_adaptation!
       comparison = ProposalComparison.new(@proposal).call
       comparison.changes.each do |change|
-        Workouts::ManualEditor.new(change.workout).apply!(action: :adapt, progression_level: change.requested_level)
+        Workouts::ManualEditor.new(change.workout).apply!(action: :adapt, progression_level: change.requested_level, lower_targets: change.lower_targets)
       end
       return if comparison.bias.delta.zero?
 

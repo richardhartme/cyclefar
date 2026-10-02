@@ -182,7 +182,7 @@ Important:
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
 
-The plan's existing global `intensity_bias` is now consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that remaining granularity is coordinated with CYF-5. Existing pending proposal payloads remain compatible.
+The plan's existing global `intensity_bias` is now consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains outside the CYF-5 near-term scope fix. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep
 
@@ -245,11 +245,11 @@ Fields:
 - `expires_at: datetime`
 - timestamps
 
-Feedback-proposal payloads contain `changes` (workout ID and proposed progression level), `progression_bias`, and `source_workout_id`. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
+Feedback-proposal payloads contain `changes` (workout ID and proposed progression level, plus optional `lower_targets: true` for Recovery/Endurance), `progression_bias`, and `source_workout_id`. Easy reductions keep a compatibility level in the payload, but persist no intensity progression level; their canonical steps narrow existing target ranges to the lower endpoints. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths use a seven-day `expires_at`.
 
 Feedback comparisons are derived in memory from canonical steps and the owning plan's current FTP; no before/after watt targets or new ownership columns are persisted. Existing feedback payloads with no `type` or `type = feedback` remain supported. The comparison resolves all source/target IDs through the proposal's plan and shows effective generated levels, metrics and clamped global bias. Invalid references make the whole comparison unavailable without exposing a partial target set.
 
-On accept: check target/source workouts are still planned/structured, apply atomically, then destroy the proposal. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal.
+On feedback acceptance: verify target workouts are still planned/structured and inside the current 14-day horizon, recheck generated level/load constraints, apply atomically, then destroy the proposal. The completed source remains immutable. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal.
 
 No long-term proposal history is required.
 
