@@ -5,6 +5,7 @@ require_relative "interval_selector"
 require_relative "plan_configuration"
 require_relative "phase_allocator"
 require_relative "v1/rules"
+require_relative "v1/weekly_load_cap"
 
 module Planning
   class PlanBuilder
@@ -43,6 +44,9 @@ module Planning
       def executable?
         %w[workout opener].include?(kind)
       end
+
+      def estimated_tss = metrics&.estimated_tss.to_f
+      def adjustable? = kind == "workout" && intensity?
 
       def intensity?
         %w[tempo sweet_spot threshold vo2_max over_under].include?(subtype)
@@ -329,21 +333,14 @@ module Planning
     end
 
     def lower_week_load(prescriptions, week_start, cap)
-      adjusted = prescriptions.dup
-      loop do
-        current = adjusted.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }
-        break adjusted if tss_for(current) <= cap
-
-        candidate = current.select { |prescription| prescription.kind == "workout" && prescription.intensity? && prescription.progression_level.to_i > 1 }
-          .max_by { |prescription| prescription.metrics.estimated_tss }
-        break adjusted unless candidate
-
-        replacement = evaluate(
+      current = prescriptions.select { |item| item.scheduled_on.between?(week_start, week_start + 6) }
+      reduced = V1::WeeklyLoadCap.reduce(current, limit: cap) do |candidate|
+        evaluate(
           candidate.with(
             progression_level: candidate.progression_level - 1,
             reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq))
-        adjusted[adjusted.index(candidate)] = replacement
       end
+      prescriptions.map { |item| (index = current.index(item)) ? reduced[index] : item }
     end
 
     def build_weeks(prescriptions, warnings)

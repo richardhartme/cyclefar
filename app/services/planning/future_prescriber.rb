@@ -11,9 +11,16 @@ module Planning
     end
 
     def replace!(range, preserve_workout_ids: [])
+      @plan.with_lock { replace_under_lock!(range, preserve_workout_ids: preserve_workout_ids) }
+    end
+
+    private
+
+    def replace_under_lock!(range, preserve_workout_ids:)
       dates = range.select { |date| date >= Date.current && date.between?(@plan.starts_on, @plan.ends_on) }
       return if dates.empty?
 
+      @generation_contexts = {}
       @pre_break_levels = pre_break_levels
       replaceable_workouts(preserve_workout_ids).where(scheduled_on: dates & blocked_dates(dates)).destroy_all
       replaceable_workouts(preserve_workout_ids).where(kind: :workout, scheduled_on: dates).destroy_all
@@ -29,6 +36,7 @@ module Planning
           subtype: item.subtype,
           duration_minutes: item.duration_minutes,
           progression_level: item.progression_level,
+          generation_context: @generation_contexts.fetch(item.scheduled_on) { item.reason_codes.include?("weekly_load_cap") ? { "maximum_level" => item.progression_level } : {} },
           variation_key: item.kind == "workout" ? Workouts::Variations.default_key(item.subtype) : item.kind == "opener" ? "activation" : nil,
           name: item.name,
           purpose: item.purpose,
@@ -40,8 +48,6 @@ module Planning
       end
       HorizonMaterializer.new(@plan).call
     end
-
-    private
 
     def replaceable_workouts(preserve_workout_ids)
       @plan.planned_workouts.planned.where.not(id: preserve_workout_ids)
@@ -119,7 +125,8 @@ module Planning
     def resumed_level(item, period, reduction: 0)
       baseline = @pre_break_levels.fetch(period.id, 1)
       weekly_progression = ((item.scheduled_on - period.ends_on - 1) / 7).to_i
-      [ item.progression_level.to_i, [ baseline - reduction + weekly_progression, 1 ].max ].min
+      biased_level = Training::V1::Progression.level(baseline: item.progression_level, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i)
+      [ biased_level, [ baseline - reduction + weekly_progression, 1 ].max ].min
     end
 
     def reduced_duration(duration, factor)
@@ -127,6 +134,9 @@ module Planning
     end
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:)
+      if item.intensity?
+        @generation_contexts[item.scheduled_on] = { "baseline_level" => item.progression_level, "maximum_level" => progression_level }
+      end
       level = progression_level || 1
       definition = Workouts::Generator.new(
         subtype: subtype,
@@ -153,7 +163,9 @@ module Planning
 
     def pre_break_levels
       time_off_periods.to_h do |period|
-        level = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(progression_level: nil).maximum(:progression_level)
+        level = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(progression_level: nil).map do |workout|
+          workout.generation_context.fetch("generated_level", workout.progression_level)
+        end.compact.max
         [ period.id, level || 1 ]
       end
     end

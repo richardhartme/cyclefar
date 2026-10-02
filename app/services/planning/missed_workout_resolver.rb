@@ -10,7 +10,7 @@ module Planning
       when "leave_unchanged"
         mark_missed!
       when "replan"
-        TrainingPlan.transaction do
+        @workout.training_plan.with_lock do
           mark_missed!
           replan_upcoming_workouts!
         end

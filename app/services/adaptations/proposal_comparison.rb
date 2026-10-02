@@ -38,7 +38,7 @@ module Adaptations
           preview: Workouts::ManualEditor.new(workout).preview(action: :adapt, progression_level: level))
       end
       before = @plan.progression_state.fetch("intensity_bias", 0).to_i
-      after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(-2, 2)
+      after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(*Training::V1::Rules::PROGRESSION_BIAS_BOUNDS)
       Result.new(changes: changes, bias: Bias.new(before: before, after: after, delta: after - before), ftp_watts: ftp)
     rescue ActiveRecord::RecordNotFound, KeyError, ArgumentError, TypeError
       # Payloads are server-owned, but obsolete or malformed IDs must not disclose

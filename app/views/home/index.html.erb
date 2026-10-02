@@ -29,6 +29,10 @@
       </div>
     </header>
 
+    <% @load_warnings.each do |warning| %>
+      <p role="status" class="alert alert-warning"><%= warning %></p>
+    <% end %>
+
     <% @plan.adaptation_proposals.each do |proposal| %>
       <% if proposal.material_change_replan? %>
       <section class="alert alert-warning items-start sm:items-center" aria-label="Adaptation proposal">
