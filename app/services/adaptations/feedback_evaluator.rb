@@ -1,4 +1,5 @@
 module Adaptations
+  # Evaluate workout feedback against RPE bands and propose progression adjustments.
   class FeedbackEvaluator
     RPE_BANDS = Training::V1::Rules::RPE_BANDS
 

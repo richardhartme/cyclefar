@@ -1,5 +1,8 @@
 module Adaptations
-  # Read-only generation shared by proposal construction, comparison and accept.
+  # Previews feedback-driven adaptations for target workouts and keeps weekly
+  # training load bounded: where a selected week would exceed the cap derived
+  # from the previous comparable week, it steps workouts down a progression
+  # level. Read-only; shared by proposal construction, comparison and accept.
   class FeedbackLoadLimiter
     Candidate = Data.define(:workout, :preview, :fixed_tss, :selected) do
       def scheduled_on = workout.scheduled_on

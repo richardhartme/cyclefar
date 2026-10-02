@@ -1,6 +1,7 @@
 require_relative "step_sequence"
 
 module Workouts
+  # Builds intensity profile segments with time/power coordinates for visualization.
   class ProfileBuilder
     Segment = Data.define(
       :position,

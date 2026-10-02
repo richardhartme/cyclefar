@@ -1,4 +1,5 @@
 module Planning
+  # Data value object for a scheduled training availability slot.
   Availability = Data.define(:weekday, :duration_minutes, :intent) do
     INTENTS = %w[intervals endurance recovery vo2_max threshold sweet_spot tempo].freeze
 

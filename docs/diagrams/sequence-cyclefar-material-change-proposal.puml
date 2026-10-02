@@ -1,0 +1,65 @@
+@startuml CycleFar Material Change Proposal Sequence
+title CycleFar — Optional replan after Change Workout
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "PlannedWorkoutsController" as WorkoutController
+control "ManualEditor" as Editor
+control "MaterialChangeProposal" as ProposalService
+boundary "AdaptationProposalsController" as ProposalController
+control "ProposalApplier" as Applier
+control "MaterialChangeReplanner" as Replanner
+control "FuturePrescriber" as Prescriber
+control "HorizonMaterializer" as Materializer
+database "PostgreSQL" as Database
+
+== The rider's selected workout changes immediately ==
+Rider -> WorkoutController: POST Change Workout with type and duration
+WorkoutController -> Database: load rider-owned planned workout
+group workout transaction
+  WorkoutController -> Editor: apply!(change)
+  Editor -> Database: save replacement canonical steps and metrics
+  Editor --> WorkoutController: material change flag
+  WorkoutController -> ProposalService: replace!(material_change flag)
+  ProposalService -> Database: remove older proposal for this workout
+  opt material change
+    ProposalService -> Database: save optional bounded replan proposal
+  end
+end
+WorkoutController --> Rider: redirect to workout detail
+
+== The rest of the plan waits for a separate decision ==
+opt material-change proposal exists
+  alt keep rest of plan unchanged
+    Rider -> ProposalController: DELETE proposal
+    ProposalController -> Database: load rider-owned proposal
+    ProposalController -> Applier: reject!
+    Applier -> Database: destroy proposal
+  else replan upcoming workouts
+    Rider -> ProposalController: POST accept proposal
+    ProposalController -> Database: load rider-owned proposal
+    ProposalController -> Applier: accept!
+    group transaction: lock plan, then proposal
+      Applier -> Database: lock plan and proposal
+      Applier -> Replanner: apply!
+      Replanner -> Database: validate changed source and bounded dates
+      Replanner -> Database: read effective availability template for each date
+      loop each template's dates in the bounded block
+        Replanner -> Prescriber: replace!(dates, preserve source workout)
+        Prescriber -> Database: replace other future planned prescriptions
+        Prescriber -> Materializer: structure near-term outlines
+        Materializer -> Database: save canonical steps and metrics
+      end
+      Applier -> Database: destroy proposal
+    end
+  end
+  ProposalController --> Rider: redirect to calendar
+end
+
+note over Replanner, Database
+  The changed workout remains fixed. The replan starts no earlier than
+  today or its date and spans at most 14 days, bounded by plan end.
+end note
+@enduml

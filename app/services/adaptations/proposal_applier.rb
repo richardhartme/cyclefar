@@ -1,4 +1,5 @@
 module Adaptations
+  # Accept or reject adaptation proposals; apply feedback or material change replans.
   class ProposalApplier
     def initialize(proposal)
       @proposal = proposal

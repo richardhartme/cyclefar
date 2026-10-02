@@ -1,4 +1,5 @@
 module Planning
+  # Updates training availability and regenerates affected workouts.
   class AvailabilityChanger
     def initialize(plan:, slots:, effective_from:, scope:)
       @plan = plan

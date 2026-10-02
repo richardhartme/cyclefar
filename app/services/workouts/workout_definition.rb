@@ -1,6 +1,7 @@
 require_relative "step_sequence"
 
 module Workouts
+  # Canonical immutable workout definition with steps, metadata, and generation context.
   WorkoutDefinition = Data.define(
     :engine_version,
     :subtype,

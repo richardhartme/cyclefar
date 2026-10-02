@@ -1,6 +1,7 @@
 require_relative "v1/rules"
 
 module Planning
+  # Selects interval workout subtype based on goal, discipline, phase and ordinal.
   class IntervalSelector
     def initialize(goal:, discipline:, phase:, ordinal:)
       @goal = goal.to_sym

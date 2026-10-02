@@ -1,4 +1,5 @@
 module Workouts
+  # Creates new planned workouts (openers and regular) on a training plan.
   class Creator
     DEFAULT_PROGRESSION_LEVEL = 1
 

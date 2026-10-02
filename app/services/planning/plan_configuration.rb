@@ -3,6 +3,7 @@ require_relative "availability"
 require_relative "v1/rules"
 
 module Planning
+  # ActiveModel form object for plan creation with user inputs, parsing and validation.
   class PlanConfiguration
     include ActiveModel::Model
 

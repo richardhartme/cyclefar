@@ -1,4 +1,5 @@
 module Planning
+  # Configuration adapter for accessing plan attributes and availability slots.
   ExistingPlanConfiguration = Data.define(:plan, :availability) do
     def goal = plan.goal
     def discipline = plan.discipline

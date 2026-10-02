@@ -2,6 +2,7 @@ require_relative "rules"
 
 module Training
   module V1
+    # Calculates progression levels with bias and maximum bounds.
     module Progression
       def self.level(baseline:, bias: 0, maximum: nil)
         levels = Rules::PROGRESSION_LEVELS

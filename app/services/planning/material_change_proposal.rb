@@ -1,4 +1,5 @@
 module Planning
+  # Creates or removes an adaptation proposal when a workout is materially changed.
   class MaterialChangeProposal
     def initialize(workout)
       @workout = workout

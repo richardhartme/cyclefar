@@ -1,4 +1,5 @@
 module Adaptations
+  # Record completed workout, snapshot targets, and generate adaptation proposal if applicable.
   class CompletionRecorder
     def initialize(workout:, rpe:, completion_quality:)
       @workout = workout

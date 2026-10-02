@@ -1,4 +1,5 @@
 module Planning
+  # Recalculates future workout metrics when FTP updates.
   class FtpRecalculator
     def initialize(profile:, effective_on: Date.current)
       @profile = profile

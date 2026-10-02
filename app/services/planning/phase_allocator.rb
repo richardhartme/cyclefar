@@ -1,6 +1,7 @@
 require_relative "v1/rules"
 
 module Planning
+  # Allocates base, build, speciality and taper phases across the plan duration.
   class PhaseAllocator
     Phase = Data.define(:kind, :starts_on, :ends_on, :position) do
       def initialize(kind:, starts_on:, ends_on:, position:)

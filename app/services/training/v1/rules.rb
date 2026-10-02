@@ -1,5 +1,6 @@
 module Training
   module V1
+    # Versioned training engine constants: zones, targets, progressions, and workout structures.
     module Rules
       def self.deep_freeze(value)
         case value

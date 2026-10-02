@@ -1,4 +1,5 @@
 module Adaptations
+  # Validate and resolve adaptation proposal changes; compute updated metrics and bias.
   class ProposalComparison
     UNAVAILABLE_MESSAGE = "Proposal is unavailable. Reject it and review your upcoming workouts.".freeze
     Change = Data.define(:workout, :requested_level, :lower_targets, :current_metrics, :preview)

@@ -1,6 +1,7 @@
 require "uri/mailto"
 
 module Accounts
+  # Create a new user account with email validation and password reset email.
   class Provision
     def initialize(email_address:)
       @email_address = email_address.to_s.strip.downcase

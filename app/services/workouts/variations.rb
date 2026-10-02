@@ -1,6 +1,7 @@
 require_relative "../training/v1/rules"
 
 module Workouts
+  # Manages variation keys for workouts (sustained, alternating, undulating, redistributed recovery).
   module Variations
     def self.keys_for(subtype)
       rules = Training::V1::Rules

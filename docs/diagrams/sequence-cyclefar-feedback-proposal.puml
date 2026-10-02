@@ -1,0 +1,83 @@
+@startuml CycleFar Feedback Proposal Sequence
+title CycleFar — Propose and apply a feedback adaptation
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "Owner-scoped\nRails controllers" as Controller
+control "HorizonMaterializer" as Materializer
+control "CompletionRecorder" as Recorder
+control "FeedbackEvaluator" as Evaluator
+control "ProposalComparison" as Comparison
+control "FeedbackLoadLimiter" as Limiter
+control "ProposalApplier" as Applier
+control "ManualEditor" as Editor
+database "PostgreSQL" as Database
+
+== Complete workout and decide whether to propose ==
+Rider -> Controller: POST completion with RPE and quality
+Controller -> Recorder: call(owned structured workout)
+group completion transaction
+  Recorder -> Database: save feedback and immutable FTP/watt snapshot
+  Recorder -> Evaluator: evaluate feedback
+  Evaluator -> Database: read comparable planned workouts in today..day 13
+  Evaluator -> Comparison: preview candidate changes
+  Comparison -> Limiter: fit proposals against fixed load and ceilings
+  Limiter -> Editor: preview canonical workout changes
+  Editor --> Limiter: definitions and current-FTP metrics
+  Limiter --> Comparison: bounded proposed prescriptions
+  Comparison --> Evaluator: current/proposed metrics and bias
+  opt meaningful change remains
+    Evaluator --> Recorder: reason and proposal payload
+    Recorder -> Database: save AdaptationProposal
+  end
+end
+Controller --> Rider: redirect to calendar
+
+== Review: proposal comparison does not change workouts ==
+Rider -> Controller: GET calendar
+Controller -> Materializer: materialize eligible near-term outlines
+Materializer -> Database: save any newly due structured details
+Controller -> Database: load this rider's pending proposals
+Controller -> Comparison: calculate Current / Proposed values
+alt proposal remains available
+  Comparison -> Limiter: recheck target set and weekly load
+  Limiter --> Comparison: in-memory fitted prescriptions
+  Comparison --> Controller: before/after workouts and clamped bias
+  Controller --> Rider: show comparison and Accept / Reject
+else stale or invalid targets
+  Comparison --> Controller: unavailable
+  Controller --> Rider: show Reject only
+end
+
+== Decision ==
+alt Reject (available or unavailable)
+  Rider -> Controller: DELETE proposal
+  Controller -> Database: load rider-owned proposal
+  Controller -> Applier: reject!
+  Applier -> Database: destroy proposal
+else Accept (available proposal)
+  Rider -> Controller: POST accept proposal
+  Controller -> Database: load rider-owned proposal
+  Controller -> Applier: accept!
+  group transaction: lock plan, then proposal
+    Applier -> Database: lock owned plan and proposal
+    Applier -> Comparison: revalidate and recalculate whole target set
+    Comparison -> Limiter: recheck current limits
+    Limiter --> Comparison: fitted prescriptions
+    Comparison --> Applier: accepted comparison
+    loop each affected workout
+      Applier -> Editor: apply! accepted definition
+      Editor -> Database: replace planned steps and metrics
+    end
+    Applier -> Database: save clamped global bias; destroy proposal
+  end
+end
+Controller --> Rider: redirect to calendar
+
+note over Comparison, Database
+  An unavailable comparison shows Reject only. The completed source
+  remains immutable. Expiry is stored but is not currently enforced.
+end note
+@enduml

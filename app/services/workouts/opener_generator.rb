@@ -4,6 +4,7 @@ require_relative "workout_definition"
 require_relative "../training/v1/rules"
 
 module Workouts
+  # Generates pre-event opener workouts with threshold and VO2 activation efforts.
   class OpenerGenerator
     def initialize(duration_minutes:, phase: :taper, goal: :event, discipline: :road)
       raise ArgumentError, "opener duration must be 30 to 45 minutes" unless duration_minutes.is_a?(Integer) && duration_minutes.between?(30, 45)

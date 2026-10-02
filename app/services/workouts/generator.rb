@@ -4,6 +4,7 @@ require_relative "workout_definition"
 require_relative "variations"
 
 module Workouts
+  # Generates WorkoutDefinitions with progression levels, durations, and variation rules.
   class Generator
     def initialize(subtype:, duration_minutes:, progression_level: 1, variation_key: nil,
       phase: :base, goal: :general_fitness, discipline: :road)

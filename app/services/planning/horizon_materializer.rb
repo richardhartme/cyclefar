@@ -1,4 +1,5 @@
 module Planning
+  # Materializes outlined workouts to structured and applies weekly load limits.
   class HorizonMaterializer
     Candidate = Data.define(:workout, :definition, :metrics, :selected) do
       def scheduled_on = workout.scheduled_on

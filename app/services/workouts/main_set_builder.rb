@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "step_definition"
 
 module Workouts
+  # Builds interval ladder main sets with work/recovery repetitions and variations.
   class MainSetBuilder
     Definition = Data.define(:steps, :name_suffix, :summary, :progression_level, :shortened)
 

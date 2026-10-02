@@ -1,4 +1,5 @@
 module IntervalsIcu
+  # Serialize a planned workout to Intervals.icu event payload format.
   class WorkoutSerializer
     def initialize(workout:, ftp_watts:)
       @workout = workout

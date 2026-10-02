@@ -2,6 +2,7 @@ require "digest"
 require "json"
 
 module IntervalsIcu
+  # Sync the next two eligible workouts to Intervals.icu and reconcile stale syncs.
   class SyncNextTwo
     Result = Data.define(:synced_count, :removed_count)
 

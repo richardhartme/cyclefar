@@ -1,6 +1,7 @@
 require_relative "step_definition"
 
 module Workouts
+  # Normalizes and validates step sequences with consecutive positions.
   module StepSequence
     def self.normalize(steps)
       sequence = steps.to_a.map { |step| StepDefinition.from(step) }.sort_by(&:position)

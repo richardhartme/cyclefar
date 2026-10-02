@@ -1,4 +1,5 @@
 module Planning
+  # Manages time-off periods and re-prescribes workouts in affected date ranges.
   class TimeOffPlanner
     def initialize(plan:)
       @plan = plan

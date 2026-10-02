@@ -1,4 +1,5 @@
 module Settings
+  # Updates rider profile settings and triggers FTP recalculation if FTP changed.
   class Update
     def initialize(profile:, attributes:, effective_on: Date.current)
       @profile = profile
