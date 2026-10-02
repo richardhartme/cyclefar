@@ -28,6 +28,13 @@ RSpec.describe PlannedWorkout, type: :model do
     expect(build(:planned_workout)).to be_valid
   end
 
+  it "requires generation metadata to be a JSON object in the model and database" do
+    workout = create(:planned_workout)
+    expect(workout.update(generation_context: [])).to be(false)
+    expect_database_rejection { workout.update_columns(generation_context: []) }
+    expect_database_rejection(ActiveRecord::NotNullViolation) { workout.update_columns(generation_context: nil) }
+  end
+
   it "FTP-001 stores FTP tests with no invented protocol or metrics" do
     workout = create(:planned_workout, :ftp_test)
     expect(workout.workout_steps).to be_empty
@@ -62,6 +69,7 @@ RSpec.describe PlannedWorkout, type: :model do
     it "prevents bulk edits, status reversal and deletion in PostgreSQL" do
       expect_database_rejection { described_class.where(id: workout.id).update_all(status: "planned") }
       expect_database_rejection { described_class.where(id: workout.id).update_all(scheduled_on: workout.scheduled_on + 1) }
+      expect_database_rejection { described_class.where(id: workout.id).update_all(generation_context: { "generated_level" => 7 }) }
       expect_database_rejection { described_class.where(id: workout.id).delete_all }
     end
 

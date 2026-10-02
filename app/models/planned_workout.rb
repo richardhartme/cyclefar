@@ -21,6 +21,7 @@ class PlannedWorkout < ApplicationRecord
   validates :completed_at, presence: true, if: :completed?
   validates :completed_ftp_watts, numericality: { only_integer: true, greater_than: 0 }, if: -> { completed? && !ftp_test? }
   validates :completed_at, :completed_ftp_watts, :completed_target_snapshot, absence: true, if: -> { planned? || missed? }
+  validate :generation_context_is_object
   validate :schedule_matches_plan
   validate :canonical_structure
   validate :completion_has_snapshot
@@ -30,6 +31,10 @@ class PlannedWorkout < ApplicationRecord
   end
 
   private
+
+  def generation_context_is_object
+    errors.add(:generation_context, "must be an object") unless generation_context.is_a?(Hash)
+  end
 
   def schedule_matches_plan
     if training_plan&.starts_on && training_plan.ends_on && scheduled_on

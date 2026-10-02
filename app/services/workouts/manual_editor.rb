@@ -29,6 +29,10 @@ module Workouts
       kind, definition, metrics = proposed.kind, proposed.definition, proposed.metrics
       material_change = material_change?(proposed.before, proposed.after)
       @workout.transaction do
+        if attributes[:action].to_s == "adapt"
+          @workout.generation_context = @workout.generation_context.merge(
+            "generated_level" => definition.progression_level, "generated_tss" => metrics.estimated_tss)
+        end
         @workout.workout_steps.destroy_all
         @workout.assign_attributes(
           kind: kind,

@@ -325,9 +325,11 @@ CREATE TABLE public.planned_workouts (
     completed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    generation_context jsonb DEFAULT '{}'::jsonb NOT NULL,
     CONSTRAINT planned_workouts_completion_snapshot CHECK (((((status)::text = ANY ((ARRAY['planned'::character varying, 'missed'::character varying])::text[])) AND (completed_at IS NULL) AND (completed_ftp_watts IS NULL) AND (completed_target_snapshot IS NULL)) OR (((status)::text = 'completed'::text) AND (completed_at IS NOT NULL) AND (((kind)::text = 'ftp_test'::text) OR (((detail_status)::text = 'structured'::text) AND (completed_ftp_watts IS NOT NULL) AND (completed_ftp_watts > 0) AND (completed_target_snapshot IS NOT NULL) AND (jsonb_typeof(completed_target_snapshot) = 'object'::text) AND (completed_target_snapshot <> '{}'::jsonb)))))),
     CONSTRAINT planned_workouts_detail_status_values CHECK (((detail_status)::text = ANY ((ARRAY['outline'::character varying, 'structured'::character varying])::text[]))),
     CONSTRAINT planned_workouts_ftp_test_no_protocol CHECK ((((kind)::text <> 'ftp_test'::text) OR ((estimated_np_watts IS NULL) AND (estimated_if IS NULL) AND (estimated_tss IS NULL) AND (estimated_work_kj IS NULL) AND (duration_minutes IS NULL) AND ((detail_status)::text = 'outline'::text)))),
+    CONSTRAINT planned_workouts_generation_context_object CHECK ((jsonb_typeof(generation_context) = 'object'::text)),
     CONSTRAINT planned_workouts_intent_values CHECK (((intent)::text = ANY ((ARRAY['intervals'::character varying, 'endurance'::character varying, 'recovery'::character varying, 'vo2_max'::character varying, 'threshold'::character varying, 'sweet_spot'::character varying, 'tempo'::character varying])::text[]))),
     CONSTRAINT planned_workouts_kind_values CHECK (((kind)::text = ANY ((ARRAY['workout'::character varying, 'ftp_test'::character varying, 'opener'::character varying])::text[]))),
     CONSTRAINT planned_workouts_minimum_duration CHECK ((((kind)::text = 'ftp_test'::text) OR ((duration_minutes IS NOT NULL) AND (duration_minutes >= 30) AND (intent IS NOT NULL)))),
@@ -1232,6 +1234,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261002110000'),
 ('20260927220000'),
 ('20260927180000'),
 ('20260927170000'),

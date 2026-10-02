@@ -10,7 +10,7 @@ module Planning
     def apply!
       raise ArgumentError, "Choose at least one available training day" if @slots.empty?
 
-      TrainingPlan.transaction do
+      @plan.with_lock do
         template = create_template!
         re_prescribe!(affected_range)
         template
