@@ -35,6 +35,7 @@ RSpec.describe "FBK-002 owner-scoped progression bias", type: :request, generate
     proposals = plans.zip(targets, [ -1, 1 ]).map do |plan, target, bias|
       create(
         :adaptation_proposal,
+        :fresh,
         training_plan: plan,
         payload: {
                 "changes" => [ { "planned_workout_id" => target.id, "progression_level" => 3 + bias } ],

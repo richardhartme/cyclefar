@@ -72,8 +72,14 @@
           <div>
             <h3 class="font-semibold">Replan upcoming workouts?</h3>
             <p class="mt-1"><%= @material_change_proposal.reason %></p>
+            <% if @material_change_error %>
+              <p role="status"><%= @material_change_error %></p>
+              <p>To review a fresh replan, change the workout again after dismissing this proposal.</p>
+            <% end %>
             <div class="mt-3 flex flex-wrap gap-2">
-              <%= button_to "Replan upcoming workouts", accept_adaptation_proposal_path(@material_change_proposal), class: "btn btn-primary btn-sm" %>
+              <% unless @material_change_error %>
+                <%= button_to "Replan upcoming workouts", accept_adaptation_proposal_path(@material_change_proposal), class: "btn btn-primary btn-sm" %>
+              <% end %>
               <%= button_to "Keep rest of plan unchanged", reject_adaptation_proposal_path(@material_change_proposal), method: :delete, class: "btn btn-ghost btn-sm" %>
             </div>
           </div>

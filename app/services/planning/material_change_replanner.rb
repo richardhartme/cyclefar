@@ -6,10 +6,15 @@ module Planning
       @plan = proposal.training_plan
     end
 
-    def apply!
+    def validate!
       source = @plan.planned_workouts.find(@proposal.source_workout_id)
       raise ArgumentError, "Proposal is stale" unless source.planned? && source.structured?
+      proposal_range
+      source
+    end
 
+    def apply!
+      source = validate!
       dates_by_template.each do |template, dates|
         FuturePrescriber.new(plan: @plan, slots: template.availability_slots).replace!(
           dates,

@@ -1,7 +1,7 @@
 module Adaptations
   # Validate and resolve adaptation proposal changes; compute updated metrics and bias.
   class ProposalComparison
-    UNAVAILABLE_MESSAGE = "Proposal is unavailable. Reject it and review your upcoming workouts.".freeze
+    UNAVAILABLE_MESSAGE = ProposalFreshness::UNAVAILABLE_MESSAGE
     Change = Data.define(:workout, :requested_level, :lower_targets, :current_metrics, :preview)
     Bias = Data.define(:before, :after, :delta)
     Result = Data.define(:changes, :bias, :ftp_watts)
@@ -11,7 +11,8 @@ module Adaptations
       @plan = proposal.training_plan
     end
 
-    def call
+    def call(validate_freshness: true)
+      ProposalFreshness.new(@proposal).validate! if validate_freshness
       raise ArgumentError unless [ nil, "feedback" ].include?(@proposal.payload["type"])
 
       workouts = @plan.planned_workouts.includes(:workout_steps, :plan_phase)
@@ -45,6 +46,8 @@ module Adaptations
       before = @plan.progression_state.fetch("intensity_bias", 0).to_i
       after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(*Training::V1::Rules::PROGRESSION_BIAS_BOUNDS)
       Result.new(changes: changes, bias: Bias.new(before: before, after: after, delta: after - before), ftp_watts: ftp)
+    rescue ProposalFreshness::Unavailable
+      raise
     rescue ActiveRecord::RecordNotFound, KeyError, ArgumentError, TypeError
       # Payloads are server-owned, but obsolete or malformed IDs must not disclose
       # another plan's records or prevent the rest of the calendar from rendering.

@@ -30,7 +30,7 @@ RSpec.describe "FBK-002 / USR-004 feedback ownership", generated_workouts: true 
     end
     generated_workout(plan: other_plan, phase: other_phase, date: today + 1, level: 5, duration: 90)
     foreign_target = generated_workout(plan: other_plan, phase: other_phase, date: today + 2, level: 5, duration: 90)
-    create(:adaptation_proposal, training_plan: other_plan, payload: { "changes" => [ { "planned_workout_id" => foreign_target.id, "progression_level" => 4 } ] })
+    create(:adaptation_proposal, :fresh, training_plan: other_plan, payload: { "changes" => [ { "planned_workout_id" => foreign_target.id, "progression_level" => 4 } ] })
     source = generated_workout(plan: plan, phase: phase, date: today, duration: 90)
     target = generated_workout(plan: plan, phase: phase, date: today + 3, level: 5, duration: 90)
     other_before = state(other_plan)
@@ -74,6 +74,7 @@ RSpec.describe "FBK-002 / USR-004 feedback ownership", generated_workouts: true 
       target = generated_workout(plan: plan, phase: phase, date: today + 2, level: 5, duration: 90)
       proposal = create(
         :adaptation_proposal,
+        :fresh,
         training_plan: plan,
         payload: { "changes" => [ { "planned_workout_id" => target.id, "progression_level" => 4 } ], "progression_bias" => -1 })
       other_before = state(other_plan)

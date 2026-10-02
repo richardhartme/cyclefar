@@ -39,9 +39,15 @@
         <div>
           <strong class="block"><%= proposal.material_change_replan? ? "Optional upcoming replan" : "Adaptation proposal" %></strong>
           <p><%= proposal.reason %></p>
+          <% if @proposal_errors[proposal.id] %>
+            <p role="status"><%= @proposal_errors[proposal.id] %></p>
+            <p>To review a fresh replan, change the workout again after dismissing this proposal.</p>
+          <% end %>
         </div>
         <div class="flex flex-wrap gap-2 sm:ml-auto">
-          <%= button_to proposal.material_change_replan? ? "Replan upcoming workouts" : "Accept all", accept_adaptation_proposal_path(proposal), class: "btn btn-success btn-sm" %>
+          <% unless @proposal_errors[proposal.id] %>
+            <%= button_to "Replan upcoming workouts", accept_adaptation_proposal_path(proposal), class: "btn btn-success btn-sm" %>
+          <% end %>
           <%= button_to proposal.material_change_replan? ? "Keep rest of plan unchanged" : "Reject all", reject_adaptation_proposal_path(proposal), method: :delete, form: { data: { turbo_confirm: proposal.material_change_replan? ? nil : "Reject this adaptation proposal?" } }, class: "btn btn-ghost btn-sm" %>
         </div>
       </section>

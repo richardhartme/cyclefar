@@ -8,6 +8,10 @@ module Workouts
     end
 
     def create!(scheduled_on:, subtype:, duration_minutes:)
+      @plan.with_lock { create_under_lock!(scheduled_on: scheduled_on, subtype: subtype, duration_minutes: duration_minutes) }
+    end
+
+    def create_under_lock!(scheduled_on:, subtype:, duration_minutes:)
       validate_destination!(scheduled_on)
       kind, definition = definition_for(scheduled_on, subtype, duration_minutes)
       metrics = Metrics::WorkoutCalculator.new(
@@ -36,6 +40,7 @@ module Workouts
         workout
       end
     end
+    private :create_under_lock!
 
     def validate_destination!(scheduled_on)
       raise ArgumentError, "Choose a date inside this plan" unless scheduled_on.between?(@plan.starts_on, @plan.ends_on)

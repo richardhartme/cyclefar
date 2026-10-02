@@ -6,7 +6,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; live mail verification remains open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
 
-Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Expiry/full staleness handling, per-family bias, complete workout-card fields (CAL-002), move regeneration across phase/distance boundaries and all stale linked sync-event cases (ICU-001) remain gaps. These notes do not replace the acceptance criteria below.
+Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Per-family bias, complete workout-card fields (CAL-002), move regeneration across phase/distance boundaries and all stale linked sync-event cases (ICU-001) remain gaps. These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -359,6 +359,7 @@ Feedback may produce a proposed adaptation to the next 14 days.
 - Show a concise before/after summary and reason.
 - The rider accepts or rejects the entire proposal atomically.
 - Do not silently apply it.
+- Feedback and material-change proposals expire at their seven-day deadline. Reject stale, expired or unverifiable proposals atomically, with dismissal guidance and no workout or bias changes. Canonical edits, moves, relevant schedule/load changes and archived plans invalidate them; metrics-only FTP recalculation does not. Ownership remains through the plan.
 - V1 does not need a persistent user-visible history of accepted/rejected proposals.
 
 Repeated feedback may alter longer-term progression state used when later workouts are structured, without rewriting the long-term schedule unnecessarily.
