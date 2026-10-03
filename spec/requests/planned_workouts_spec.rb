@@ -24,7 +24,7 @@ RSpec.describe "Planned workouts", type: :request do
   end
 
   it "WKO-001 provides a useful detail state before a workout is structured" do
-    outline = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 2)
+    outline = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 14)
 
     get root_path
     calendar_link = Nokogiri::HTML(response.body).css("a").find { |link| link.text == outline.name }
@@ -180,6 +180,12 @@ RSpec.describe "Planned workouts", type: :request do
     expect(response).to redirect_to(settings_path)
     expect(ftp_test.reload).to be_completed
     expect(ftp_test.completed_at).to be_present
+    expect(ftp_test).to be_outline
+    expect(ftp_test.workout_steps).to be_empty
+    expect(ftp_test.workout_feedback).to be_nil
+    expect(ftp_test.completed_ftp_watts).to be_nil
+    expect(ftp_test.completed_target_snapshot).to be_nil
+    expect(PlannedWorkout::METRICS.map { |metric| ftp_test.public_send(metric) }).to all(be_nil)
   end
 
   it "SET-001 displays current FTP watt targets for planned workouts and snapshots for completed workouts" do

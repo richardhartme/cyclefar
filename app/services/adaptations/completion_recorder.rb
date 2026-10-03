@@ -12,10 +12,16 @@ module Adaptations
 
       @workout.training_plan.with_lock do
         @workout.reload
-        raise ArgumentError, "Only planned structured workouts can be completed" unless @workout.planned? && @workout.structured? && @workout.workout?
+        raise ArgumentError, "Only planned executable workouts can be completed" unless @workout.planned? && !@workout.ftp_test?
+
+        Planning::HorizonMaterializer.new(@workout.training_plan).materialize_for_completion!(@workout) if @workout.outline?
 
         @workout.create_workout_feedback!(rpe: @rpe, completion_quality: @completion_quality)
         ftp = @workout.training_plan.ftp_watts_for_planning
+        # Overdue structured workouts are outside FTP recalculation's future
+        # scope. Freeze coherent metrics at the same FTP as their watt targets.
+        metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: ftp).call
+        PlannedWorkout::METRICS.each { |key| @workout.public_send("#{key}=", metrics.public_send(key)) }
 
         snapshot = {
           steps: @workout.workout_steps.map { |step|
