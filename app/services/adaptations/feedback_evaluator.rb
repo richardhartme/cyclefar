@@ -9,6 +9,9 @@ module Adaptations
     end
 
     def call
+      # Openers are activation, without an expected RPE/progression band.
+      # Their feedback is recorded but does not drive training adaptations.
+      return unless @workout.workout?
       return if late_completion_blocked?
 
       delta, reason = adjustment
@@ -92,13 +95,14 @@ module Adaptations
     def late_completion_blocked?
       return false unless @workout.scheduled_on < Date.current
 
-      @workout.training_plan.planned_workouts.completed.where("scheduled_on > ?", @workout.scheduled_on).exists?
+      @workout.training_plan.planned_workouts.where("scheduled_on > ?", @workout.scheduled_on)
+        .order(:scheduled_on).first&.completed?
     end
 
     def progression_bias
       return 0 unless intensity?
 
-      recent = @workout.training_plan.planned_workouts.completed.where(subtype: @workout.subtype)
+      recent = @workout.training_plan.planned_workouts.completed.where(kind: :workout, subtype: @workout.subtype)
         .order(scheduled_on: :desc, id: :desc).limit(3).includes(:workout_feedback).to_a
       return 0 unless recent.size == 3 && recent.all?(&:workout_feedback)
 
