@@ -44,26 +44,12 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def move
-    @workout.training_plan.with_lock do
-      @workout.reload
-      move_under_lock!
-    end
+    destination = Date.iso8601(params.require(:scheduled_on))
+    result = Workouts::Mover.new(@workout).move_to!(destination: destination)
+    redirect_to root_path, notice: ([ "Workout moved to #{destination.to_fs(:long)}." ] + result.warnings).join(" ")
   rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to planned_workout_path(@workout), alert: error.message
   end
-
-  def move_under_lock!
-    raise ArgumentError, "Completed workouts cannot be moved" unless @workout.planned?
-
-    destination = Date.iso8601(params.require(:scheduled_on))
-    raise ArgumentError, "Choose an empty date inside this plan" unless destination.between?(@workout.training_plan.starts_on, @workout.training_plan.ends_on)
-    raise ArgumentError, "That date already has a workout" if @workout.training_plan.planned_workouts.where(scheduled_on: destination).where.not(id: @workout.id).exists?
-
-    phase = @workout.training_plan.plan_phases.find { |item| destination.between?(item.starts_on, item.ends_on) }
-    @workout.update!(scheduled_on: destination, plan_phase: phase)
-    redirect_to root_path, notice: "Workout moved to #{destination.to_fs(:long)}."
-  end
-  private :move_under_lock!
 
   def copy
     destination = Date.iso8601(params.require(:scheduled_on))
@@ -93,8 +79,9 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def miss
-    Planning::MissedWorkoutResolver.new(@workout).resolve!(mode: params.require(:resolution), destination: params[:scheduled_on])
-    redirect_to root_path, notice: "Missed workout resolved."
+    result = Planning::MissedWorkoutResolver.new(@workout).resolve!(mode: params.require(:resolution), destination: params[:scheduled_on])
+    warnings = result.is_a?(Workouts::Mover::Result) ? result.warnings : []
+    redirect_to root_path, notice: ([ "Missed workout resolved." ] + warnings).join(" ")
   rescue Date::Error, ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to planned_workout_path(@workout), alert: error.message
   end

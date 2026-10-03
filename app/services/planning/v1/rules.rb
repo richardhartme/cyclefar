@@ -15,6 +15,7 @@ module Planning
       RECOVERY_MAXIMUM_LEVEL = 1
       RECOVERY_DURATION_FACTOR = 0.70
       TAPER_DURATION_FACTOR = 0.60
+      MOVE_STRUCTURE_WINDOW_DAYS = 7
 
       PHASE_PROPORTIONS = {
         with_base: { base: 0.35, build: 0.40, speciality: 0.25 }.freeze,

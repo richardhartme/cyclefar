@@ -6,7 +6,7 @@ Requirement IDs are intended to be referenced in RSpec descriptions and implemen
 
 Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; live mail verification remains open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
 
-Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Per-family bias, complete workout-card fields (CAL-002), move regeneration across phase/distance boundaries and all stale linked sync-event cases (ICU-001) remain gaps. These notes do not replace the acceptance criteria below.
+Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Ordinary and missed-workout moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load (CYF-7). Per-family bias, complete workout-card fields (CAL-002) and all stale linked sync-event cases (ICU-001) remain gaps. These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -320,6 +320,8 @@ If this materially changes training load or changes between easy/intensity inten
 The rider may move a workout by opening it and choosing a new date. No drag-and-drop in V1.
 
 V1 assumes one cycling workout per date. The date picker should prevent moving onto a date that already contains another cycling workout; the rider can move that workout first.
+
+Ordinary and missed-workout Move apply the same rules: preserve eligible same-phase structures within seven days; regenerate across phases or by more than seven days using destination progression, preserving subtype and duration. Recheck destination weekly load and display applicable non-blocking warnings. Completed history remains immutable.
 
 ### WKO-007 Copy
 
