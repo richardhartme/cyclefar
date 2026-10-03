@@ -1,14 +1,13 @@
 module Adaptations
   # Previews feedback-driven adaptations for target workouts and keeps weekly
-  # training load bounded: where a selected week would exceed the cap derived
-  # from the previous comparable week, it steps workouts down a progression
-  # level. Read-only; shared by proposal construction, comparison and accept.
+  # training load bounded using the ordered §27 reductions against the previous
+  # comparable week. Read-only; shared by comparison and atomic acceptance.
   class FeedbackLoadLimiter
     Candidate = Data.define(:workout, :preview, :fixed_tss, :selected) do
       def scheduled_on = workout.scheduled_on
       def progression_level = preview ? preview.definition.progression_level : workout.progression_level
       def estimated_tss = preview ? preview.metrics.estimated_tss : fixed_tss
-      def adjustable? = selected && Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
+      def adjustable? = selected && workout.workout?
       def reference_tss = selected ? estimated_tss : workout.generation_context.fetch("generated_tss", estimated_tss).to_f
     end
 
@@ -36,9 +35,17 @@ module Adaptations
         next unless @context.comparable_week?(week_start, items.map(&:workout))
 
         if reference && items.any?(&:selected)
-          items = Planning::V1::WeeklyLoadCap.reduce(items, limit: Planning::V1::WeeklyLoadCap.limit(reference)) do |candidate|
-            level = candidate.progression_level - 1
-            candidate.with(preview: preview(candidate.workout, level, false))
+          items = Planning::V1::WeeklyLoadCap.reduce(items, limit: Planning::V1::WeeklyLoadCap.limit(reference)) do |candidate, stage|
+            Planning::V1::LoadReduction.options(candidate.preview.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
+              metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
+              after = Workouts::ManualEditor::Snapshot.new(
+                kind: "workout",
+                subtype: definition.subtype,
+                duration_minutes: definition.duration_minutes,
+                estimated_if: metrics.estimated_if,
+                estimated_tss: metrics.estimated_tss)
+              candidate.with(preview: candidate.preview.with(definition: definition, metrics: metrics, after: after))
+            end
           end
           items.select(&:selected).each { |item| selected[item.workout.id] = item.preview }
         end
@@ -79,7 +86,8 @@ module Adaptations
             **attributes,
             subtype: workout.subtype,
             progression_level: workout.progression_level || 1,
-            variation_key: workout.variation_key || Workouts::Variations.default_key(workout.subtype)).call.steps
+            variation_key: workout.variation_key || Workouts::Variations.default_key(workout.subtype),
+            load_adjustments: workout.generation_context.fetch("load_adjustments", {})).call.steps
         end
       end
       Metrics::WorkoutCalculator.new(steps: steps, ftp_watts: workout.completed? ? workout.completed_ftp_watts : @plan.ftp_watts_for_planning).call.estimated_tss

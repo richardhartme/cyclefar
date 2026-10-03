@@ -5,7 +5,7 @@ module Workouts
       def scheduled_on = workout.scheduled_on
       def progression_level = definition.progression_level
       def estimated_tss = metrics.estimated_tss
-      def adjustable? = workout.workout? && Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
+      def adjustable? = workout.workout?
     end
 
     def initialize(workout)
@@ -49,11 +49,15 @@ module Workouts
       baseline = context["baseline_level"] || @workout.progression_level || 1
       maximum = fresh_context ? context["maximum_level"] : Planning::V1::LoadContext.new(@plan).maximum_level(@workout)
       level = Training::V1::Progression.level(baseline: baseline, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i, maximum: maximum)
-      candidate = limit_load(candidate_for(level))
+      candidate = limit_load(candidate_for(level, load_adjustments: context.fetch("load_adjustments", {})))
       definition, metrics = candidate.definition, candidate.metrics
       # Destination references replace source-week ceilings. The saved baseline
       # also prevents bias stacking when a moved outline later materialises.
-      context.merge!("baseline_level" => baseline, "generated_level" => definition.progression_level, "generated_tss" => metrics.estimated_tss)
+      context.merge!(
+        "baseline_level" => baseline,
+        "generated_level" => definition.progression_level,
+        "generated_tss" => metrics.estimated_tss,
+        "load_adjustments" => definition.load_adjustments)
       if definition.progression_level && definition.progression_level < level
         context["maximum_level"] = [ maximum || 7, definition.progression_level ].min
       end
@@ -74,7 +78,7 @@ module Workouts
       @workout.save!
     end
 
-    def candidate_for(level)
+    def candidate_for(level, load_adjustments: {})
       attributes = { duration_minutes: @workout.duration_minutes, phase: @workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline }
       definition = if @workout.opener?
         OpenerGenerator.new(**attributes).call
@@ -83,7 +87,8 @@ module Workouts
           **attributes,
           subtype: @workout.subtype,
           progression_level: level,
-          variation_key: @workout.variation_key || Variations.default_key(@workout.subtype)).call
+          variation_key: @workout.variation_key || Variations.default_key(@workout.subtype),
+          load_adjustments: load_adjustments).call
       end
       Candidate.new(
         workout: @workout,
@@ -97,8 +102,11 @@ module Workouts
       return candidate unless week.limit
 
       fixed_tss = week.workouts.reject { |workout| workout.id == @workout.id }.sum { |workout| review.estimated_tss(workout) }
-      Planning::V1::WeeklyLoadCap.reduce([ candidate ], limit: week.limit - fixed_tss) do |item|
-        candidate_for(item.progression_level - 1)
+      Planning::V1::WeeklyLoadCap.reduce([ candidate ], limit: week.limit - fixed_tss) do |item, stage|
+        # Explicit Move promises to retain the rider's selected subtype.
+        Planning::V1::LoadReduction.options(item.definition, stage: stage, intent: @workout.subtype).map do |definition|
+          item.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
+        end
       end.sole
     end
 

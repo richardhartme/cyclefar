@@ -182,6 +182,8 @@ Important:
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
 
+`load_adjustments` inside that context saves §27 target/filler generation choices (`lower_targets` and `easy_filler`). Preview persistence and later materialisation use those choices together with the saved subtype, level and variation. Canonical structured steps remain authoritative; comparison and adaptation acceptance apply the same load-limited definition atomically. No migration is required for these optional JSON keys.
+
 The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep
