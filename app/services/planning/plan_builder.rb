@@ -6,6 +6,7 @@ require_relative "plan_configuration"
 require_relative "phase_allocator"
 require_relative "v1/rules"
 require_relative "v1/weekly_load_cap"
+require_relative "v1/phase_progression"
 
 module Planning
   # Builds a training plan preview with workouts, weeks, FTP tests and load enforcement.
@@ -247,9 +248,7 @@ module Planning
     end
 
     def level_for(date, phase)
-      range = V1::Rules::PHASE_LEVELS.fetch(phase.kind.to_sym)
-      fraction = (date - phase.starts_on).fdiv([ phase.ends_on - phase.starts_on, 1 ].max)
-      [ range.begin + (fraction * range.size).floor, range.end ].min
+      V1::PhaseProgression.level(date: date, kind: phase.kind, starts_on: phase.starts_on, ends_on: phase.ends_on)
     end
 
     def place_ftp_tests(prescriptions)
