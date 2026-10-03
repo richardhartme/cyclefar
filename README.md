@@ -11,7 +11,7 @@ snapshots.
 
 ## What it includes
 
-- Guided plan creation with a preview for general fitness, FTP, endurance,
+- Plan creation with a preview for general fitness, FTP, endurance,
   climbing and event goals.
 - Email/password registration, sign-in, sign-out and password reset built on
   Rails-generated authentication, with independent rider accounts.
@@ -21,7 +21,8 @@ snapshots.
   inline power-profile graphs.
 - Completion feedback, overdue and missed-workout resolution, and explicit
   adaptation proposals with owner-scoped before/after comparisons and a
-  14-day target window. Accepted progression bias affects later generation.
+  14-day target window. Proposals enforce seven-day expiry and reject stale
+  inputs; accepted progression bias affects later generation.
 - Availability changes, planned time off and a gradual return after illness or
   recovery time.
 - FTP history and recalculation of future workout watt targets without changing
@@ -34,14 +35,26 @@ snapshots.
 Profiles, plans, preview drafts and Intervals.icu sync records are scoped to
 the signed-in user, and an integrated two-rider test matrix exercises those
 boundaries. Riders can self-register from the public homepage. Operator
-provisioning stays disabled until live mail delivery is verified. V1 has no
-ride imports, trainer control, notifications or automatic calendar syncing.
+provisioning is disabled by default and requires an explicit environment flag;
+the documented release process requires verifying live mail delivery first.
+V1 has no ride imports, trainer control, notifications or automatic calendar syncing.
+
+Each rider can have one active plan. Executable workouts for today through the
+next 13 days gain detailed steps as the calendar is loaded; later workouts
+retain outline prescriptions and forecast metrics. Explicit Add, Copy and Move
+actions can also leave structured workouts outside that window. Due or overdue
+outlines can be opened and completed individually, including event openers.
+
+Initial endurance workouts select and save one of three profiles: sustained,
+alternating or undulating. This is the engine's deliberate randomness exception;
+previews and regeneration with an explicit variation remain deterministic.
 
 ## Local setup
 
 The repository pins Ruby **4.0.6** and Rails **8.1.4**, and uses Tailwind CSS
-with daisyUI. Local setup requires Bundler, libvips and a running PostgreSQL **17+**
-server with `psql` and `pg_dump` on `PATH`. Your local PostgreSQL role must be
+with daisyUI, Hotwire/Turbo and Stimulus. Local setup requires Bundler, libvips
+and a running PostgreSQL **17+** server with `psql` and `pg_dump` on `PATH`.
+Your local PostgreSQL role must be
 able to create the development and test databases. libvips supports the configured
 Active Storage image-processing backend; CI installs its development package
 before preparing Rails. Set `PGHOST`, `PGPORT`,
@@ -49,49 +62,142 @@ before preparing Rails. Set `PGHOST`, `PGPORT`,
 
 ```sh
 rbenv install -s 4.0.6
+bundle install
+bin/rails db:create db:schema:load
 bin/setup --skip-server
 bin/dev
 ```
 
+The schema-load command is for a fresh database only. It initializes the
+development and test databases without
+running the optional demo seed, which requires an existing rider account.
+For subsequent setup or updates, run `bin/setup --skip-server` and `bin/dev`
+without repeating the schema load.
+
 Open <http://localhost:3000>. `bin/setup` installs dependencies, creates local
 Active Record Encryption keys, prepares the database and builds Tailwind CSS.
-It can be rerun safely; existing encryption keys are retained. Use
-`bin/setup --reset` when a local database reset is wanted.
+`bin/dev` runs Rails and the Tailwind watcher through Foreman, installing Foreman
+if needed. Node.js is not required by the current asset setup.
+
+Setup retains existing encryption keys and can be rerun to update the local
+environment; it also clears logs and temporary files. Its `--reset` option
+recreates the database and invokes seeds, so it currently encounters the same
+existing-rider requirement; use the fresh-database path above for initial setup.
 
 The encryption-key files in `config/` are ignored by Git. Keep them with any
 local database backup: losing them prevents decryption of a saved Intervals.icu
 API key.
 
-Prepare the database, then open the homepage and choose **Register** to create
+After setup, open the homepage and choose **Register** to create
 your rider account or **Sign In** if you already have one. The checked-in
 `db/structure.sql` includes authentication and user ownership constraints.
 Production password-reset delivery uses environment-configured SMTP; delivery
-through a live provider has not been verified. See the [account access
-guide](docs/ACCOUNT_ACCESS.md) for deployment settings.
+through a live provider is not recorded as verified in the project docs.
+See the [account access guide](docs/ACCOUNT_ACCESS.md) for deployment settings.
+
+## Development sample plan
+
+In development, load a realistic 12-week Increase FTP / Road plan with Base
+included, a 260 W FTP, and three hard weeks followed by one recovery week:
+
+| Day | Duration | Intent |
+| --- | --- | --- |
+| Tuesday | 60 minutes | Intervals |
+| Thursday | 90 minutes | Endurance |
+| Saturday | 60 minutes | Intervals |
+| Sunday | 120 minutes | Endurance |
+
+```sh
+CYCLEFAR_SEED_USER_EMAIL=rider@example.com bin/rails db:seed
+```
+
+Set the email to an existing local user. The seed starts the plan on the next
+Monday and sets that rider's FTP to 260 W. It does nothing when the rider already
+has an active plan, and it does not create an account or run in production.
+
+## Working with Intervals.icu
+
+Save an Intervals.icu API key in **Settings**, then use the calendar's manual
+sync action. Sync exports only the next two structured workouts that can be
+performed, including openers, and uses stable `cyclefar-workout-<id>` external
+IDs. It excludes FTP tests and exports fewer than two when fewer are eligible.
+It neither imports rides nor changes unrelated Intervals.icu events.
+
+Current cleanup handles deleted workouts and still-planned future workouts that
+leave the next-two set. Linked workouts subsequently marked missed/completed or
+moved into the past are not yet included in cleanup. See the
+[integration guide](docs/INTERVALS_ICU.md) for reconciliation and API-contract limits.
+
+## Deployment
+
+The application uses Kamal **2.12.0**, Docker and an external PostgreSQL server.
+The [Terraform guide](infra/README.md) and
+[CloudFormation alternative](infra/cloudformation/README.md) provision AWS
+infrastructure separately; use one infrastructure tool per environment.
+
+`config/deploy.yml` reads host and registry details from the deploying machine's
+environment. Runtime credentials are supplied through `.kamal/secrets`. Prepare
+Docker, SSH access, a container registry and the production database before
+deploying. The configuration uses `cyclefar.com` for TLS and password-reset links;
+for your own instance, update both `proxy.host` and `CYCLEFAR_APP_HOST` in that file.
+
+Create or update local Rails credentials with your editor configured:
+
+```sh
+bin/rails credentials:edit
+```
+
+Use [the credentials example](config/credentials.yml.enc.example) as the guide.
+The current `.kamal/secrets` reads `secret_key_base`, `kamal.registry_password`
+and `db.password` from that local encrypted file. Retain existing production
+values when configuring an existing deployment. The encrypted credentials file
+and its master key are ignored by Git.
+
+Create a private `.env.deploy` in the repository root containing shell
+assignments for these variables:
+
+| Variable | Value |
+| --- | --- |
+| `CYCLEFAR_WEB_HOST` | Application server IP address or hostname |
+| `CYCLEFAR_DB_HOST` | PostgreSQL/RDS endpoint |
+| `KAMAL_REGISTRY_USER` | Registry username; also used in the image name |
+| `KAMAL_SSH_KEY` | SSH key path; optional, defaults to `~/.ssh/id_ed25519` |
+| `CYCLEFAR_MAIL_FROM` | Authorized sender address |
+| `CYCLEFAR_SMTP_HOST` | SMTP server address |
+| `CYCLEFAR_SMTP_USERNAME` | SMTP username |
+| `CYCLEFAR_SMTP_PASSWORD` | SMTP password or provider token |
+| `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Existing production primary key |
+| `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` | Existing production deterministic key |
+| `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Existing production derivation salt |
+
+For example, an assignment has the form `CYCLEFAR_WEB_HOST='your-server-address'`.
+`.env.deploy` is ignored by Git and excluded from Docker builds. Restrict access
+and load it explicitly when deploying from the repository root:
+
+```sh
+chmod 600 .env.deploy
+( set -a; source .env.deploy; set +a; bin/kamal deploy )
+```
+
+For the first deployment to a prepared environment, use `bin/kamal setup` in
+place of `bin/kamal deploy`. `set -a` exports the loaded assignments; the
+subshell keeps them scoped to that command. Kamal fixes the database port to
+`5432` and database username to `cyclefar`; SMTP defaults to port `587`.
+Match those settings to your provisioned services, or adjust the deployment
+configuration.
+
+Keep the production encryption keys for the lifetime of stored Intervals.icu
+API keys; replacing them makes existing ciphertext unreadable. For a new
+installation, generate one set with `bin/rails db:encryption:init` and retain it
+in your secret store. Production password-reset delivery needs the Solid Queue
+worker; Kamal enables its supervisor inside Puma. See the
+[account access guide](docs/ACCOUNT_ACCESS.md) for mail and provisioning details.
 
 Kamal supplies the running deployment version automatically. Pages display it
 in a small footer: Git commit SHAs are shortened to seven characters, with the
 full version available on hover. Custom versions and uncommitted-build markers
 are shown in full. The footer is hidden when `KAMAL_VERSION` is absent, including
 normal local development.
-
-## Development sample plan
-
-In development, load a realistic 12-week plan with a 260 W FTP and a
-Tuesday/Thursday/Saturday/Sunday schedule:
-
-```sh
-CYCLEFAR_SEED_USER_EMAIL=rider@example.com bin/rails db:seed
-```
-
-Set the email to an existing local user. The seed is idempotent for that user and does nothing when they already have an active plan.
-
-## Working with Intervals.icu
-
-Save an Intervals.icu API key in **Settings**, then use the calendar's manual
-sync action. Sync exports only the next two structured workouts that can be
-performed and uses stable `cyclefar-` external IDs. It neither imports rides nor
-changes unrelated Intervals.icu events.
 
 ## Validation
 
@@ -104,7 +210,9 @@ bin/bundler-audit
 bin/importmap audit
 ```
 
-`bin/ci` runs the configured continuous-integration checks.
+`bin/ci` runs setup followed by these checks locally. GitHub Actions runs tests
+against PostgreSQL 17, plus autoloading, lint and security checks. Intervals.icu
+adapter specs stub HTTP rather than calling the live API.
 
 ## Documentation
 
@@ -122,7 +230,9 @@ bin/importmap audit
 
 Requirements and training rules describe intended V1 behaviour. Architecture,
 data-model and UX implementation notes describe the current code and identify
-remaining differences, including proposal expiry/staleness and sync cleanup.
+remaining differences, including per-family progression bias, complete calendar
+card fields and stale linked Intervals.icu event cleanup. Proposal expiry and
+stale-input checks are implemented.
 
 ## License
 
