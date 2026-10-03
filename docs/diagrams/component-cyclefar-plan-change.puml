@@ -1,4 +1,5 @@
-@startuml CycleFar Plan Change Components
+@startuml
+!pragma layout smetana
 ' Scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
@@ -12,9 +13,11 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Scope workout, proposal and time-off lookups to Current.user; handle edits, feedback, schedule and settings.")
   Component(home, "HomeController and comparison view", "Rails / ERB", "Render owner-scoped Current / Proposed workout metrics and clamped bias; unavailable proposals offer Reject only.")
-  Component(editor, "ManualEditor", "Workouts service", "Regenerates a planned structured workout after a rider-directed change or accepted adaptation.")
+  Component(editor, "ManualEditor", "Workouts service", "Regenerates manual edits; acceptance saves the exact load-limited definition shown in the comparison.")
+  Component(mover, "Mover and DestinationValidator", "Workouts services", "Validate shared destination exclusions; preserve short same-context moves or regenerate from destination progression; recheck weekly load and warnings.")
+  Component(freshness, "ProposalCreator and ProposalFreshness", "Adaptations services", "Save seven-day expiry and a digest of relevant canonical inputs; reject expired, stale, archived or unverifiable proposals without writes.")
   Component(manual_creation, "Creator and Copier", "Workouts services", "Add a generated workout or copy canonical steps to an empty plan date using current FTP.")
-  Component(completion, "CompletionRecorder", "Adaptations service", "Records feedback, freezes completed-workout snapshots and requests adaptation evaluation atomically.")
+  Component(completion, "CompletionRecorder", "Adaptations service", "Materialises a due outline if needed; records feedback and current-FTP snapshots, then evaluates adaptations under the plan lock.")
   Component(evaluator, "FeedbackEvaluator", "Adaptations service", "Proposes same-subtype/family or broad-Intervals changes within today through day 13; nearby reductions and difficult-easy targets; optional global bias.")
   Component(comparison, "ProposalComparison", "Adaptations service", "Validates the complete source/target set through its plan and current horizon; computes current/proposed metrics and clamped global bias without writes.")
   Component(feedback_limits, "FeedbackLoadLimiter", "Adaptations service", "Previews fitted changes; preserves reduced-load ceilings and rechecks weekly caps against fixed workouts and forecasts.")
@@ -24,7 +27,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(prescriber, "FuturePrescriber", "Planning service", "Under the plan lock, replaces future planned prescriptions; retains unbiased baselines and post-break ceilings, preserves history and materializes the horizon.")
   Component(plan_builder, "PlanBuilder and ExistingPlanConfiguration", "Planning services", "Rebuild deterministic prescriptions from the saved plan and supplied availability.")
   Component(materializer, "HorizonMaterializer", "Planning service", "Applies accepted bias once when outlines enter the next 14 days; saves fitted levels, steps and automatic load references under the plan lock.")
-  Component(load_rules, "LoadContext and WeeklyLoadCap", "Planning::V1 services", "Share comparable-week rules, generation ceilings and highest-load-first intensity-level reductions.")
+  Component(load_rules, "LoadContext, WeeklyLoadCap and LoadReduction", "Planning::V1 services", "Share comparable-week rules, ceilings and ordered level/variation/target/broad-subtype/filler reductions; preserve duration and endurance profiles.")
   Component(progression, "Progression", "Training::V1 pure calculation", "Combines baseline and bias; clamps to 1-7 and reduced-load ceilings.")
   Component(ftp, "Settings::Update and FtpRecalculator", "Settings and Planning services", "Record FTP history and recalculate future structured-workout metrics without changing completed snapshots.")
   Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical definitions and metrics; explicit variations are deterministic and initial endurance profiles are sampled.")
@@ -38,16 +41,27 @@ Rel(controllers, editor, "Edits planned structured workouts")
 Rel(controllers, material_change, "Creates optional material-change proposal")
 Rel(material_change, prescriber, "Re-prescribes following block on acceptance")
 Rel(material_change, models, "Reads proposal and preserves changed workout")
-Rel(controllers, models, "Moves date/phase directly; records FTP-test completion")
+Rel(controllers, models, "Records FTP-test completion")
 Rel(controllers, manual_creation, "Adds and copies workouts")
 Rel(manual_creation, engine, "Generates definitions or recalculates copied metrics")
 Rel(manual_creation, models, "Persists new workout and steps")
+Rel(controllers, mover, "Moves ordinary planned workouts")
+Rel(schedule_changes, mover, "Uses the same Move service for missed Move")
+Rel(mover, engine, "Regenerates across phase/context changes or moves over seven days")
+Rel(mover, load_rules, "Keeps subtype/duration and limits regenerated destination load")
+Rel(mover, models, "Saves destination, canonical steps and generation choices")
+Rel(controllers, materializer, "Structures a due/overdue outline when opened")
+Rel(completion, materializer, "Structures only a due/overdue completion source")
 Rel(controllers, completion, "Records completion")
 Rel(completion, evaluator, "Evaluates feedback")
 Rel(completion, models, "Persists feedback and completion snapshot")
 Rel(evaluator, models, "Reads comparable workouts and feedback")
 Rel(evaluator, comparison, "Filters no-op and load-increasing reductions")
-Rel(completion, models, "Creates proposal from evaluator result")
+Rel(completion, freshness, "Creates proposal with expiry and canonical baseline")
+Rel(material_change, freshness, "Creates bounded replan proposal after source edit")
+Rel(comparison, freshness, "Checks availability before generating comparisons")
+Rel(proposals, freshness, "Validates under locks before acceptance")
+Rel(freshness, models, "Captures or verifies relevant owner-scoped canonical inputs")
 Rel(controllers, proposals, "Accepts or rejects proposal")
 Rel(proposals, comparison, "Revalidates complete target set and bounded prescriptions")
 Rel(comparison, models, "Resolves owner-scoped source/targets and current FTP")
@@ -55,7 +69,7 @@ Rel(comparison, feedback_limits, "Calculates allowed proposed prescriptions")
 Rel(feedback_limits, editor, "Previews canonical definitions and metrics")
 Rel(feedback_limits, load_rules, "Rechecks ceilings and weekly growth cap")
 Rel(feedback_limits, progression, "Clamps requested levels")
-Rel(proposals, editor, "Applies accepted workout change")
+Rel(proposals, editor, "Saves exact accepted definition and automatic load references")
 Rel(proposals, material_change, "Applies accepted material-change replan")
 Rel(proposals, models, "Updates progression state and proposal")
 Rel(controllers, schedule_changes, "Resolves misses, availability and time off")
@@ -80,8 +94,9 @@ Rel(models, database, "Reads and writes", "SQL")
 note bottom of proposals
   Accepted global intensity bias feeds later horizon generation.
   Per-family stored bias remains unimplemented.
-  Expiry timestamps are stored but not enforced;
-  full stale-input checks remain incomplete (CYF-6).
+  Seven-day expiry and relevant canonical-input freshness are enforced.
+  Expired, stale, legacy or invalid proposals require dismissal;
+  acceptance failure rolls back all edits and preserves the proposal.
 end note
 
 note bottom of evaluator
@@ -89,7 +104,8 @@ note bottom of evaluator
   Struggled: nearby broad Intervals reduction.
   Failed: nearby intensity reduction, within two calendar days.
   Difficult easy rides lower existing ranges at fixed duration.
-  Late feedback is blocked if a later workout is completed.
+  Late feedback is blocked if the next scheduled workout is completed.
+  Openers save feedback without progression adaptation.
 end note
 
 note bottom of material_change

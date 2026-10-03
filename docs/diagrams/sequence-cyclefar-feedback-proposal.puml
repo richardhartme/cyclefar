@@ -1,4 +1,4 @@
-@startuml CycleFar Feedback Proposal Sequence
+@startuml
 title CycleFar — Propose and apply a feedback adaptation
 
 autonumber
@@ -9,45 +9,77 @@ boundary "Owner-scoped\nRails controllers" as Controller
 control "HorizonMaterializer" as Materializer
 control "CompletionRecorder" as Recorder
 control "FeedbackEvaluator" as Evaluator
+control "ProposalCreator +\nProposalFreshness" as Freshness
 control "ProposalComparison" as Comparison
 control "FeedbackLoadLimiter" as Limiter
+control "WeeklyLoadCap +\nLoadReduction" as LoadRules
 control "ProposalApplier" as Applier
 control "ManualEditor" as Editor
 database "PostgreSQL" as Database
 
-== Complete workout and decide whether to propose ==
+== Complete an executable workout and decide whether to propose ==
 Rider -> Controller: POST completion with RPE and quality
-Controller -> Recorder: call(owned structured workout)
-group completion transaction
-  Recorder -> Database: save feedback and immutable FTP/watt snapshot
+Controller -> Database: load rider-owned planned executable workout
+Controller -> Recorder: call(workout)
+group completion transaction under plan lock
+  Recorder -> Database: lock plan; reload and validate source
+  opt source is a due/overdue outline
+    Recorder -> Materializer: materialize_for_completion!(source)
+    Materializer -> Database: read source context and fixed weekly load
+    Materializer -> Materializer: generate source definition at current FTP with saved choices
+    Materializer -> LoadRules: fit only source against context and weekly load
+    Materializer -> Database: save source steps, profile and generation choices
+  end
+  Recorder -> Database: save feedback; read current owner FTP
+  Recorder -> Recorder: recalculate metrics from canonical steps
+  Recorder -> Database: mark completed; freeze FTP, watts, metrics and feedback
   Recorder -> Evaluator: evaluate feedback
-  Evaluator -> Database: read comparable planned workouts in today..day 13
-  Evaluator -> Comparison: preview candidate changes
-  Comparison -> Limiter: fit proposals against fixed load and ceilings
-  Limiter -> Editor: preview canonical workout changes
-  Editor --> Limiter: definitions and current-FTP metrics
-  Limiter --> Comparison: bounded proposed prescriptions
-  Comparison --> Evaluator: current/proposed metrics and bias
-  opt meaningful change remains
-    Evaluator --> Recorder: reason and proposal payload
-    Recorder -> Database: save AdaptationProposal
+  opt regular workout
+    opt source is overdue
+      Evaluator -> Database: read next scheduled workout for late-feedback guard
+    end
+    Evaluator -> Evaluator: evaluate RPE/quality if late-feedback guard permits
+    opt feedback warrants an adjustment
+      Evaluator -> Database: read comparable planned structured targets in today..day 13
+      opt proposed target changes exist
+        Evaluator -> Comparison: preview unsaved candidate (skip freshness validation)
+        Comparison -> Limiter: fit targets within ceilings and weekly load
+        Limiter -> Editor: preview canonical changes at current FTP
+        Editor --> Limiter: definitions and metrics
+        Limiter -> LoadRules: apply ordered reductions against comparable hard week
+        LoadRules --> Limiter: load-limited definitions, retaining profile and duration
+        Limiter --> Comparison: proposed prescriptions
+        Comparison --> Evaluator: current/proposed metrics
+        Evaluator -> Evaluator: remove no-op or wrong-direction changes
+        opt meaningful changes remain
+          Evaluator --> Recorder: reason, target payload and optional global bias
+          Recorder -> Freshness: ProposalCreator.create!(evaluation)
+          Freshness -> Database: capture relevant canonical-input digest
+          Freshness -> Database: save proposal with seven-day expiry and digest
+        end
+      end
+    end
   end
 end
 Controller --> Rider: redirect to calendar
 
-== Review: proposal comparison does not change workouts ==
+== Review: comparison itself is read-only ==
 Rider -> Controller: GET calendar
-Controller -> Materializer: materialize eligible near-term outlines
-Materializer -> Database: save any newly due structured details
+Controller -> Materializer: materialize eligible today..day 13 outlines
+Materializer -> LoadRules: recheck actual generated load; retain sampled profiles
+Materializer -> Database: save only new structures and load references
 Controller -> Database: load this rider's pending proposals
 Controller -> Comparison: calculate Current / Proposed values
-alt proposal remains available
-  Comparison -> Limiter: recheck target set and weekly load
-  Limiter --> Comparison: in-memory fitted prescriptions
+Comparison -> Freshness: validate expiry, active plan and canonical-input digest
+Freshness -> Database: read relevant owner-scoped canonical inputs
+alt fresh proposal and valid planned structured targets in today..day 13
+  Comparison -> Limiter: recheck target set, ceilings and weekly load
+  Limiter -> LoadRules: ordered reductions against fixed load and forecasts
+  Limiter --> Comparison: in-memory bounded prescriptions
   Comparison --> Controller: before/after workouts and clamped bias
   Controller --> Rider: show comparison and Accept / Reject
-else stale or invalid targets
-  Comparison --> Controller: unavailable
+else expired, stale, legacy or invalid proposal
+  Comparison --> Controller: unavailable with dismissal guidance
   Controller --> Rider: show Reject only
 end
 
@@ -56,28 +88,41 @@ alt Reject (available or unavailable)
   Rider -> Controller: DELETE proposal
   Controller -> Database: load rider-owned proposal
   Controller -> Applier: reject!
-  Applier -> Database: destroy proposal
-else Accept (available proposal)
+  Applier -> Database: lock plan, then proposal; destroy proposal
+else Accept
   Rider -> Controller: POST accept proposal
   Controller -> Database: load rider-owned proposal
   Controller -> Applier: accept!
-  group transaction: lock plan, then proposal
+  group acceptance transaction: lock plan, then proposal
     Applier -> Database: lock owned plan and proposal
-    Applier -> Comparison: revalidate and recalculate whole target set
-    Comparison -> Limiter: recheck current limits
-    Limiter --> Comparison: fitted prescriptions
-    Comparison --> Applier: accepted comparison
-    loop each affected workout
-      Applier -> Editor: apply! accepted definition
-      Editor -> Database: replace planned steps and metrics
+    Applier -> Freshness: revalidate expiry and canonical inputs
+    Freshness -> Database: read current canonical context
+    alt unavailable or target validation fails
+      Applier --> Controller: error; roll back edits and preserve proposal
+    else available
+      Applier -> Comparison: revalidate freshness and calculate whole target set
+      Comparison -> Limiter: recheck current load limits
+      Limiter -> LoadRules: apply ordered reductions
+      Limiter --> Comparison: exact fitted definitions and current-FTP metrics
+      Comparison --> Applier: accepted comparison
+      loop each affected planned workout
+        Applier -> Editor: apply!(adapt, prepared_preview)
+        Editor -> Database: save exact shown steps, metrics and generation choices
+      end
+      opt accepted global bias changes
+        Applier -> Database: save clamped intensity_bias
+      end
+      Applier -> Database: destroy proposal
     end
-    Applier -> Database: save clamped global bias; destroy proposal
   end
 end
-Controller --> Rider: redirect to calendar
+Controller --> Rider: redirect to calendar with result
 
-note over Comparison, Database
-  An unavailable comparison shows Reject only. The completed source
-  remains immutable. Expiry is stored but is not currently enforced.
+note over Freshness, Database
+  Completed structure, feedback and snapshots remain immutable.
+  Openers record feedback without progression adaptation.
+  Late feedback is suppressed if the next scheduled workout is completed.
+  Freshness uses relevant canonical inputs; FTP-only metric updates do not stale it.
+  Any acceptance/persistence failure rolls back the entire transaction.
 end note
 @enduml

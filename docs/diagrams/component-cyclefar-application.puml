@@ -1,4 +1,5 @@
-@startuml CycleFar Component Diagram
+@startuml
+!pragma layout smetana
 ' Scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
@@ -20,8 +21,8 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(views, "Views and graph helpers", "ERB, Turbo, Tailwind CSS / daisyUI", "Render full-page forms, weekly TSS chart, canonical-step SVG profiles and read-only adaptation comparisons.")
   Component(calendar, "Calendar presenter", "Planning::CalendarPresenter", "Builds the continuous calendar view from plans, workouts, phases and time off.")
   Component(plan_management, "Plan management services", "Planning services", "Validate inputs, preview/create plans and prescribe future workouts; materialise the horizon with accepted bias and shared load limits.")
-  Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical workout steps with saved endurance-profile choices, calculate metrics, add/copy/edit workouts and build graph profiles.")
-  Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record completion; evaluate, compare and atomically apply bounded proposals; save progression bias; resolve misses, availability, time off and FTP changes.")
+  Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical workout steps with saved endurance-profile choices, calculate metrics, add/copy/edit/move workouts and build graph profiles.")
+  Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record executable completion; validate proposal expiry/freshness, compare and atomically apply bounded changes; save bias; resolve schedule and FTP changes.")
   Component(settings, "Settings service", "Settings::Update", "Updates rider settings and FTP history atomically.")
   Component(sync, "Intervals.icu sync service", "IntervalsIcu::SyncNextTwo and WorkoutSerializer", "Selects and serializes up to two eligible structured workouts and reconciles CycleFar-owned sync records.")
   Component(client, "Intervals.icu API client", "IntervalsIcu::Client", "Performs authenticated HTTP requests, timeouts, JSON handling and API-error mapping.")
@@ -46,7 +47,7 @@ Rel(controllers, settings, "Updates settings")
 Rel(controllers, sync, "Starts manual sync")
 Rel(controllers, views, "Renders pages with presenter data")
 Rel(views, workouts, "Builds graph data through ProfileBuilder")
-Rel(controllers, models, "Loads records; moves workouts, records FTP tests and archives/deletes plans")
+Rel(controllers, models, "Loads owner-scoped records; records FTP tests and archives/deletes plans")
 Rel(controllers, auth_models, "Scopes profile, plan and record queries to Current.user")
 Rel(calendar, models, "Reads calendar data")
 Rel(plan_management, workouts, "Generates workout structures and metrics")
