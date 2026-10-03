@@ -1,5 +1,5 @@
 # Host details are read from the deploy shell so they are not committed:
-#   KAMAL_WEB_HOST     IP address or hostname of the web server
+#   CYCLEFAR_WEB_HOST  IP address or hostname of the web server
 #   CYCLEFAR_DB_HOST   PostgreSQL (RDS) endpoint
 #   KAMAL_SSH_KEY      Path to the SSH private key (default ~/.ssh/id_ed25519)
 #   KAMAL_REGISTRY_USER  Container registry username
@@ -13,7 +13,7 @@ image: <%= ENV.fetch("KAMAL_REGISTRY_USER") %>/cycle_far
 # Deploy to these servers.
 servers:
   web:
-    - <%= ENV.fetch("KAMAL_WEB_HOST") %>
+    - <%= ENV.fetch("CYCLEFAR_WEB_HOST") %>
   # job:
   #   hosts:
   #     - 192.168.0.1
