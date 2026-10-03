@@ -105,7 +105,7 @@
           <% end %>
         </div>
 
-        <% if @workout.workout? %>
+        <% if @workout.workout? || @workout.opener? %>
           <%= form_with url: complete_planned_workout_path(@workout), method: :post, class: "fieldset bg-base-200 border-base-300 rounded-box border p-5" do %>
             <h3 class="text-lg font-semibold">Mark completed</h3>
             <%= label_tag :rpe, "RPE (1–10)", class: "fieldset-label font-semibold" %>
