@@ -1,4 +1,5 @@
-@startuml CycleFar Container Diagram
+@startuml
+!pragma layout smetana
 ' Scope and limitations: README.md
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
@@ -23,6 +24,7 @@ Rel(web_application, smtp, "Sends password setup immediately and enqueues reset 
 
 note bottom of web_application
   Horizon generation runs on creation, calendar requests and replanning.
+  Due/overdue detail or completion requests can structure one outline.
   No scheduled training-generation or integration-sync worker.
 end note
 
