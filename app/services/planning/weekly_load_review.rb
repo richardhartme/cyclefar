@@ -49,7 +49,8 @@ module Planning
             **attributes,
             subtype: workout.subtype,
             progression_level: workout.progression_level || 1,
-            variation_key: workout.variation_key || Workouts::Variations.default_key(workout.subtype)).call.steps
+            variation_key: workout.variation_key || Workouts::Variations.default_key(workout.subtype),
+            load_adjustments: workout.generation_context.fetch("load_adjustments", {})).call.steps
         end
       end
       ftp = workout.completed? ? workout.completed_ftp_watts : @plan.ftp_watts_for_planning

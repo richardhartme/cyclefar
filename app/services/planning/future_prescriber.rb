@@ -37,8 +37,8 @@ module Planning
           subtype: item.subtype,
           duration_minutes: item.duration_minutes,
           progression_level: item.progression_level,
-          generation_context: @generation_contexts.fetch(item.scheduled_on) { item.reason_codes.include?("weekly_load_cap") ? { "maximum_level" => item.progression_level } : {} },
-          variation_key: item.kind == "workout" ? Workouts::Variations.default_key(item.subtype) : item.kind == "opener" ? "activation" : nil,
+          generation_context: @generation_contexts.fetch(item.scheduled_on, item.generation_context),
+          variation_key: item.definition&.variation_key,
           name: item.name,
           purpose: item.purpose,
           detail_status: :outline,
@@ -155,7 +155,8 @@ module Planning
         name: definition.name,
         purpose: purpose,
         main_set_summary: definition.main_set_summary,
-        metrics: metrics)
+        metrics: metrics,
+        definition: definition)
     end
 
     def latest_completed_break_before(date)

@@ -7,7 +7,8 @@ module Workouts
   # Generates WorkoutDefinitions with progression levels, durations, and variation rules.
   class Generator
     def initialize(subtype:, duration_minutes:, progression_level: 1, variation_key: nil,
-      phase: :base, goal: :general_fitness, discipline: :road)
+      phase: :base, goal: :general_fitness, discipline: :road, load_adjustments: {})
+      @load_adjustments = load_adjustments.transform_keys(&:to_s)
       rules = Training::V1::Rules
       @subtype = member!(subtype, rules::SUBTYPE_NAMES.keys.map(&:to_s), "subtype").to_sym
       @phase = member!(phase, rules::PHASES, "phase")
@@ -30,7 +31,16 @@ module Workouts
         subtype: @subtype,
         duration_minutes: @duration_minutes,
         progression_level: @level,
-        variation_key: @variation_key).call
+        variation_key: @variation_key,
+        easy_filler: @load_adjustments["easy_filler"] == true).call
+      steps = fit.steps
+      if @load_adjustments["lower_targets"] == true
+        steps = steps.map do |step|
+          next step unless step.group_key == "main"
+
+          step.with(target_high_pct_ftp: step.target_low_pct_ftp, end_target_high_pct_ftp: step.end_target_low_pct_ftp)
+        end
+      end
       rules = Training::V1::Rules
       reason_codes = [ "#{@subtype}_main_set" ]
       reason_codes << "duration_level_reduced" if fit.progression_level && fit.progression_level < @level
@@ -49,8 +59,9 @@ module Workouts
         name: "#{rules::SUBTYPE_NAMES.fetch(@subtype)} #{fit.name_suffix}",
         purpose: "#{@phase.capitalize} phase. #{rules::PURPOSES.fetch(@subtype)}",
         main_set_summary: fit.summary,
-        steps: fit.steps,
-        reason_codes: reason_codes)
+        steps: steps,
+        reason_codes: reason_codes,
+        load_adjustments: @load_adjustments)
     end
 
     private

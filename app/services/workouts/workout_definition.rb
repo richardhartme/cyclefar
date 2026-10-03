@@ -16,8 +16,10 @@ module Workouts
     :purpose,
     :main_set_summary,
     :steps,
-    :reason_codes) do
+    :reason_codes,
+    :load_adjustments) do
     def initialize(**attributes)
+      attributes[:load_adjustments] = attributes.fetch(:load_adjustments, {}).transform_keys(&:to_s).freeze
       attributes[:steps] = StepSequence.normalize(attributes.fetch(:steps))
       attributes[:reason_codes] = attributes.fetch(:reason_codes).map { |code| code.dup.freeze }.freeze
       attributes.transform_values! { |value| value.is_a?(String) ? value.dup.freeze : value }
