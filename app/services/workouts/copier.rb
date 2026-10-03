@@ -31,11 +31,10 @@ module Workouts
     private
 
     def copy_under_lock!(destination:)
-      raise ArgumentError, "Choose an empty date inside this plan" unless destination.between?(plan.starts_on, plan.ends_on)
-      raise ArgumentError, "That date already has a workout" if plan.planned_workouts.exists?(scheduled_on: destination)
+      phase = DestinationValidator.new(plan).validate!(destination)
 
       PlannedWorkout.transaction do
-        copy = plan.planned_workouts.build(copy_attributes(destination))
+        copy = plan.planned_workouts.build(copy_attributes(destination, phase))
         @workout.workout_steps.each do |step|
           copy.workout_steps.build(step.attributes.symbolize_keys.slice(*STEP_ATTRIBUTES))
         end
@@ -48,10 +47,10 @@ module Workouts
       @workout.training_plan
     end
 
-    def copy_attributes(destination)
+    def copy_attributes(destination, phase)
       metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: plan.ftp_watts_for_planning).call
       {
-        plan_phase: phase_for(destination),
+        plan_phase: phase,
         scheduled_on: destination,
         kind: @workout.kind,
         intent: @workout.intent,
@@ -67,11 +66,6 @@ module Workouts
         estimated_tss: metrics.estimated_tss,
         estimated_work_kj: metrics.estimated_work_kj
       }
-    end
-
-    def phase_for(destination)
-      plan.plan_phases.find { |phase| destination.between?(phase.starts_on, phase.ends_on) } ||
-        raise(ArgumentError, "Choose a date covered by a plan phase")
     end
   end
 end

@@ -61,6 +61,6 @@ RSpec.describe Workouts::Creator, type: :service do
         scheduled_on: empty_date,
         subtype: :endurance,
         duration_minutes: 60)
-    end.to raise_error(ArgumentError, "Workouts cannot be added during time off")
+    end.to raise_error(ArgumentError, "Workouts cannot be scheduled during time off")
   end
 end
