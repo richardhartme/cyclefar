@@ -69,6 +69,12 @@ Production password-reset delivery uses environment-configured SMTP; delivery
 through a live provider has not been verified. See the [account access
 guide](docs/ACCOUNT_ACCESS.md) for deployment settings.
 
+Kamal supplies the running deployment version automatically. Pages display it
+in a small footer: Git commit SHAs are shortened to seven characters, with the
+full version available on hover. Custom versions and uncommitted-build markers
+are shown in full. The footer is hidden when `KAMAL_VERSION` is absent, including
+normal local development.
+
 ## Development sample plan
 
 In development, load a realistic 12-week plan with a 260 W FTP and a
