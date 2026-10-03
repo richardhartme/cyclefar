@@ -20,7 +20,7 @@ module Workouts
         raise ArgumentError, "Completed workouts cannot be moved; only planned workouts can be moved" unless @workout.planned?
         raise ArgumentError, "Only workouts in an active plan can be moved" unless @plan.active?
 
-        phase = validate_destination!(destination)
+        phase = DestinationValidator.new(@plan).validate!(destination, excluding_workout: @workout)
         regenerate = @workout.plan_phase_id != phase.id ||
           (@workout.scheduled_on - destination).abs > Planning::V1::Rules::MOVE_STRUCTURE_WINDOW_DAYS ||
           reduced_context(@workout.scheduled_on) != reduced_context(destination)
@@ -41,16 +41,6 @@ module Workouts
     def refresh_metrics!
       metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: @plan.ftp_watts_for_planning).call
       @workout.update!(PlannedWorkout::METRICS.to_h { |key| [ key, metrics.public_send(key) ] })
-    end
-
-    def validate_destination!(date)
-      raise ArgumentError, "Choose an empty date inside this plan" unless date.between?(@plan.starts_on, @plan.ends_on)
-      raise ArgumentError, "That date already has a workout" if @plan.planned_workouts.where(scheduled_on: date).where.not(id: @workout.id).exists?
-      raise ArgumentError, "Workouts cannot be moved during time off" if periods.any? { |period| date.between?(period.starts_on, period.ends_on) }
-      raise ArgumentError, "Workouts cannot be moved on the target event date" if @plan.target_event&.event_on == date
-
-      @plan.plan_phases.find { |phase| date.between?(phase.starts_on, phase.ends_on) } ||
-        raise(ArgumentError, "Choose a date covered by a plan phase")
     end
 
     def regenerate!(fresh_context:, materialize:)

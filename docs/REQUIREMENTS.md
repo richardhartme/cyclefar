@@ -327,6 +327,8 @@ Ordinary and missed-workout Move apply the same rules: preserve eligible same-ph
 
 The rider may copy a planned structured workout to another empty date inside the plan. The copy retains the source's canonical percentage-based step structure and is calculated using the rider's current FTP. Copying does not alter the source workout or replan the rest of the calendar.
 
+Add, Copy, Move and missed Move share destination exclusions: reject dates outside the plan or its phases, occupied dates, time off (including both boundary dates) and the target-event date. Rejection leaves workouts, canonical steps and completed history unchanged.
+
 ### WKO-008 Add workout
 
 An empty calendar date inside the plan links to an add-workout form. The rider chooses a workout type and duration; CycleFar generates its canonical structured workout using the current FTP. The date must not be occupied, a target-event date or within time off.

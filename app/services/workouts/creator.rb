@@ -43,12 +43,7 @@ module Workouts
     private :create_under_lock!
 
     def validate_destination!(scheduled_on)
-      raise ArgumentError, "Choose a date inside this plan" unless scheduled_on.between?(@plan.starts_on, @plan.ends_on)
-      raise ArgumentError, "That date already has a workout" if @plan.planned_workouts.exists?(scheduled_on: scheduled_on)
-      raise ArgumentError, "Workouts cannot be added during time off" if @plan.time_off_periods.where("starts_on <= ? AND ends_on >= ?", scheduled_on, scheduled_on).exists?
-      raise ArgumentError, "Workouts cannot be added on the target event date" if @plan.target_event&.event_on == scheduled_on
-
-      phase_for(scheduled_on)
+      DestinationValidator.new(@plan).validate!(scheduled_on)
     end
 
     private
