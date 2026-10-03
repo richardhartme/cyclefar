@@ -15,21 +15,41 @@ module Planning
     end
 
     def call
+      @plan.with_lock { materialize! }
+    end
+
+    # An explicit late-completion request structures only its source. Moving
+    # the ordinary horizon backwards would also rewrite unrelated outlines.
+    def materialize_for_completion!(workout)
       @plan.with_lock do
-        @ftp = @plan.ftp_watts_for_planning
-        @load_context = V1::LoadContext.new(@plan)
-        candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + 13).end_of_week)
-          .includes(:plan_phase, :workout_steps).order(:scheduled_on).map { |workout| candidate_for(workout) }
-        candidates, warnings = limit_load(candidates)
-        candidates.select(&:selected).each { |candidate| persist!(candidate) }
-        warnings
+        workout.reload
+        unless workout.training_plan_id == @plan.id && workout.planned? && !workout.ftp_test? && workout.scheduled_on <= @date
+          raise ArgumentError, "Only a planned executable workout due today or earlier can be materialised for completion"
+        end
+        return if workout.structured?
+
+        materialize!(workout_id: workout.id)
+        workout.reload
       end
     end
 
     private
 
+    def materialize!(workout_id: nil)
+      @ftp = @plan.ftp_watts_for_planning
+      @load_context = V1::LoadContext.new(@plan)
+      eligible = @plan.planned_workouts.planned.outline.where.not(kind: :ftp_test)
+      eligible = workout_id ? eligible.where(id: workout_id) : eligible.where(scheduled_on: @date..(@date + 13))
+      @selected_ids = eligible.pluck(:id)
+      candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + 13).end_of_week)
+        .includes(:plan_phase, :workout_steps).order(:scheduled_on).map { |workout| candidate_for(workout) }
+      candidates, warnings = limit_load(candidates)
+      candidates.select(&:selected).each { |candidate| persist!(candidate) }
+      warnings
+    end
+
     def candidate_for(workout)
-      selected = workout.planned? && workout.outline? && !workout.ftp_test? && workout.scheduled_on.between?(@date, @date + 13)
+      selected = @selected_ids.include?(workout.id)
       if selected || (!workout.ftp_test? && workout.outline? && workout.estimated_tss.nil?)
         definition = definition_for(workout)
         metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call
@@ -49,7 +69,7 @@ module Planning
       }
       return Workouts::OpenerGenerator.new(**attributes).call if workout.opener?
 
-      eligible = workout.planned? && workout.outline? && workout.scheduled_on.between?(@date, @date + 13)
+      eligible = @selected_ids.include?(workout.id)
       key = if variation
         variation
       elsif eligible
@@ -82,7 +102,7 @@ module Planning
         next unless @load_context.comparable_week?(week_start, items.map(&:workout))
 
         in_horizon = week_start <= @date + 13 && week_start + 6 >= @date
-        if reference && in_horizon
+        if reference && (in_horizon || items.any?(&:selected))
           limit = V1::WeeklyLoadCap.limit(reference)
           reduced = V1::WeeklyLoadCap.reduce(items, limit: limit) do |candidate|
             definition = definition_for(candidate.workout, level: candidate.progression_level - 1, variation: candidate.definition.variation_key)
