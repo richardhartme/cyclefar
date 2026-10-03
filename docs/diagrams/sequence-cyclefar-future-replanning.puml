@@ -1,4 +1,4 @@
-@startuml CycleFar Future Replanning Sequence
+@startuml
 title CycleFar — Change future training
 
 autonumber
@@ -11,48 +11,60 @@ control "FuturePrescriber" as Prescriber
 control "ExistingPlanConfiguration" as ExistingConfiguration
 control "PlanBuilder" as Builder
 control "HorizonMaterializer" as Materializer
+control "LoadContext, WeeklyLoadCap\nand LoadReduction" as LoadRules
 database "PostgreSQL" as Database
 
 note over ChangeService
-  Entry service is AvailabilityChanger, TimeOffPlanner or
-  MissedWorkoutResolver, according to the rider's action.
+  Entry service: AvailabilityChanger, TimeOffPlanner
+  or MissedWorkoutResolver, according to rider action.
 end note
 
 Rider -> Controller: submit change to an owned plan/workout
-alt change availability
-  Controller -> ChangeService: AvailabilityChanger.apply!
-  ChangeService -> Database: lock plan; version availability template
-  ChangeService -> ChangeService: choose one week or from-date range
-else add or remove time off
-  Controller -> ChangeService: TimeOffPlanner.add! / remove!
-  ChangeService -> Database: lock plan; save or remove time-off period
-  ChangeService -> ChangeService: group future dates by effective template
-else replan after a missed workout
-  Controller -> ChangeService: MissedWorkoutResolver.resolve!(replan)
-  ChangeService -> Database: lock plan; retain source as missed
-  ChangeService -> ChangeService: choose today through day 13 and today's template
-end
+Controller -> Database: resolve rider-owned plan/workout
+Controller -> ChangeService: apply change
+group transaction under plan lock
+  ChangeService -> Database: lock owned plan
+  alt change availability
+    ChangeService -> Database: version availability template and slots
+    ChangeService -> ChangeService: choose one-week or from-date range
+  else add or remove time off
+    ChangeService -> Database: save or remove time-off period
+    ChangeService -> ChangeService: group future dates by effective template
+  else replan after a missed workout
+    ChangeService -> Database: retain source as missed
+    ChangeService -> ChangeService: choose today..day 13, bounded by plan end\nuse today's effective template
+  end
 
-loop each affected range and its selected availability slots
-  ChangeService -> Prescriber: replace!(dates, slots)
-  Prescriber -> Database: lock plan; read future planned workouts
-  Prescriber -> Database: remove affected replaceable planned workouts
-  Prescriber -> ExistingConfiguration: build from saved plan and slots
-  ExistingConfiguration --> Prescriber: existing-plan configuration
-  Prescriber -> Builder: preview(configuration)
-  Builder --> Prescriber: deterministic prescriptions and forecasts
-  Prescriber -> Prescriber: apply time-off and return-ramp rules
-  Prescriber -> Database: create replacement outlines and forecasts
-  Prescriber -> Materializer: call(plan)
-  Materializer -> Database: lock plan; read eligible outlines
-  Materializer -> Database: save canonical steps and current-FTP metrics
+  loop each affected range and its selected availability slots
+    ChangeService -> Prescriber: replace!(dates, selected slots)
+    Prescriber -> Database: lock plan
+    Prescriber -> Prescriber: restrict replacement dates to today onward inside plan
+    Prescriber -> Database: read pre-break levels and time-off context
+    Prescriber -> Database: remove replaceable planned regular workouts\nand blocked-date planned specials
+    Prescriber -> ExistingConfiguration: build from saved plan and supplied slots
+    ExistingConfiguration --> Prescriber: existing-plan configuration
+    Prescriber -> Builder: preview(configuration)
+    Builder -> LoadRules: apply ordered cap reductions to forecasts
+    Builder --> Prescriber: deterministic prescriptions and generation choices
+    Prescriber -> Prescriber: skip blocked dates; apply return-ramp/resumption rules
+    Prescriber -> Database: create outlines on empty dates\nretain target/filler choices and effective levels
+    Prescriber -> Materializer: call(plan)
+    Materializer -> Database: lock plan; read eligible outlines and fixed workouts
+    Materializer -> Materializer: apply accepted bias once; generate actual profiles/metrics
+    Materializer -> LoadRules: recheck actual load against comparable hard week
+    LoadRules --> Materializer: bounded definitions or infeasible-load warning
+    Materializer -> Database: save new canonical steps, profiles and load references
+  end
 end
 ChangeService --> Controller: change applied
 Controller --> Rider: redirect to calendar
 
 note over Prescriber, Database
-  Only future planned records in the affected dates are replaceable.
-  Completed and missed workouts, plan phases and event date remain.
-  Missed leave/move actions do not enter this re-prescription flow.
+  Only future planned records in affected dates are replaceable.
+  Completed/missed workouts, plan phases and event date remain fixed.
+  Missed Leave and Move do not enter this re-prescription flow;
+  ordinary and missed Move use Workouts::Mover and shared destination rules.
+  Normal hard-week duration and specific subtype intent remain fixed.
+  Calendar review shows a warning when valid load reductions are exhausted.
 end note
 @enduml

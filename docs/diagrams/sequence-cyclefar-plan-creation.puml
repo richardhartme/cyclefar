@@ -1,4 +1,4 @@
-@startuml CycleFar Plan Creation Sequence
+@startuml
 title CycleFar — Create a training plan
 
 autonumber
@@ -9,7 +9,8 @@ boundary "TrainingPlansController" as Controller
 collections "Owner-bound\nRails session draft" as Draft
 control "PlanConfiguration" as Configuration
 control "PlanBuilder" as Builder
-control "Workout engine +\nweekly load cap" as Engine
+control "Workout engine" as Engine
+control "WeeklyLoadCap +\nLoadReduction" as LoadRules
 control "PreviewPresenter" as Presenter
 control "PlanCreator" as Creator
 control "HorizonMaterializer" as Materializer
@@ -26,17 +27,23 @@ else valid configuration
   Rider -> Controller: GET preview
   Controller -> Draft: read draft for Current.user
   alt missing or different owner
-    Controller -> Draft: clear stale draft
+    Controller -> Draft: clear stale/foreign draft if present
     Controller --> Rider: redirect to plan form
   else owned draft
     Controller -> Configuration: validate restored inputs
-    Controller -> Builder: preview(configuration)
-    Builder -> Builder: allocate phases, recovery, taper and FTP tests
-    Builder -> Engine: forecast workouts, metrics and weekly load
-    Engine --> Builder: in-memory prescriptions and warnings
-    Builder --> Controller: in-memory preview
-    Controller -> Presenter: format preview
-    Controller --> Rider: show review screen
+    alt restored inputs invalid
+      Controller -> Draft: clear invalid draft
+      Controller --> Rider: redirect to plan form
+    else valid inputs
+      Controller -> Builder: preview(configuration)
+      Builder -> Builder: allocate phases, recovery, taper and FTP tests
+      Builder -> Engine: forecast workouts with explicit variations and metrics
+      Builder -> LoadRules: enforce ordered reductions on comparable hard weeks
+      LoadRules --> Builder: adjusted definitions, metrics and infeasible warnings
+      Builder --> Controller: in-memory preview
+      Controller -> Presenter: format preview
+      Controller --> Rider: show review screen
+    end
   end
 end
 
@@ -49,21 +56,27 @@ alt missing or invalid draft
 else valid draft
   Controller -> Creator: create!(configuration, Current.user)
   Creator -> Builder: rebuild deterministic preview
-  Builder --> Creator: phases, outlines and forecasts
+  Builder -> LoadRules: enforce ordered forecast load cap
+  Builder --> Creator: phases, outlines, forecasts and generation choices
   group database transaction
-    Creator -> Database: create owned plan, phases, template, event and outlines
-    Creator -> Materializer: structure today's 14-day horizon
-    Materializer -> Database: lock plan and read eligible outlines
-    Materializer -> Engine: generate canonical steps and current-FTP metrics
-    Engine --> Materializer: fitted definitions and metrics
-    Materializer -> Database: save steps, variation and effective load references
+    Creator -> Database: create owned plan, phases, template, event and outlines\npersist subtype, variation, ceilings and target/filler choices
+    Creator -> Materializer: structure today..day 13 outlines
+    Materializer -> Database: lock plan; read eligible outlines and fixed weekly load
+    Materializer -> Engine: apply accepted bias/ceilings; generate actual definitions\nsample initial endurance profile once
+    Engine --> Materializer: canonical steps and current-FTP metrics
+    Materializer -> LoadRules: recheck actual load against comparable hard weeks
+    LoadRules --> Materializer: bounded definitions retaining sampled profiles and duration
+    Materializer -> Database: save steps, profile, effective level and automatic load references
   end
   Creator --> Controller: created plan
   Controller --> Rider: redirect to training calendar
 end
 
 note over Builder, Database
-  Forecasts use explicit variations. Initial endurance profiles are
-  sampled only when a workout is materialized and then saved.
+  Forecasts use explicit variations; sampled endurance profiles are saved at materialisation.
+  Reduction order: level, variation, work target, compatible broad subtype, easy filler.
+  Normal duration and specific subtype intent remain fixed. If infeasible, warn.
+  Partial, recovery, taper and assessment weeks are not hard-week baselines.
+  HomeController later rolls the horizon and reviews load without regenerating fixed detail.
 end note
 @enduml
