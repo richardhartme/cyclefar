@@ -27,7 +27,7 @@ module Planning
           replan_upcoming_workouts!
         end
       when "move"
-        move!(Date.iso8601(destination.to_s))
+        Workouts::Mover.new(@workout).move_to!(destination: Date.iso8601(destination.to_s))
       else
         raise ArgumentError, "Choose a missed-workout resolution"
       end
@@ -35,15 +35,6 @@ module Planning
 
     def mark_missed!
       @workout.update!(status: :missed)
-    end
-
-    def move!(date)
-      plan = @workout.training_plan
-      raise ArgumentError, "Choose an empty date inside this plan" unless date.between?(plan.starts_on, plan.ends_on)
-      raise ArgumentError, "That date already has a workout" if plan.planned_workouts.where(scheduled_on: date).where.not(id: @workout.id).exists?
-
-      phase = plan.plan_phases.find { |item| date.between?(item.starts_on, item.ends_on) }
-      @workout.update!(scheduled_on: date, plan_phase: phase)
     end
 
     def replan_upcoming_workouts!

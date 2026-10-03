@@ -241,7 +241,7 @@ Actions:
 - Complete
 - Missed (when relevant)
 
-Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form and service path. Move retains structure regardless of distance or phase; its destination checks currently cover plan bounds and workout collisions, without Add/Copy's time-off and event exclusions.
+Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change and Move, but currently lack the regular workout completion form and service path. Ordinary Move and missed-workout Move share destination rules: preserve eligible same-phase structures for moves of at most seven days; regenerate across phases, longer distances or changed recovery/return context using destination progression while retaining subtype, duration and saved variation. Both reject occupied dates, dates outside the active plan or its phases, time off and the target event date. Moved outlines entering the horizon gain detail; distant outlines retain forecasts only. The confirmation and calendar show non-blocking destination load warnings, including future weeks outside the detail horizon.
 
 ## 7. Shuffle controls
 

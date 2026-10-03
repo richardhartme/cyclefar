@@ -6,7 +6,8 @@ class HomeController < ApplicationController
 
     plan = Current.user.training_plans.active.first
     if plan
-      @load_warnings = Planning::HorizonMaterializer.new(plan).call
+      Planning::HorizonMaterializer.new(plan).call
+      @load_warnings = Planning::WeeklyLoadReview.new(plan).warnings
       @plan = Current.user.training_plans.includes(:target_event, :plan_phases, :time_off_periods, :adaptation_proposals).find(plan.id)
       @has_completed_workouts = @plan.planned_workouts.completed.exists?
       @proposal_errors = {}
