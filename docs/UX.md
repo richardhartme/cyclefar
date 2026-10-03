@@ -161,7 +161,7 @@ Include:
 
 ### Weekly load chart
 
-A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. The calendar also displays a non-blocking warning when generated level reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration.
+A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. The calendar also displays a non-blocking warning when the ordered generated-load reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration.
 
 ### Phase bands
 

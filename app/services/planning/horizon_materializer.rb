@@ -5,7 +5,7 @@ module Planning
       def scheduled_on = workout.scheduled_on
       def progression_level = definition ? definition.progression_level : workout.progression_level
       def estimated_tss = metrics ? metrics.estimated_tss : workout.estimated_tss.to_f
-      def adjustable? = selected && workout.workout? && Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
+      def adjustable? = selected && workout.workout?
       def reference_tss = selected ? estimated_tss : workout.generation_context.fetch("generated_tss", estimated_tss).to_f
     end
 
@@ -81,7 +81,8 @@ module Planning
         **attributes,
         subtype: workout.subtype,
         progression_level: level || (eligible ? biased_level(workout) : workout.progression_level || 1),
-        variation_key: key).call
+        variation_key: key,
+        load_adjustments: workout.generation_context.fetch("load_adjustments", {})).call
     end
 
     def biased_level(workout)
@@ -104,9 +105,10 @@ module Planning
         in_horizon = week_start <= @date + 13 && week_start + 6 >= @date
         if reference && (in_horizon || items.any?(&:selected))
           limit = V1::WeeklyLoadCap.limit(reference)
-          reduced = V1::WeeklyLoadCap.reduce(items, limit: limit) do |candidate|
-            definition = definition_for(candidate.workout, level: candidate.progression_level - 1, variation: candidate.definition.variation_key)
-            candidate.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
+          reduced = V1::WeeklyLoadCap.reduce(items, limit: limit) do |candidate, stage|
+            V1::LoadReduction.options(candidate.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
+              candidate.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
+            end
           end
           items.each_with_index { |item, index| candidates[candidates.index(item)] = reduced[index] }
           items = reduced
@@ -124,9 +126,11 @@ module Planning
       context = workout.generation_context.merge(
         "baseline_level" => workout.generation_context["baseline_level"] || workout.progression_level,
         "generated_tss" => metrics.estimated_tss,
-        "generated_level" => definition.progression_level)
+        "generated_level" => definition.progression_level,
+        "load_adjustments" => definition.load_adjustments)
       workout.assign_attributes(
         detail_status: :structured,
+        subtype: definition.subtype,
         progression_level: definition.progression_level,
         generation_context: context,
         variation_key: definition.variation_key,

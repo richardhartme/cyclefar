@@ -15,12 +15,24 @@ module Planning
       # explicit rider edits are fixed when the horizon materialises.
       def self.reduce(items, limit:)
         adjusted = items.dup
-        while adjusted.sum(&:estimated_tss) > limit
-          candidate = adjusted.select { |item| item.adjustable? && item.progression_level.to_i > 1 }
-            .max_by { |item| [ item.estimated_tss, -item.scheduled_on.jd ] }
-          break unless candidate
+        %i[level variation target subtype filler].each do |stage|
+          loop do
+            return adjusted if adjusted.sum(&:estimated_tss) <= limit
 
-          adjusted[adjusted.index(candidate)] = yield(candidate)
+            replacement = nil
+            adjusted.select(&:adjustable?).sort_by { |item| [ -item.estimated_tss, item.scheduled_on ] }.each do |candidate|
+              # A ladder's TSS is not monotonic. Accept only a real reduction;
+              # the caller can search past an intermediate higher-load level.
+              option = yield(candidate, stage).find { |item| item.estimated_tss < candidate.estimated_tss - 0.000001 }
+              next unless option
+
+              replacement = [ adjusted.index(candidate), option ]
+              break
+            end
+            break unless replacement
+
+            adjusted[replacement.first] = replacement.last
+          end
         end
         adjusted
       end

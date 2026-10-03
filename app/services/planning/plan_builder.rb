@@ -6,6 +6,7 @@ require_relative "plan_configuration"
 require_relative "phase_allocator"
 require_relative "v1/rules"
 require_relative "v1/weekly_load_cap"
+require_relative "v1/load_reduction"
 require_relative "v1/phase_progression"
 
 module Planning
@@ -24,9 +25,10 @@ module Planning
       :purpose,
       :main_set_summary,
       :metrics,
-      :reason_codes) do
+      :reason_codes,
+      :definition) do
       def initialize(scheduled_on:, kind:, intent: nil, subtype: nil, duration_minutes: nil, progression_level: nil,
-        phase:, recovery_week: false, name: nil, purpose: nil, main_set_summary: nil, metrics: nil, reason_codes: [])
+        phase:, recovery_week: false, name: nil, purpose: nil, main_set_summary: nil, metrics: nil, reason_codes: [], definition: nil)
         super(
           scheduled_on: scheduled_on,
           kind: kind.to_s.dup.freeze,
@@ -40,7 +42,8 @@ module Planning
           purpose: purpose&.dup&.freeze,
           main_set_summary: main_set_summary&.dup&.freeze,
           metrics: metrics,
-          reason_codes: reason_codes.map { |code| code.to_s.dup.freeze }.freeze)
+          reason_codes: reason_codes.map { |code| code.to_s.dup.freeze }.freeze,
+          definition: definition)
       end
 
       def executable?
@@ -48,7 +51,13 @@ module Planning
       end
 
       def estimated_tss = metrics&.estimated_tss.to_f
-      def adjustable? = kind == "workout" && intensity?
+      def adjustable? = kind == "workout"
+
+      def generation_context
+        context = reason_codes.include?("weekly_load_cap") ? { "maximum_level" => progression_level } : {}
+        context["load_adjustments"] = definition.load_adjustments if definition && !definition.load_adjustments.empty?
+        context
+      end
 
       def intensity?
         %w[tempo sweet_spot threshold vo2_max over_under].include?(subtype)
@@ -300,6 +309,10 @@ module Planning
           goal: @configuration.goal,
           discipline: @configuration.discipline).call
       end
+      evaluated_definition(prescription, definition)
+    end
+
+    def evaluated_definition(prescription, definition)
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @configuration.ftp_watts).call
       prescription.with(
         subtype: definition.subtype,
@@ -308,6 +321,7 @@ module Planning
         purpose: definition.purpose,
         main_set_summary: definition.main_set_summary,
         metrics: metrics,
+        definition: definition,
         reason_codes: (prescription.reason_codes + definition.reason_codes).uniq)
     end
 
@@ -334,11 +348,10 @@ module Planning
 
     def lower_week_load(prescriptions, week_start, cap)
       current = prescriptions.select { |item| item.scheduled_on.between?(week_start, week_start + 6) }
-      reduced = V1::WeeklyLoadCap.reduce(current, limit: cap) do |candidate|
-        evaluate(
-          candidate.with(
-            progression_level: candidate.progression_level - 1,
-            reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq))
+      reduced = V1::WeeklyLoadCap.reduce(current, limit: cap) do |candidate, stage|
+        V1::LoadReduction.options(candidate.definition, stage: stage, intent: candidate.intent).map do |definition|
+          evaluated_definition(candidate.with(reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq), definition)
+        end
       end
       prescriptions.map { |item| (index = current.index(item)) ? reduced[index] : item }
     end
