@@ -9,6 +9,7 @@ boundary "TrainingPlansController" as Controller
 collections "Owner-bound\nRails session draft" as Draft
 control "PlanConfiguration" as Configuration
 control "PlanBuilder" as Builder
+control "RecoverySchedule +\nAssessmentSchedule" as ScheduleRules
 control "Workout engine" as Engine
 control "WeeklyLoadCap +\nLoadReduction" as LoadRules
 control "PreviewPresenter" as Presenter
@@ -36,10 +37,17 @@ else valid configuration
       Controller --> Rider: redirect to plan form
     else valid inputs
       Controller -> Builder: preview(configuration)
-      Builder -> Builder: allocate phases, recovery, taper and FTP tests
+      Builder -> Builder: allocate phases
+      Builder -> ScheduleRules: align recovery before transitions
+      ScheduleRules --> Builder: recovery flags excluding taper
+      Builder -> Builder: build prescriptions, event and opener
+      Builder -> ScheduleRules: rank eligible FTP-test dates within 4-6 weeks
+      ScheduleRules --> Builder: replacement dates excluding recovery, taper and pre-event window
       Builder -> Engine: forecast workouts with explicit variations and metrics
       Builder -> LoadRules: enforce ordered reductions on comparable hard weeks
       LoadRules --> Builder: adjusted definitions, metrics and infeasible warnings
+      Builder -> Builder: select highest comparable generated hard week\nbudget early/final taper stages at 75% / 50% of peak
+      Builder -> Engine: adjust taper durations; retain normal intensity bands\nuse 75% / 60% main-set work factors
       Builder --> Controller: in-memory preview
       Controller -> Presenter: format preview
       Controller --> Rider: show review screen
@@ -59,7 +67,7 @@ else valid draft
   Builder -> LoadRules: enforce ordered forecast load cap
   Builder --> Creator: phases, outlines, forecasts and generation choices
   group database transaction
-    Creator -> Database: create owned plan, phases, template, event and outlines\npersist subtype, variation, ceilings and target/filler choices
+    Creator -> Database: create owned plan, phases, template, event and outlines\npersist subtype, variation, ceilings, target/filler choices and taper main_set_factor
     Creator -> Materializer: structure today..day 13 outlines
     Materializer -> Database: lock plan; read eligible outlines and fixed weekly load
     Materializer -> Engine: apply accepted bias/ceilings; generate actual definitions\nsample initial endurance profile once
@@ -76,6 +84,9 @@ note over Builder, Database
   Forecasts use explicit variations; sampled endurance profiles are saved at materialisation.
   Reduction order: level, variation, work target, compatible broad subtype, easy filler.
   Normal duration and specific subtype intent remain fixed. If infeasible, warn.
+  Taper budgets adjust duration separately: minimum 30 minutes; event/opener fixed.
+  Final stage ends on the event date, including non-Sunday events; no added dates.
+  Saved taper work factors and ceilings survive materialisation and positive bias.
   Partial, recovery, taper and assessment weeks are not hard-week baselines.
   HomeController later rolls the horizon and reviews load without regenerating fixed detail.
 end note
