@@ -1,0 +1,85 @@
+@startuml
+title CycleFar — Manual Intervals.icu reconciliation
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "IntervalsIcuSyncsController" as Controller
+control "SyncNextTwo" as Sync
+control "WorkoutSerializer" as Serializer
+control "IntervalsIcu::Client" as Client
+database "PostgreSQL" as Database
+participant "Intervals.icu" as Remote
+
+Rider -> Controller: POST manual sync
+Controller -> Database: resolve signed-in rider's active plan and profile
+Controller -> Sync: call(plan, profile)
+Sync -> Sync: validate profile owner and API key
+Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude FTP tests and time off
+Database --> Sync: eligible set (zero, one or two workouts)
+loop each selected workout
+  Sync -> Serializer: payload(canonical steps, current FTP, stable external ID)
+  Serializer --> Sync: event payload
+end
+group local transaction before HTTP
+  Sync -> Database: retain owned identities for selected workouts\nnew identities have no confirmed event ID/digest/timestamp
+end
+
+alt eligible set is not empty
+  Sync -> Client: upsert_events(payloads)
+  Client -> Remote: POST athlete/0/events/bulk?upsert=true
+  alt upload fails or outcome is uncertain
+    Remote --> Client: error or timeout
+    Client --> Sync: mapped error after transient retry where applicable
+    break stop before cleanup
+      Sync --> Controller: error; retain identities and prior confirmed metadata
+      Controller --> Rider: show sync error
+    end
+  else upload confirmed
+    Remote --> Client: returned events with external IDs and event IDs
+    Client --> Sync: events
+  end
+else eligible set is empty
+  Sync -> Sync: skip upload; continue stale cleanup
+end
+
+group following successful upload or empty-set selection
+  group local transaction
+    Sync -> Database: save confirmed selected event IDs, digests and timestamps
+  end
+  Sync -> Database: load all this rider's sync records outside selected set\nincluding missed/completed, past-moved, deleted and previous-plan
+  Database --> Sync: stale owned external IDs
+  opt stale set is not empty
+    Sync -> Client: delete_events(stale external IDs)
+    Client -> Remote: PUT athlete/0/events/bulk-delete
+    alt cleanup fails
+      Remote --> Client: error or timeout
+      Client --> Sync: mapped error after transient retry where applicable
+      Sync --> Controller: PartialSyncError; keep confirmed uploads and stale identities
+      Controller --> Rider: show partial-sync result and retry guidance
+    else cleanup confirmed (missing events ignored upstream)
+      Remote --> Client: delete response
+      Client --> Sync: deletion confirmed
+      group local transaction
+        Sync -> Database: destroy stale sync records
+      end
+      Sync --> Controller: synced and removed counts
+      Controller --> Rider: redirect to calendar with result
+    end
+  end
+  opt no stale records
+    Sync --> Controller: synced count; zero removed
+    Controller --> Rider: redirect to calendar with result
+  end
+end
+
+note over Sync, Remote
+  Remote requests and local transactions are separate.
+  Stable cyclefar-workout-<id> IDs make retries idempotent.
+  Selected moved workouts are upserted with their original identity.
+  Only this rider's tracked calendar events are reconciled.
+  No remote listing, unrelated-event edits or activity/history API calls.
+  Local completed workouts, steps, snapshots and feedback remain immutable.
+end note
+@enduml

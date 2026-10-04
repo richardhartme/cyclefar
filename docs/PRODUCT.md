@@ -73,7 +73,7 @@ Current feedback proposals compare each affected workout before and after at the
 
 ### Near-term specificity, long-term flexibility
 
-Only the next 14 days are fully structured. The rest of the plan stores purpose/type/duration/phase so future detailed workouts can reflect newer FTP and feedback.
+Automatic detail generation covers today through day 13. Later workouts normally store purpose/type/duration/phase and forecast load so future detail can reflect newer FTP and feedback. Explicit Add/Copy, retained moved structures and individual due/overdue completion are exceptions to the automatic horizon.
 
 ### Explain important changes
 

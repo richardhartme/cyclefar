@@ -138,6 +138,8 @@ Digests are stored for reference; repeat sync still upserts both selected workou
 
 CycleFar's tracked remote calendar-event set matches the next-two set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged (CYF-14).
 
+The [manual sync sequence](diagrams/sequence-cyclefar-intervals-icu-sync.puml) shows the separate local transactions, remote calls and failure paths. With no eligible workouts, upload is skipped and all stale owned events are still reconciled.
+
 ## Partial failure
 
 Prefer one bulk request for the two upserts when possible.

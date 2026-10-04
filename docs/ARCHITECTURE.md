@@ -64,6 +64,8 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `Metrics::WorkoutCalculator` calculates representative one-second power, NP, IF, TSS and work from canonical steps plus FTP. `Workouts::ProfileBuilder` supplies percentage-based graph data. `CalendarHelper` renders inline SVG with power-zone colours; the detail graph uses the same canonical data at a larger size.
 
+`CalendarHelper#workout_main_set_entries` groups repeated canonical main/activation steps for calendar summaries, retaining separate under/over efforts and both ramp endpoints. Planned watt ranges use owner FTP; completed ranges come from the immutable per-step snapshot. Home views show TSS/IF/work for structured cards, purpose for outlines, and supplied event distance/elevation/duration. Card summaries are presentation derived from canonical steps, not generation inputs (CYF-13).
+
 `Workouts::ManualEditor` handles Same, Easier, Harder, Shorter, Longer, Change and accepted progression adjustments. It replaces steps and metrics transactionally and reports before/after values plus whether the documented material-change thresholds were crossed. A material Change creates a persisted optional proposal through `Planning::MaterialChangeProposal`; `Planning::MaterialChangeReplanner` treats that changed workout as fixed and re-prescribes only the bounded following 14-day block on acceptance. `Workouts::Creator` validates an empty, in-plan, non-event, non-time-off destination and generates a structured workout (regular workouts start at level 1). `Workouts::Copier` copies regular planned structured workouts, retaining canonical steps and recalculating metrics with current FTP.
 
 `ManualEditor#preview` returns an in-memory definition and metrics without persistence. `apply!` uses the same path, including explicit variation, level clamping and exact-duration fitting, so feedback comparisons match accepted results when inputs remain unchanged.
@@ -164,5 +166,6 @@ Sequence views show request order and the boundaries between in-memory previews,
 - [Change future training](diagrams/sequence-cyclefar-future-replanning.puml)
 - [Feedback proposal](diagrams/sequence-cyclefar-feedback-proposal.puml)
 - [Material Change Workout proposal](diagrams/sequence-cyclefar-material-change-proposal.puml)
+- [Manual Intervals.icu reconciliation](diagrams/sequence-cyclefar-intervals-icu-sync.puml)
 
 See the [diagram guide](diagrams/README.md) for scope, implementation limitations and rendering requirements.
