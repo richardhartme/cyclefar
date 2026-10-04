@@ -339,3 +339,5 @@ If reason = Illness or Recovery:
 - additional field for user-selected return-to-training duration (days/weeks; normalise internally to days).
 
 After save, the app confirms that time off was added and future training replanned. It does not yet show a per-workout change summary. Holiday, Event and Other do not use a return ramp.
+
+Illness/Recovery return workouts show their return-stage purpose. The engine applies saved stage power limits and reduced durations, then resumes intensity progression from one level below the latest comparable pre-break session. Holiday/Event/Other resume from that comparable baseline without the reduction. See [TRAINING_ENGINE.md §39](TRAINING_ENGINE.md#39-time-off) for the staged prescription rules.

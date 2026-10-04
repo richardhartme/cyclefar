@@ -26,11 +26,12 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(schedule_changes, "Schedule-change services", "Planning services", "MissedWorkoutResolver, AvailabilityChanger and TimeOffPlanner preserve history while changing the future schedule.")
   Component(prescriber, "FuturePrescriber", "Planning service", "Under the plan lock, replaces future planned prescriptions; retains unbiased baselines and post-break ceilings, preserves history and materializes the horizon.")
   Component(plan_builder, "PlanBuilder and ExistingPlanConfiguration", "Planning services", "Rebuild aligned recovery, ranked assessments and staged taper forecasts; exclude time off and return ramps before FTP-test selection.")
+  Component(return_rules, "ReturnRamp and PreBreakProgression", "Planning::V1 calculations", "Use the latest comparable planned/completed regular session; choose stage duration/power limits and resume from reduced progression after illness/recovery.")
   Component(materializer, "HorizonMaterializer", "Planning service", "Applies accepted bias once when outlines enter the next 14 days; saves fitted levels, steps and automatic load references under the plan lock.")
   Component(load_rules, "LoadContext, WeeklyLoadCap and LoadReduction", "Planning::V1 services", "Use shared RecoverySchedule flags, comparable-week rules and ceilings; apply ordered reductions while retaining hard-week duration and endurance profiles.")
   Component(progression, "Progression", "Training::V1 pure calculation", "Combines baseline and bias; clamps to 1-7 and reduced-load ceilings.")
   Component(ftp, "Settings::Update and FtpRecalculator", "Settings and Planning services", "Record FTP history and recalculate future structured-workout metrics without changing completed snapshots.")
-  Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical definitions and metrics; explicit variations are deterministic and initial endurance profiles are sampled.")
+  Component(engine, "Workout engine and TargetBandLimiter", "Workouts and Metrics services", "Generate definitions and metrics; constrain saved return main targets and every step ceiling, including sampled endurance profiles.")
   Component(models, "Plan and workout models", "Active Record", "Enforce validations and completed-workout immutability while persisting plans, workouts, steps, feedback, proposals, settings and time off.")
 }
 
@@ -62,6 +63,7 @@ Rel(material_change, freshness, "Creates bounded replan proposal after source ed
 Rel(comparison, freshness, "Checks availability before generating comparisons")
 Rel(proposals, freshness, "Validates under locks before acceptance")
 Rel(freshness, models, "Captures or verifies relevant owner-scoped canonical inputs")
+Rel(freshness, return_rules, "Uses the same comparable pre-break baseline for replan freshness")
 Rel(controllers, proposals, "Accepts or rejects proposal")
 Rel(proposals, comparison, "Revalidates complete target set and bounded prescriptions")
 Rel(comparison, models, "Resolves owner-scoped source/targets and current FTP")
@@ -75,6 +77,7 @@ Rel(proposals, models, "Updates progression state and proposal")
 Rel(controllers, schedule_changes, "Resolves misses, availability and time off")
 Rel(schedule_changes, prescriber, "Re-prescribes affected future dates")
 Rel(prescriber, plan_builder, "Rebuilds prescriptions through preview engine")
+Rel(prescriber, return_rules, "Reads recent comparable baseline and calendar return stage")
 Rel(plan_builder, engine, "Forecasts workout definitions and metrics")
 Rel(prescriber, engine, "Recalculates return-to-training prescriptions; retains taper work factors and ceilings")
 Rel(prescriber, materializer, "Materializes after replacement")
@@ -110,6 +113,16 @@ end note
 
 note bottom of material_change
   Dismissal leaves the rest of the plan unchanged.
+end note
+
+note bottom of return_rules
+  Return duration factors: 60 / 70 / 80 / 100%, minimum 30 minutes.
+  First two main bands: 45-60% / 55-68% FTP.
+  Third stage: level-1 Tempo on intensity days, Endurance otherwise.
+  Final stage: scheduled subtype, one level below comparable baseline.
+  Weekly progression resumes from that reduced level after the ramp.
+  Holiday/Event/Other resume from the baseline without the reduction.
+  Saved limits survive outline persistence and horizon generation.
 end note
 
 SHOW_LEGEND()

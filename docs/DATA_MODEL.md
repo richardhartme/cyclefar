@@ -190,7 +190,7 @@ CYF-12 saves `load_adjustments.return_target_band` for return-stage main power r
 
 Material-replan proposals with pre-break fingerprints from the previous baseline algorithm become stale and require dismissal/recreation. Their payload format remains readable; acceptance rechecks the current comparable baseline.
 
-The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing pending proposal payloads remain compatible.
+The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing proposal payload formats remain readable, subject to expiry and canonical-input freshness checks.
 
 ## WorkoutStep
 

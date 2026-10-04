@@ -26,7 +26,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(progression, "Progression", "Training::V1 pure calculation", "Applies global intensity bias, clamps levels to 1-7 and respects generation ceilings.")
   Component(load_cap, "WeeklyLoadCap and LoadReduction", "Planning::V1 pure calculations", "Apply ordered level, variation, target, broad-subtype and easy-filler reductions; preserve duration and saved endurance profiles; warn if infeasible.")
   Component(load_context, "LoadContext", "Planning::V1 service", "Uses shared recovery flags and excludes partial, assessment, taper, time-off and re-entry weeks from load references; enforces saved ceilings.")
-  Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical steps and metrics; tapered main sets shorten hard time in positive 30-second segments while retaining normal power bands.")
+  Component(engine, "Workout engine", "Workouts and Metrics services", "Generates canonical steps and metrics; preserves saved taper work factors and return target bands through TargetBandLimiter.")
   Component(models, "User, plan and workout models", "Active Record", "Enforces per-user active-plan ownership and represents phases, availability, events, workouts and canonical steps.")
 }
 
@@ -63,6 +63,8 @@ note bottom of materializer
   Initial endurance profiles are sampled; forecasts are deterministic.
   Manual edits retain automatic references for future load baselines.
   Saved target/filler choices, taper main_set_factor and ceilings survive persistence.
+  Saved return_target_band limits main work and every step endpoint,
+  including sampled endurance profiles; easier preparation stays easier.
   Positive bias cannot escalate saved tapered intensity sets;
   legacy taper outlines retain the level-2 fallback.
 end note

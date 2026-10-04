@@ -10,6 +10,8 @@ control "Planning change service" as ChangeService
 control "FuturePrescriber" as Prescriber
 control "ExistingPlanConfiguration" as ExistingConfiguration
 control "PlanBuilder" as Builder
+control "PreBreakProgression\nand ReturnRamp" as ReturnRules
+control "Generator and\nTargetBandLimiter" as Generator
 control "HorizonMaterializer" as Materializer
 control "LoadContext, WeeklyLoadCap\nand LoadReduction" as LoadRules
 database "PostgreSQL" as Database
@@ -40,6 +42,8 @@ group transaction under plan lock
     Prescriber -> Database: lock plan
     Prescriber -> Prescriber: restrict replacement dates to today onward inside plan
     Prescriber -> Database: read pre-break levels and time-off context
+    Prescriber -> ReturnRules: latest comparable planned/completed regular level\nfor each break; exclude missed and special records
+    ReturnRules --> Prescriber: family baseline, default level 1
     Prescriber -> Database: remove replaceable planned regular workouts\nand blocked-date planned specials
     Prescriber -> ExistingConfiguration: build from saved plan and supplied slots
     ExistingConfiguration --> Prescriber: saved plan and slots; assessment exclusions for time off/return ramps
@@ -48,8 +52,14 @@ group transaction under plan lock
     Builder -> LoadRules: apply ordered cap reductions to forecasts
     Builder -> Builder: budget taper stages against comparable peak load\nretain event/opener and save reduced main-set factors
     Builder --> Prescriber: deterministic prescriptions and generation choices
-    Prescriber -> Prescriber: skip blocked dates; apply return-ramp/resumption rules
-    Prescriber -> Database: create outlines on empty dates\nretain target/filler choices, taper factors, ceilings and effective levels
+    Prescriber -> Prescriber: skip time-off dates and blocked return specials
+    opt prescription follows a break
+      Prescriber -> ReturnRules: choose stage, duration factor, target band\nand resumed progression ceiling
+      ReturnRules --> Prescriber: staged limits; reduced post-ramp level\nor baseline resumption for Holiday/Event/Other
+      Prescriber -> Generator: regenerate with saved return_target_band\nand any taper main_set_factor
+      Generator --> Prescriber: exact-duration definition with constrained main targets\nand every step endpoint below the stage ceiling
+    end
+    Prescriber -> Database: create outlines on empty dates\nretain target/filler choices, return bands/stages, taper factors and ceilings
     Prescriber -> Materializer: call(plan)
     Materializer -> Database: lock plan; read eligible outlines and fixed workouts
     Materializer -> Materializer: apply accepted bias once; generate actual profiles/metrics
@@ -68,6 +78,9 @@ note over Prescriber, Database
   ordinary and missed Move use Workouts::Mover and shared destination rules.
   Normal hard-week duration and specific subtype intent remain fixed.
   Taper duration follows stage budgets; saved work factors preserve power bands.
+  Return limits survive every sampled endurance profile and materialisation.
+  Illness/Recovery resumes one level below the latest comparable baseline;
+  missed/special workouts do not establish it. Holiday/Event/Other do not reduce it.
   Only affected dates are replaced; existing plans are not bulk rewritten.
   Calendar review shows a warning when valid load reductions are exhausted.
 end note

@@ -26,17 +26,20 @@ Rel(sync, serializer, "Builds event payloads")
 Rel(serializer, models, "Reads canonical steps and current FTP context")
 Rel(sync, client, "Bulk-upserts desired set, then bulk-deletes stale external IDs")
 Rel(client, intervals_icu, "Sends authenticated bulk event requests", "HTTPS / JSON")
-Rel(sync, models, "Transactionally saves IDs, digests and timestamps after remote success")
+Rel(sync, models, "Retains identities before HTTP; saves confirmed upload metadata; removes stale identities after confirmed deletion")
 Rel(models, database, "Reads and writes", "SQL")
 
 note bottom of sync
   Stable external IDs: cyclefar-workout-<id>.
-  Cleanup covers detached records and linked planned
-  future workouts outside the selected set. Linked
-  missed/completed/past workouts are not yet cleaned up.
+  Cleanup covers every owned record outside the selected set:
+  missed/completed, past-moved, deleted and previous-plan workouts.
+  Selected moved workouts keep the same external ID.
+  Uncertain uploads retain identities before any success metadata.
+  Confirmed uploads remain saved if later cleanup fails.
+  Completed local workouts, snapshots and feedback remain frozen.
   No remote listing, automatic sync or activity import.
   Remote calls and local persistence are separate transactions;
-  failed cleanup retains metadata for an idempotent retry.
+  failed cleanup retains stale identities for an idempotent retry.
 end note
 
 SHOW_LEGEND()

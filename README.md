@@ -17,14 +17,18 @@ snapshots.
   Rails-generated authentication, with independent rider accounts.
 - A deterministic, versioned workout engine for endurance, tempo, Sweet Spot,
   threshold, VO2 max, over-under and recovery sessions.
-- A continuous calendar with workout details, editable future workouts and
-  inline power-profile graphs.
+- A continuous calendar with canonical main-set summaries, watt ranges,
+  TSS/IF/work, event details, editable future workouts and inline power-profile
+  graphs. Later outlines show their purpose; weekly totals feed a TSS chart.
+- Generated weekly load limits, aligned recovery weeks, ranked FTP assessments
+  and staged taper budgets that retain the target event and opener.
 - Completion feedback, overdue and missed-workout resolution, and explicit
   adaptation proposals with owner-scoped before/after comparisons and a
   14-day target window. Proposals enforce seven-day expiry and reject stale
   inputs; accepted progression bias affects later generation.
 - Availability changes, planned time off and a gradual return after illness or
-  recovery time.
+  recovery time, with saved stage power limits and progression based on the
+  latest comparable pre-break session.
 - FTP history and recalculation of future workout watt targets without changing
   completed workouts.
 - Manual Intervals.icu sync for the next two executable structured workouts.
@@ -123,10 +127,12 @@ performed, including openers, and uses stable `cyclefar-workout-<id>` external
 IDs. It excludes FTP tests and exports fewer than two when fewer are eligible.
 It neither imports rides nor changes unrelated Intervals.icu events.
 
-Current cleanup handles deleted workouts and still-planned future workouts that
-leave the next-two set. Linked workouts subsequently marked missed/completed or
-moved into the past are not yet included in cleanup. See the
-[integration guide](docs/INTERVALS_ICU.md) for reconciliation and API-contract limits.
+Sync removes every tracked event owned by the rider outside the next-two set,
+including missed/completed, past-moved, deleted and previous-plan workouts.
+It saves owned identities before upload and retains cleanup metadata on failure
+so another manual sync can retry safely. Completed local history stays frozen.
+See the [integration guide](docs/INTERVALS_ICU.md) for reconciliation and
+API-contract limits.
 
 ## Deployment
 
@@ -230,9 +236,10 @@ adapter specs stub HTTP rather than calling the live API.
 
 Requirements and training rules describe intended V1 behaviour. Architecture,
 data-model and UX implementation notes describe the current code and identify
-remaining differences, including per-family progression bias, complete calendar
-card fields and stale linked Intervals.icu event cleanup. Proposal expiry and
-stale-input checks are implemented.
+remaining differences, including per-family progression bias and the proposed
+workout modals and replacement previews. Calendar card fields,
+stale linked Intervals.icu event cleanup, proposal expiry and stale-input checks
+are implemented.
 
 ## License
 
