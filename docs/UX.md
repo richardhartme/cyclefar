@@ -188,7 +188,7 @@ Show enough to understand it without opening:
 - TSS / IF / kJ in compact form;
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details.
 
-Current cards show name, duration, TSS, IF and a profile graph. Main-set summary, watt range and work kJ remain detail-view information rather than card fields.
+Structured cards show type and duration, repeated main-set segments with their watt ranges, the profile graph, and TSS / IF / kJ. Under/over and activation efforts retain separate ranges; ramps show both endpoint ranges. Planned targets use current FTP, while completed targets use frozen snapshots. Outline cards show purpose without detailed targets or metrics. Supplied event details use km, m and min; absent optional fields are omitted. Calendar day columns retain a readable minimum width with local horizontal scrolling.
 
 ### High-level workout card (>14 days)
 
