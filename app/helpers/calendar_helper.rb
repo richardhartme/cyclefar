@@ -18,6 +18,40 @@ module CalendarHelper
     WORKOUT_CARD_COLORS.fetch(type.to_sym, WORKOUT_CARD_COLORS[:recovery])
   end
 
+  def workout_type_label(workout)
+    return "Opener" if workout.opener?
+
+    Training::V1::Rules::SUBTYPE_NAMES.fetch(workout.subtype.to_sym)
+  end
+
+  def workout_main_set_entries(workout)
+    steps = workout.workout_steps.select { |step| %w[main activation].include?(step.group_key) }
+    # Older canonical structures can lack grouping metadata. Exclude known
+    # preparation/recovery groups rather than inventing a generated main set.
+    steps = workout.workout_steps.reject { |step| %w[warm_up cool_down recovery filler].include?(step.group_key) } if steps.empty?
+    steps.group_by { |step|
+      [ step.label, step.duration_seconds, step.kind, step.target_low_pct_ftp, step.target_high_pct_ftp,
+        step.end_target_low_pct_ftp, step.end_target_high_pct_ftp ]
+    }.values.map do |repetitions|
+      step = repetitions.first
+      minutes, seconds = step.duration_seconds.divmod(60)
+      duration = [ ("#{minutes} min" if minutes.positive?), ("#{seconds} sec" if seconds.positive?) ].compact.join(" ")
+      duration = "#{repetitions.size} × #{duration}" if repetitions.size > 1
+      { summary: "#{step.label} · #{duration}", targets: workout_card_step_targets(workout, step) }
+    end
+  end
+
+  def workout_card_step_targets(workout, step)
+    targets = if workout.completed?
+      workout.completed_target_snapshot.fetch("steps").find { |item| item.fetch("position").to_i == step.position }
+    else
+      Workouts::StepDefinition.from(step).target_watts(ftp_watts: workout_ftp_watts(workout)).stringify_keys
+    end
+    range = "#{targets.fetch('low_watts')}–#{targets.fetch('high_watts')}"
+    range += " → #{targets.fetch('end_low_watts')}–#{targets.fetch('end_high_watts')}" if step.ramp?
+    "#{range} W"
+  end
+
   PROFILE_ZONE_COLORS = {
     recovery: "#94A3B8",
     endurance: "#38BDF8",

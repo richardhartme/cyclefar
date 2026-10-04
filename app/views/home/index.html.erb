@@ -75,7 +75,7 @@
 
   <div class="bg-base-100 border-base-300 overflow-x-auto rounded-box border shadow-sm">
     <% weeks.each do |week| %>
-      <section class="divide-base-300 border-base-300 grid min-w-[840px] divide-x border-b last:border-b-0" style="grid-template-columns: repeat(7, minmax(120px, 1fr))<%= " 11rem" if @plan %>" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">
+      <section class="divide-base-300 border-base-300 grid <%= @plan ? "min-w-[1296px]" : "min-w-[840px]" %> divide-x border-b last:border-b-0" style="grid-template-columns: repeat(7, minmax(<%= @plan ? 160 : 120 %>px, 1fr))<%= " 11rem" if @plan %>" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">
           <% week.days.each do |date| %>
             <div class="hover:bg-base-200/50 min-h-48 p-3 transition-colors">
               <% can_add_workout = @plan && @calendar.workouts_on(date).empty? && !@calendar.event_on(date) && !@calendar.time_off_on(date) %>
@@ -95,6 +95,19 @@
                   <div class="card-body gap-1 p-3">
                     <strong><%= event.name %></strong>
                     <span class="text-sm">Target event · <%= event.discipline.humanize %></span>
+                    <% if event.distance_km.present? || event.elevation_m.present? || event.expected_duration_minutes.present? %>
+                      <dl class="mt-2 space-y-1 text-sm">
+                        <% if event.distance_km.present? %>
+                          <div><dt>Distance</dt><dd><%= number_with_delimiter(number_with_precision(event.distance_km, precision: 2, strip_insignificant_zeros: true)) %> km</dd></div>
+                        <% end %>
+                        <% if event.elevation_m.present? %>
+                          <div><dt>Elevation</dt><dd><%= number_with_delimiter(event.elevation_m) %> m</dd></div>
+                        <% end %>
+                        <% if event.expected_duration_minutes.present? %>
+                          <div><dt>Expected duration</dt><dd><%= event.expected_duration_minutes %> min</dd></div>
+                        <% end %>
+                      </dl>
+                    <% end %>
                   </div>
                 </article>
               <% end %>
@@ -122,11 +135,22 @@
                         <p class="text-sm">Use your preferred assessment, then update Settings.</p>
                       <% elsif workout.structured? %>
                         <strong><%= link_to workout.name, planned_workout_path(workout), class: "link" %></strong>
-                        <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.estimated_tss.round %> TSS · IF <%= format("%.2f", workout.estimated_if) %></p>
+                        <p class="text-sm"><%= workout_type_label(workout) %> · <%= workout.duration_minutes %> min</p>
+                        <dl aria-label="Main set" class="mt-2 space-y-2 text-sm">
+                          <% workout_main_set_entries(workout).each do |entry| %>
+                            <div><dt><%= entry[:summary] %></dt><dd class="font-medium"><%= entry[:targets] %></dd></div>
+                          <% end %>
+                        </dl>
                         <%= workout_profile_svg(workout) %>
+                        <p class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm tabular-nums">
+                          <span><%= workout.estimated_tss.round %> TSS</span>
+                          <span>IF <%= format("%.2f", workout.estimated_if) %></span>
+                          <span><%= workout.estimated_work_kj.round %> kJ</span>
+                        </p>
                       <% else %>
                         <strong><%= link_to workout.name, planned_workout_path(workout), class: "link" %></strong>
                         <p class="text-sm"><%= workout.duration_minutes %> min · <%= workout.plan_phase.kind.humanize %></p>
+                        <p class="mt-2 text-sm"><%= workout.purpose %></p>
                       <% end %>
                     </div>
 
