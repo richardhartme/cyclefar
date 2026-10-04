@@ -6,7 +6,7 @@ On explicit rider action, sync the next two upcoming structured cycling workouts
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-02, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were checked for athlete `0`, bulk upsert/delete, and event field names/types. This is not a live authenticated sync certification. Local specs stub HTTP.
+The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-04, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete (CYF-14); event field names/types were checked on 2026-10-02. This is not a live authenticated sync certification. Local specs stub HTTP.
 
 ## Authentication
 
@@ -129,14 +129,14 @@ Send `icu_ftp`/current FTP where supported so Intervals.icu has the correct cont
 Current call order:
 
 1. Resolve the active plan's next-two eligible set (or fewer when fewer exist).
-2. Build payloads with stable external IDs and bulk-upsert the set.
-3. Find stale local sync records owned by this rider: detached records, plus records for still-planned future workouts in this plan that are no longer in the selected set.
-4. Bulk-delete those stale external IDs.
-5. After both remote operations succeed, transactionally save returned event IDs, digests and timestamps, then destroy stale local sync records.
+2. Build payloads with stable external IDs and transactionally retain their owned sync identities before HTTP. New records have no event ID, digest or successful-sync timestamp yet.
+3. Bulk-upsert the set, then transactionally save confirmed returned event IDs, digests and timestamps.
+4. Find all stale sync records owned by this rider outside the selected set, including missed/completed, past-moved, deleted and previous-plan workouts.
+5. Bulk-delete those stale external IDs, then transactionally destroy their local sync records only after confirmed deletion.
 
 Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider. The serializer exports stored estimated metrics; current FTP is passed separately and percentage steps remain canonical.
 
-The intended policy is that CycleFar's owned upcoming remote set matches the next-two set, with unrelated events untouched. Current reconciliation does not include linked missed/completed workouts or workouts moved into the past; those stale-event cases remain open and are tracked in Jira.
+CycleFar's tracked remote calendar-event set matches the next-two set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged (CYF-14).
 
 ## Partial failure
 
@@ -148,6 +148,8 @@ If reconciliation requires delete + upsert calls and one part fails:
 - do not corrupt local workouts;
 - retain enough sync metadata to retry idempotently;
 - never mark an event successfully synced until confirmed.
+
+An uncertain upsert retains its identity for retry or cleanup if the workout changes before retry. Previously confirmed metadata remains unchanged on upsert failure. When upload succeeds but cleanup fails, confirmed upload metadata remains saved, stale identities remain available, and the rider sees a partial-sync message with retry guidance. Repeated cleanup of an already deleted event is safe because the API ignores missing events.
 
 ## Timeouts/retries
 
