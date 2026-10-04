@@ -8,6 +8,8 @@ require_relative "v1/rules"
 require_relative "v1/weekly_load_cap"
 require_relative "v1/load_reduction"
 require_relative "v1/phase_progression"
+require_relative "v1/recovery_schedule"
+require_relative "v1/assessment_schedule"
 
 module Planning
   # Builds a training plan preview with workouts, weeks, FTP tests and load enforcement.
@@ -55,6 +57,7 @@ module Planning
 
       def generation_context
         context = reason_codes.include?("weekly_load_cap") ? { "maximum_level" => progression_level } : {}
+        context["maximum_level"] = progression_level if reason_codes.include?("taper_reduced_intensity")
         context["load_adjustments"] = definition.load_adjustments if definition && !definition.load_adjustments.empty?
         context
       end
@@ -117,6 +120,7 @@ module Planning
       prescriptions = place_ftp_tests(prescriptions)
       evaluated = prescriptions.map { |prescription| evaluate(prescription) }
       evaluated, warnings = enforce_load_cap(evaluated)
+      evaluated = taper_load(evaluated)
       weeks = build_weeks(evaluated, warnings)
       Preview.new(
         configuration: @configuration,
@@ -134,7 +138,6 @@ module Planning
     def build_prescriptions
       interval_ordinals = Hash.new(0)
       opener_on = @configuration.event? ? @configuration.ends_on - 1 : nil
-      taper_intensity_on = first_taper_intensity_day
       prescriptions = []
       (@configuration.starts_on..@configuration.ends_on).each do |date|
         phase = phase_for(date)
@@ -150,7 +153,7 @@ module Planning
         next unless slot
 
         recovery = recovery_week?(date)
-        subtype, level, duration, reason_codes = normal_attributes(slot, phase, date, interval_ordinals, recovery, taper_intensity_on)
+        subtype, level, duration, reason_codes = normal_attributes(slot, phase, date, interval_ordinals, recovery)
         prescriptions << Prescription.new(
           scheduled_on: date,
           kind: :workout,
@@ -165,17 +168,19 @@ module Planning
       prescriptions
     end
 
-    def normal_attributes(slot, phase, date, interval_ordinals, recovery, taper_intensity_on)
+    def normal_attributes(slot, phase, date, interval_ordinals, recovery)
       if recovery
         subtype = slot.intent == "recovery" ? :recovery : :endurance
         return [ subtype, nil, reduced_duration(slot.duration_minutes, V1::Rules::RECOVERY_DURATION_FACTOR), [ "recovery_week_override" ] ]
       end
       if phase.kind == "taper"
-        if slot.intensity? && date == taper_intensity_on
+        if slot.intensity? && taper_intensity?(date)
           subtype, level = planned_subtype_and_level(slot, taper_source_phase(phase), date, interval_ordinals)
-          return [ subtype, [ level, 2 ].min, reduced_duration(slot.duration_minutes, 0.70), [ "taper_reduced_intensity" ] ]
+          factor = early_long_taper?(date) ? V1::Rules::LONG_TAPER_DURATION_FACTOR : V1::Rules::TAPER_INTENSITY_DURATION_FACTOR
+          return [ subtype, level, reduced_duration(slot.duration_minutes, factor), [ "taper_reduced_intensity" ] ]
         end
-        return [ :endurance, nil, reduced_duration(slot.duration_minutes, V1::Rules::TAPER_DURATION_FACTOR), [ "taper_easy_override" ] ]
+        factor = early_long_taper?(date) ? V1::Rules::LONG_TAPER_DURATION_FACTOR : V1::Rules::TAPER_DURATION_FACTOR
+        return [ slot.intent == "recovery" ? :recovery : :endurance, nil, reduced_duration(slot.duration_minutes, factor), [ "taper_easy_override" ] ]
       end
 
       subtype, level = planned_subtype_and_level(slot, phase, date, interval_ordinals)
@@ -220,13 +225,19 @@ module Planning
       @phases.find { |phase| phase.includes?(date) } || raise("No phase for #{date}")
     end
 
-    def first_taper_intensity_day
+    def taper_intensity?(date)
       taper = @phases.find { |phase| phase.kind == "taper" }
-      return unless taper
+      return false if date >= @configuration.ends_on - V1::Rules::TAPER_NO_HARD_DAYS
+      return true if early_long_taper?(date)
 
-      (taper.starts_on...@configuration.ends_on).find do |date|
-        @configuration.slot_for(date.cwday)&.intensity?
-      end
+      start = [ taper.starts_on, @configuration.ends_on - V1::Rules::TAPER_FINAL_STAGE_DAYS + 1 ].max
+      date == (start...@configuration.ends_on - V1::Rules::TAPER_NO_HARD_DAYS).find { |day| @configuration.slot_for(day.cwday)&.intensity? }
+    end
+
+    def early_long_taper?(date)
+      taper = @phases.find { |phase| phase.kind == "taper" }
+      taper && taper.ends_on - taper.starts_on + 1 >= V1::Rules::LONG_TAPER_MINIMUM_DAYS &&
+        date.between?(taper.starts_on, @configuration.ends_on - V1::Rules::TAPER_FINAL_STAGE_DAYS)
     end
 
     def taper_source_phase(phase)
@@ -240,16 +251,11 @@ module Planning
     end
 
     def recovery_week_flags
-      starts = (@configuration.starts_on.beginning_of_week..@configuration.ends_on.beginning_of_week).step(7).to_a
-      return starts.to_h { |start| [ start, false ] } if @configuration.progression_mode == "continuous"
-
-      cycle_length = @configuration.hard_weeks_before_recovery + 1
-      starts.each_with_index.to_h do |week_start, index|
-        overlaps_taper = (week_start..week_start + 6).any? do |date|
-          date.between?(@configuration.starts_on, @configuration.ends_on) && phase_for(date).kind == "taper"
-        end
-        [ week_start, !overlaps_taper && index % cycle_length == @configuration.hard_weeks_before_recovery ]
-      end
+      V1::RecoverySchedule.new(
+        starts_on: @configuration.starts_on,
+        ends_on: @configuration.ends_on,
+        phases: @phases,
+        hard_weeks: @configuration.progression_mode == "hard_recovery_cycle" ? @configuration.hard_weeks_before_recovery : nil).flags
     end
 
     def recovery_week?(date)
@@ -261,26 +267,11 @@ module Planning
     end
 
     def place_ftp_tests(prescriptions)
-      return prescriptions if @configuration.ends_on - @configuration.starts_on + 1 < 42
-
-      selected = []
-      latest = @configuration.starts_on
-      loop do
-        lower = latest + V1::Rules::FTP_TEST_MIN_GAP_DAYS
-        upper = [ latest + V1::Rules::FTP_TEST_MAX_GAP_DAYS, @configuration.ends_on - V1::Rules::FTP_TEST_EVENT_EXCLUSION_DAYS ].min
-        candidates = prescriptions.select do |prescription|
-          prescription.kind == "workout" && !prescription.recovery_week && prescription.scheduled_on.between?(lower, upper)
-        end
-        break if candidates.empty?
-
-        desired = latest + V1::Rules::FTP_TEST_IDEAL_DAYS
-        chosen = candidates.min_by do |prescription|
-          preferred = prescription.intent == "intervals" ? 0 : 1
-          [ preferred, (prescription.scheduled_on - desired).abs, prescription.scheduled_on ]
-        end
-        selected << chosen.scheduled_on
-        latest = chosen.scheduled_on
-      end
+      selected = V1::AssessmentSchedule.new(
+        configuration: @configuration,
+        phases: @phases,
+        recovery_flags: @week_flags,
+        prescriptions: prescriptions).dates
       prescriptions.map do |prescription|
         if selected.include?(prescription.scheduled_on)
           special(prescription.scheduled_on, :ftp_test, phase_for(prescription.scheduled_on), "FTP Test", "Perform your preferred FTP assessment, then update Settings.")
@@ -307,7 +298,9 @@ module Planning
           variation_key: Workouts::Variations.default_key(prescription.subtype),
           phase: prescription.phase,
           goal: @configuration.goal,
-          discipline: @configuration.discipline).call
+          discipline: @configuration.discipline,
+          load_adjustments: prescription.reason_codes.include?("taper_reduced_intensity") ?
+            { "main_set_factor" => early_long_taper?(prescription.scheduled_on) ? V1::Rules::LONG_TAPER_WORK_FACTOR : V1::Rules::TAPER_WORK_FACTOR } : {}).call
       end
       evaluated_definition(prescription, definition)
     end
@@ -323,6 +316,61 @@ module Planning
         metrics: metrics,
         definition: definition,
         reason_codes: (prescription.reason_codes + definition.reason_codes).uniq)
+    end
+
+    def taper_load(prescriptions)
+      taper = @phases.find { |phase| phase.kind == "taper" }
+      return prescriptions unless taper
+
+      peak_items = prescriptions.group_by { |item| item.scheduled_on.beginning_of_week }.filter_map do |week_start, items|
+        next if partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start) || assessment_week?(items)
+
+        items
+      end.max_by { |items| tss_for(items) }
+      return prescriptions unless peak_items
+
+      peak = tss_for(peak_items)
+      prescriptions = prescriptions.map do |item|
+        next item unless item.phase == "taper" && item.intensity?
+
+        reference = peak_items.find { |candidate| candidate.scheduled_on.cwday == item.scheduled_on.cwday && candidate.intensity? }
+        reference ? evaluate(item.with(progression_level: reference.progression_level)) : item
+      end
+
+      prescriptions.group_by { |item| early_long_taper?(item.scheduled_on) }.each_value do |items|
+        stage = items.select { |item| item.phase == "taper" }
+        next if stage.empty?
+
+        early = early_long_taper?(stage.first.scheduled_on)
+        days = early ? @configuration.ends_on - V1::Rules::TAPER_FINAL_STAGE_DAYS - taper.starts_on + 1 : V1::Rules::TAPER_FINAL_STAGE_DAYS
+        factor = early ? V1::Rules::LONG_TAPER_LOAD_FACTOR : V1::Rules::EVENT_WEEK_LOAD_FACTOR
+        limit = peak * factor * days / 7.0
+        # A sparse event week loses the event day's normal ride. Where possible,
+        # retain enough easy volume to reach the stage target without adding days.
+        while tss_for(stage) < limit
+          candidate = stage.select do |item|
+            item.kind == "workout" && !item.intensity? && item.duration_minutes < @configuration.slot_for(item.scheduled_on.cwday).duration_minutes
+          end.max_by { |item| [ @configuration.slot_for(item.scheduled_on.cwday).duration_minutes - item.duration_minutes, -item.scheduled_on.jd ] }
+          break unless candidate
+
+          longer = evaluate(candidate.with(duration_minutes: candidate.duration_minutes + 1))
+          break if longer.estimated_tss <= candidate.estimated_tss
+
+          prescriptions[prescriptions.index(candidate)] = longer
+          stage[stage.index(candidate)] = longer
+        end
+        # Volume is the adjustable taper input; opener and event remain fixed.
+        while tss_for(stage) > limit
+          candidate = stage.select { |item| item.kind == "workout" && item.duration_minutes > Training::V1::Rules::MINIMUM_DURATION_MINUTES }
+            .max_by { |item| [ item.estimated_tss, -item.scheduled_on.jd ] }
+          break unless candidate
+
+          shortened = evaluate(candidate.with(duration_minutes: candidate.duration_minutes - 1))
+          prescriptions[prescriptions.index(candidate)] = shortened
+          stage[stage.index(candidate)] = shortened
+        end
+      end
+      prescriptions
     end
 
     def enforce_load_cap(prescriptions)

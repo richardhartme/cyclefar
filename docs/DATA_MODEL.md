@@ -184,6 +184,8 @@ Important:
 
 `load_adjustments` inside that context saves §27 target/filler generation choices (`lower_targets` and `easy_filler`). Preview persistence and later materialisation use those choices together with the saved subtype, level and variation. Canonical structured steps remain authoritative; comparison and adaptation acceptance apply the same load-limited definition atomically. No migration is required for these optional JSON keys.
 
+CYF-11 also saves `main_set_factor` for tapered intensity sets, alongside their fitted progression ceiling. It reduces hard time while retaining normal power bands when outlines become structured; completed rows are unchanged.
+
 The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep

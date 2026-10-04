@@ -53,11 +53,13 @@ module Planning
 
     def recovery_week?(starts_on)
       return false unless @plan
-      return false unless @plan.hard_recovery_cycle?
-      return false if @plan.plan_phases.any? { |phase| phase.kind_taper? && phase.starts_on <= starts_on + 6 && phase.ends_on >= starts_on }
 
-      index = ((starts_on - @plan.starts_on.beginning_of_week) / 7).to_i
-      index % (@plan.hard_weeks_before_recovery + 1) == @plan.hard_weeks_before_recovery
+      @recovery_flags ||= V1::RecoverySchedule.new(
+        starts_on: @plan.starts_on,
+        ends_on: @plan.ends_on,
+        phases: @plan.plan_phases.sort_by(&:position),
+        hard_weeks: @plan.hard_recovery_cycle? ? @plan.hard_weeks_before_recovery : nil).flags
+      @recovery_flags.fetch(starts_on, false)
     end
   end
 end

@@ -61,7 +61,7 @@ RSpec.describe "FBK-002 progression during explicit replanning", generated_worko
     current = plan.planned_workouts.find_by!(scheduled_on: today)
     baseline = current.generation_context.fetch("baseline_level")
     expect(current.progression_level).to eq([ baseline - 1, 1 ].max)
-    future = plan.planned_workouts.outline.where("scheduled_on > ?", today + 13).order(:scheduled_on).first!
+    future = plan.planned_workouts.workout.outline.where("scheduled_on > ?", today + 13).order(:scheduled_on).first!
     forecast_level = future.progression_level
     Planning::HorizonMaterializer.new(plan, date: future.scheduled_on).call
     expect(future.reload.progression_level).to be <= [ forecast_level - 1, 1 ].max

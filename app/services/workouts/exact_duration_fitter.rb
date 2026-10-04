@@ -8,27 +8,29 @@ module Workouts
   class ExactDurationFitter
     Result = Data.define(:steps, :progression_level, :name_suffix, :summary, :shortened, :compressed)
 
-    def initialize(subtype:, duration_minutes:, progression_level:, variation_key:, easy_filler: false)
+    def initialize(subtype:, duration_minutes:, progression_level:, variation_key:, easy_filler: false, work_factor: 1.0)
       @subtype = subtype.to_sym
       @duration_minutes = duration_minutes
       @level = progression_level
       @variation_key = variation_key
       @easy_filler = easy_filler
+      @work_factor = Float(work_factor)
+      raise ArgumentError, "work_factor must be between zero and one" unless @work_factor > 0 && @work_factor <= 1
     end
 
     def call
       return fit_aerobic unless Training::V1::Rules::LADDERS.key?(@subtype)
       if @easy_filler
-        main = MainSetBuilder.new(subtype: @subtype, progression_level: 1, variation_key: @variation_key, shortened: true).call
+        main = MainSetBuilder.new(subtype: @subtype, progression_level: 1, variation_key: @variation_key, shortened: true, work_factor: @work_factor).call
         return fit_main(main) || raise(ArgumentError, "No valid main set fits the requested duration")
       end
 
       @level.downto(1) do |level|
-        main = MainSetBuilder.new(subtype: @subtype, progression_level: level, variation_key: @variation_key).call
+        main = MainSetBuilder.new(subtype: @subtype, progression_level: level, variation_key: @variation_key, work_factor: @work_factor).call
         result = fit_main(main)
         return result if result
       end
-      main = MainSetBuilder.new(subtype: @subtype, progression_level: 1, variation_key: @variation_key, shortened: true).call
+      main = MainSetBuilder.new(subtype: @subtype, progression_level: 1, variation_key: @variation_key, shortened: true, work_factor: @work_factor).call
       fit_main(main) || raise(ArgumentError, "No valid main set fits the requested duration")
     end
 
