@@ -2,6 +2,7 @@ require_relative "../training/v1/rules"
 require_relative "exact_duration_fitter"
 require_relative "workout_definition"
 require_relative "variations"
+require_relative "target_band_limiter"
 
 module Workouts
   # Generates WorkoutDefinitions with progression levels, durations, and variation rules.
@@ -42,6 +43,9 @@ module Workouts
           step.with(target_high_pct_ftp: step.target_low_pct_ftp, end_target_high_pct_ftp: step.end_target_low_pct_ftp)
         end
       end
+      if @load_adjustments["return_target_band"]
+        steps = TargetBandLimiter.new(steps: steps, band: @load_adjustments["return_target_band"]).call
+      end
       rules = Training::V1::Rules
       reason_codes = [ "#{@subtype}_main_set" ]
       reason_codes << "duration_level_reduced" if fit.progression_level && fit.progression_level < @level
@@ -59,13 +63,23 @@ module Workouts
         discipline: @discipline,
         name: @load_adjustments["main_set_factor"] ? "#{rules::SUBTYPE_NAMES.fetch(@subtype)} tapered intervals" : "#{rules::SUBTYPE_NAMES.fetch(@subtype)} #{fit.name_suffix}",
         purpose: "#{@phase.capitalize} phase. #{rules::PURPOSES.fetch(@subtype)}",
-        main_set_summary: @load_adjustments["main_set_factor"] ? "#{steps.select { |step| step.group_key == 'main' }.sum(&:duration_seconds) / 60.0} min of brief intensity with easy recovery" : fit.summary,
+        main_set_summary: main_set_summary(fit, steps),
         steps: steps,
         reason_codes: reason_codes,
         load_adjustments: @load_adjustments)
     end
 
     private
+
+    def main_set_summary(fit, steps)
+      if @load_adjustments["main_set_factor"]
+        "#{steps.select { |step| step.group_key == 'main' }.sum(&:duration_seconds) / 60.0} min of brief intensity with easy recovery"
+      elsif (band = @load_adjustments["return_target_band"])
+        "#{fit.name_suffix}; return-stage main targets within #{band.join('–')}% FTP"
+      else
+        fit.summary
+      end
+    end
 
     def member!(value, options, name)
       raise ArgumentError, "unsupported #{name}" unless options.include?(value.to_s)

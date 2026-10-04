@@ -120,11 +120,9 @@ module Adaptations
     end
 
     def pre_break_level(period)
-      # Match FuturePrescriber's baseline without fingerprinting unrelated old
-      # rides whose edits do not change that maximum.
-      @workouts.select { |workout| workout.scheduled_on < period.starts_on && workout.progression_level }.filter_map do |workout|
-        workout.generation_context.fetch("generated_level", workout.progression_level)
-      end.max || 1
+      # Match re-prescription, including a new recent comparable baseline even
+      # when an older, higher session is unchanged outside the affected weeks.
+      Planning::V1::PreBreakProgression.levels(@workouts, before: period.starts_on)
     end
 
     def workout_context(workout)

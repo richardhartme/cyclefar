@@ -135,7 +135,7 @@ module Planning
         generation_context: context,
         variation_key: definition.variation_key,
         name: definition.name,
-        purpose: workout.generation_context["maximum_level"] ? workout.purpose : definition.purpose,
+        purpose: workout.generation_context["maximum_level"] || workout.generation_context["return_ramp_stage"] ? workout.purpose : definition.purpose,
         estimated_np_watts: metrics.estimated_np_watts,
         estimated_if: metrics.estimated_if,
         estimated_tss: metrics.estimated_tss,
