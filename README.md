@@ -9,6 +9,8 @@ calendar. Workout targets are stored as percentages of FTP, so future workouts
 can adapt when FTP changes while completed workouts retain their historical
 snapshots.
 
+![CycleFar training calendar showing weekly training load and structured workouts](public/screenshot.png)
+
 ## What it includes
 
 - Plan creation with a preview for general fitness, FTP, endurance,
