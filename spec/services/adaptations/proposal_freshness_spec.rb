@@ -174,6 +174,15 @@ RSpec.describe "CYF-6 proposal freshness", type: :service, generated_workouts: t
     expect_unavailable(proposal, Adaptations::ProposalFreshness::STALE_MESSAGE)
   end
 
+  it "CYF-12 invalidates a changed recent pre-break level despite an older higher maximum" do
+    generated_workout(plan: plan, phase: phase, date: Date.current - 13, level: 7, duration: 120)
+    recent = generated_workout(plan: plan, phase: phase, date: Date.current - 9, level: 4, duration: 90)
+    create(:time_off_period, training_plan: plan, starts_on: Date.current - 4, ends_on: Date.current - 2, reason: :illness, return_ramp_days: 16)
+    proposal = Planning::MaterialChangeProposal.new(target).replace!(material_change: true)
+    Workouts::ManualEditor.new(recent).apply!(action: :easier)
+    expect_unavailable(proposal, Adaptations::ProposalFreshness::STALE_MESSAGE)
+  end
+
   it "validates every feedback target before editing any of them or changing bias" do
     first = generated_workout(plan: plan, phase: phase, date: Date.current + 2, duration: 90)
     proposal = Adaptations::ProposalCreator.new(plan).create!(

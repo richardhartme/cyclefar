@@ -894,6 +894,10 @@ If the rider selects a very short ramp (e.g. 2–3 days), collapse stages propor
 
 The user explicitly chooses ramp length, but the engine chooses the stepped content.
 
+CYF-12 uses 60/70/80/100% duration factors with the existing 30-minute minimum. The first two stages constrain main-set targets to 45–60% and 55–68% FTP; warm-up, recovery and cool-down steps may remain easier but cannot exceed the stage ceiling. The third stage uses level-1 Tempo on intensity days, with primers also capped at the normal Tempo band's 87% upper limit, or normal Endurance on easy days. Saved power limits apply to every initial endurance profile and survive later horizon materialisation. Explicit profile regeneration remains deterministic.
+
+Pre-break progression uses the latest planned or completed regular session in the comparable Tempo/Sweet Spot/Threshold or VO2/Over-under family; missed workouts and special items are excluded. Planned sessions allow a future break to use its projected recent training. With no comparable session, use level 1. The final return stage stays one level below this baseline, bounded below by level 1; weekly progression resumes from that reduced level after the selected ramp ends. Holiday/Event/Other resume from the comparable baseline without this reduction. Existing phase, duration-fitting, accepted-bias and load ceilings can reduce the effective level further. Completed history and fixed plan/event end dates are preserved.
+
 ---
 
 # Part I — FTP-test placement
