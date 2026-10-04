@@ -5,6 +5,7 @@ module IntervalsIcu
   # Sync the next two eligible workouts to Intervals.icu and reconcile stale syncs.
   class SyncNextTwo
     Result = Data.define(:synced_count, :removed_count)
+    class PartialSyncError < Client::Error; end
 
     def initialize(plan:, profile: plan.user.rider_profile || plan.user.build_rider_profile, client: nil)
       @plan = plan
@@ -19,10 +20,16 @@ module IntervalsIcu
       client = @client || Client.new(api_key: @profile.intervals_icu_api_key)
       workouts = eligible_workouts
       payloads = workouts.map { |workout| serializer_for(workout).payload(external_id: external_id_for(workout)) }
+      retain_identities!(workouts, payloads)
       responses = payloads.empty? ? [] : client.upsert_events(payloads)
+      persist_upserts!(workouts, payloads, responses)
       stale_syncs = reconciled_syncs.reject { |sync| workouts.include?(sync.planned_workout) }
-      client.delete_events(stale_syncs.map(&:external_id))
-      persist_success!(workouts, payloads, responses, stale_syncs)
+      begin
+        client.delete_events(stale_syncs.map(&:external_id))
+      rescue Client::Error
+        raise PartialSyncError, "Synced #{workouts.size} workouts to Intervals.icu, but stale event cleanup failed. Sync again to retry."
+      end
+      IntervalsIcuSync.transaction { stale_syncs.each(&:destroy!) }
       Result.new(synced_count: workouts.size, removed_count: stale_syncs.size)
     end
 
@@ -34,10 +41,7 @@ module IntervalsIcu
     end
 
     def reconciled_syncs
-      @plan.user.intervals_icu_syncs.includes(:planned_workout).select do |sync|
-        workout = sync.planned_workout
-        workout.nil? || (workout.training_plan_id == @plan.id && workout.planned? && workout.scheduled_on >= Date.current)
-      end
+      @plan.user.intervals_icu_syncs.includes(:planned_workout)
     end
 
     def serializer_for(workout)
@@ -51,15 +55,24 @@ module IntervalsIcu
       sync&.external_id || "cyclefar-workout-#{workout.id}"
     end
 
-    def persist_success!(workouts, payloads, responses, stale_syncs)
+    def retain_identities!(workouts, payloads)
+      # A timed-out upsert may still create events remotely. Retain ownership
+      # before HTTP so later status/date changes or deletion cannot orphan them.
+      IntervalsIcuSync.transaction do
+        workouts.zip(payloads).each do |workout, payload|
+          workout.create_intervals_icu_sync!(user: @plan.user, external_id: payload.fetch(:external_id)) unless workout.intervals_icu_sync
+        end
+      end
+    end
+
+    def persist_upserts!(workouts, payloads, responses)
       response_by_external_id = responses.to_h { |response| [ response.fetch("external_id"), response ] }
       IntervalsIcuSync.transaction do
         workouts.zip(payloads).each do |workout, payload|
           response = response_by_external_id.fetch(payload.fetch(:external_id))
-          sync = workout.intervals_icu_sync || workout.build_intervals_icu_sync(user: @plan.user, external_id: payload.fetch(:external_id))
+          sync = workout.intervals_icu_sync
           sync.update!(intervals_event_id: response.fetch("id"), payload_digest: Digest::SHA256.hexdigest(JSON.generate(payload)), last_synced_at: Time.current)
         end
-        stale_syncs.each(&:destroy!)
       end
     end
   end

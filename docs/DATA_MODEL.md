@@ -276,6 +276,8 @@ Fields:
 - `payload_digest: string` — records the last successfully exported payload; current sync still upserts on every call
 - timestamps
 
+Sync identities are saved before upload so uncertain remote results remain attributable after status/date changes or deletion. New identities have null event ID, digest and `last_synced_at` until upload is confirmed. Confirmed upload metadata is saved before stale-event cleanup; cleanup failures retain stale identities for retry. Explicit sync reconciles all of the rider's tracked calendar events outside the current next-two set, including completed and previous-plan workouts, without mutating local workout history (CYF-14).
+
 Unique indexes on `external_id` and `planned_workout_id`.
 
 ## Derived concepts (do not necessarily persist)

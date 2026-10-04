@@ -32,7 +32,7 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
       @requests << request
       payload = JSON.parse(request.body)
       body = if request.path.include?("bulk-delete")
-        []
+        { "eventsDeleted" => payload.size }
       else
         payload.map.with_index { |event, index| { "external_id" => event.fetch("external_id"), "id" => index + 100 } }
       end
@@ -40,7 +40,7 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
     end
   end
 
-  let(:plan) { create(:training_plan, starts_on: Date.current, ends_on: Date.current + 30) }
+  let(:plan) { create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 30) }
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on) }
   let(:profile) { create(:rider_profile, user: plan.user, ftp_watts: 300, intervals_icu_api_key: "test-api-key") }
   let(:client) { FakeClient.new }
@@ -116,6 +116,8 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
     other_stale = create(:planned_workout, :structured, training_plan: other_plan, plan_phase: other_phase, scheduled_on: Date.current + 10)
     own_linked = create(:intervals_icu_sync, planned_workout: stale)
     other_linked = create(:intervals_icu_sync, planned_workout: other_stale)
+    stale.update!(status: :missed)
+    other_stale.update!(status: :missed)
     own_detached = create(:intervals_icu_sync, planned_workout: nil, user: plan.user, external_id: "cyclefar-workout-deleted-own")
     other_detached = create(:intervals_icu_sync, planned_workout: nil, user: other_plan.user, external_id: "cyclefar-workout-deleted-other")
 
@@ -178,14 +180,128 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
     detached = create(:intervals_icu_sync, planned_workout: nil, user: plan.user, external_id: "cyclefar-workout-deleted-own")
     allow(client).to receive(:delete_events).and_raise(IntervalsIcu::Client::RequestError, "temporary failure")
 
-    expect { described_class.new(plan: plan, profile: profile, client: client).call }.to raise_error(IntervalsIcu::Client::RequestError)
-    expect(IntervalsIcuSync.pluck(:external_id)).to eq([ detached.external_id ])
+    expect { described_class.new(plan: plan, profile: profile, client: client).call }.to raise_error(described_class::PartialSyncError)
+    expect(IntervalsIcuSync.pluck(:external_id)).to match_array([ detached.external_id, *workouts.map { |workout| "cyclefar-workout-#{workout.id}" } ])
+    expect(IntervalsIcuSync.where(planned_workout: workouts).pluck(:last_synced_at)).to all(be_present)
 
     retry_client = FakeClient.new
     result = described_class.new(plan: plan, profile: profile, client: retry_client).call
     expect(result).to have_attributes(synced_count: 2, removed_count: 1)
     expect(retry_client.deletions.sole).to eq([ detached.external_id ])
     expect(IntervalsIcuSync.pluck(:external_id)).to match_array(workouts.map { |workout| "cyclefar-workout-#{workout.id}" })
+  end
+
+  %w[missed completed past_moved deleted].each do |change|
+    it "CYF-14 removes a #{change} workout's owned calendar event with stubbed HTTP and preserves local history" do
+      workouts = create_upcoming_workouts(3)
+      connection = SyncRecordingConnection.new
+      http_client = IntervalsIcu::Client.new(api_key: profile.intervals_icu_api_key, connection_factory: ->(_) { connection })
+      sync = -> { described_class.new(plan: plan, profile: profile, client: http_client).call }
+      sync.call
+      source = workouts.first
+      external_id = source.intervals_icu_sync.external_id
+
+      case change
+      when "missed"
+        source.update!(status: :missed)
+      when "completed"
+        Adaptations::CompletionRecorder.new(workout: source, rpe: 4, completion_quality: :as_planned).call
+      when "past_moved"
+        Workouts::Mover.new(source).move_to!(destination: Date.current - 1)
+      when "deleted"
+        source.destroy!
+      end
+      history = source.reload.attributes unless change == "deleted"
+      steps = source.workout_steps.reload.map(&:attributes) unless change == "deleted"
+      feedback = source.workout_feedback&.attributes unless change == "deleted"
+
+      expect(sync.call).to have_attributes(synced_count: 2, removed_count: 1)
+      deletion = connection.requests.find { |request| request.method == "PUT" }
+      expect(deletion.path).to eq("/api/v1/athlete/0/events/bulk-delete")
+      expect(JSON.parse(deletion.body)).to eq([ { "external_id" => external_id } ])
+      expect(IntervalsIcuSync.where(external_id: external_id)).not_to exist
+      expect(sync.call).to have_attributes(synced_count: 2, removed_count: 0)
+      expect(connection.requests.count { |request| request.method == "PUT" }).to eq(1)
+      expect(connection.requests.map(&:path)).to all(match(%r{\A/api/v1/athlete/0/events/bulk}))
+      unless change == "deleted"
+        expect(source.reload.attributes).to eq(history)
+        expect(source.workout_steps.reload.map(&:attributes)).to eq(steps)
+        expect(source.workout_feedback&.reload&.attributes).to eq(feedback)
+      end
+    end
+  end
+
+  it "cleans up the rider's previous plan events without rewriting completed history" do
+    old_plan = plan
+    source = create_upcoming_workouts(1).sole
+    described_class.new(plan: old_plan, profile: profile, client: client).call
+    Adaptations::CompletionRecorder.new(workout: source, rpe: 4, completion_quality: :as_planned).call
+    old_plan.update!(status: :archived)
+    new_plan = create(:training_plan, user: old_plan.user)
+    history = source.reload.attributes
+
+    result = described_class.new(plan: new_plan, profile: profile, client: client).call
+
+    expect(result).to have_attributes(synced_count: 0, removed_count: 1)
+    expect(client.deletions.last).to eq([ "cyclefar-workout-#{source.id}" ])
+    expect(source.reload.attributes).to eq(history)
+  end
+
+  it "updates a moved workout still in the next two using the same external identity" do
+    workouts = create_upcoming_workouts(2)
+    described_class.new(plan: plan, profile: profile, client: client).call
+    original_sync = workouts.first.intervals_icu_sync
+    workouts.first.update!(scheduled_on: Date.current + 3)
+
+    described_class.new(plan: plan, profile: profile, client: client).call
+
+    moved_payload = client.upserts.last.find { |event| event.fetch(:external_id) == original_sync.external_id }
+    expect(moved_payload.fetch(:start_date_local)).to eq("#{Date.current + 3}T00:00:00")
+    expect(workouts.first.reload.intervals_icu_sync.id).to eq(original_sync.id)
+    expect(client.deletions.flatten).to be_empty
+  end
+
+  it "retains uncertain upsert identities for cleanup after workouts change before retry" do
+    workouts = create_upcoming_workouts(2)
+    connection = SyncRecordingConnection.new
+    allow(connection).to receive(:request).and_raise(Net::ReadTimeout)
+    http_client = IntervalsIcu::Client.new(api_key: profile.intervals_icu_api_key, connection_factory: ->(_) { connection })
+
+    expect { described_class.new(plan: plan, profile: profile, client: http_client).call }.to raise_error(IntervalsIcu::Client::RequestError)
+    expect(connection).to have_received(:request).twice
+    expect(IntervalsIcuSync.where(planned_workout: workouts).count).to eq(2)
+    expect(IntervalsIcuSync.pluck(:intervals_event_id, :last_synced_at, :payload_digest)).to eq([ [ nil, nil, nil ], [ nil, nil, nil ] ])
+    workouts.first.update!(status: :missed)
+    workouts.last.destroy!
+
+    result = described_class.new(plan: plan, profile: profile, client: client).call
+
+    expect(result).to have_attributes(synced_count: 0, removed_count: 2)
+    expect(client.deletions.sole).to match_array(workouts.map { |workout| "cyclefar-workout-#{workout.id}" })
+    expect(IntervalsIcuSync.where(user: plan.user)).not_to exist
+  end
+
+  it "retains confirmed upserts and stale metadata when HTTP cleanup fails, even if the next set changes" do
+    workouts = create_upcoming_workouts(3)
+    connection = SyncRecordingConnection.new
+    http_client = IntervalsIcu::Client.new(api_key: profile.intervals_icu_api_key, connection_factory: ->(_) { connection })
+    sync = -> { described_class.new(plan: plan, profile: profile, client: http_client).call }
+    sync.call
+    old_metadata = workouts.first.intervals_icu_sync.attributes
+    workouts.first.update!(status: :missed)
+    allow(connection).to receive(:request).and_wrap_original do |original, request|
+      request.method == "PUT" ? SyncRecordingConnection::Response.new("503", "failure") : original.call(request)
+    end
+
+    expect { sync.call }.to raise_error(described_class::PartialSyncError, /cleanup failed.*Sync again/)
+    expect(workouts.first.reload.intervals_icu_sync.attributes).to eq(old_metadata)
+    expect(workouts.last.reload.intervals_icu_sync).to have_attributes(intervals_event_id: 101, last_synced_at: be_present, payload_digest: be_present)
+    workouts.last.update!(status: :missed)
+    allow(connection).to receive(:request).and_call_original
+
+    expect(sync.call).to have_attributes(synced_count: 1, removed_count: 2)
+    expect(JSON.parse(connection.requests.last.body).pluck("external_id")).to match_array([ workouts.first, workouts.last ].map { |workout| "cyclefar-workout-#{workout.id}" })
+    expect(sync.call).to have_attributes(synced_count: 1, removed_count: 0)
   end
 
   def create_upcoming_workouts(count, for_plan: plan, for_phase: phase)
