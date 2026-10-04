@@ -49,7 +49,7 @@ RSpec.describe "OFF-001 return prescriptions", generated_workouts: true do
       expect(later).to be_outline
       expect(later.generation_context["maximum_level"]).to eq(3)
       snapshot = stage_examples[1].workout_steps.map(&:attributes)
-      Planning::HorizonMaterializer.new(plan, date: today + 14).call
+      Planning::WorkoutBuilder.new(plan, date: today + 14).call
       expect(later.reload).to have_attributes(detail_status: "structured", progression_level: 3)
       expect(stage_examples[1].reload.workout_steps.map(&:attributes)).to eq(snapshot)
       expect(period.reload.return_ramp_days).to eq(16)
@@ -114,7 +114,7 @@ RSpec.describe "OFF-001 return prescriptions", generated_workouts: true do
     expect(later).to be_outline
     expect(later.generation_context.fetch("load_adjustments")).to include("return_target_band" => [ 55, 68 ])
     allow(Workouts::Variations).to receive(:for_generation).with("endurance", current_key: "sustained").and_return("undulating")
-    Planning::HorizonMaterializer.new(plan, date: later.scheduled_on).call
+    Planning::WorkoutBuilder.new(plan, date: later.scheduled_on).call
     expect(later.reload).to have_attributes(detail_status: "structured", variation_key: "undulating", duration_minutes: 63)
     expect(later.workout_steps.map(&:target_high_pct_ftp)).to all(be <= 68)
     expect(later.workout_steps.map(&:end_target_high_pct_ftp).compact).to all(be <= 68)

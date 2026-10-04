@@ -32,7 +32,7 @@ RSpec.describe "GEN-001 concurrent materialisation", type: :model do
           own_plan_instance = TrainingPlan.find(plan.id)
           ready << true
           start.pop
-          Planning::HorizonMaterializer.new(own_plan_instance).call
+          Planning::WorkoutBuilder.new(own_plan_instance).call
         end
       end
     end

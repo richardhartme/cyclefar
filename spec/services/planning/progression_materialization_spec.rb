@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
+RSpec.describe Planning::WorkoutBuilder, generated_workouts: true do
   let(:today) { Date.new(2026, 10, 5) }
   let(:plan) { create(:training_plan, starts_on: today, ends_on: today + 83, progression_mode: :continuous, hard_weeks_before_recovery: nil) }
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on, kind: :build) }

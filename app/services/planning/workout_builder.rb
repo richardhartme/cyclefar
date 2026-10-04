@@ -1,6 +1,6 @@
 module Planning
-  # Materializes outlined workouts to structured and applies weekly load limits.
-  class HorizonMaterializer
+  # Builds structured workouts for the next 14 days and applies weekly load limits.
+  class WorkoutBuilder
     Candidate = Data.define(:workout, :definition, :metrics, :selected) do
       def scheduled_on = workout.scheduled_on
       def progression_level = definition ? definition.progression_level : workout.progression_level
@@ -15,27 +15,27 @@ module Planning
     end
 
     def call
-      @plan.with_lock { materialize! }
+      @plan.with_lock { build! }
     end
 
     # An explicit late-completion request structures only its source. Moving
     # the ordinary horizon backwards would also rewrite unrelated outlines.
-    def materialize_for_completion!(workout)
+    def build_for_completion!(workout)
       @plan.with_lock do
         workout.reload
         unless workout.training_plan_id == @plan.id && workout.planned? && !workout.ftp_test? && workout.scheduled_on <= @date
-          raise ArgumentError, "Only a planned executable workout due today or earlier can be materialised for completion"
+          raise ArgumentError, "Only a planned executable workout due today or earlier can be built for completion"
         end
         return if workout.structured?
 
-        materialize!(workout_id: workout.id)
+        build!(workout_id: workout.id)
         workout.reload
       end
     end
 
     private
 
-    def materialize!(workout_id: nil)
+    def build!(workout_id: nil)
       @ftp = @plan.ftp_watts_for_planning
       @load_context = V1::LoadContext.new(@plan)
       eligible = @plan.planned_workouts.planned.outline.where.not(kind: :ftp_test)

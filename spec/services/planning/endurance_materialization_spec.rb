@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Planning::HorizonMaterializer do
+RSpec.describe Planning::WorkoutBuilder do
   it "uses the passed plan's rider FTP without structuring another rider's horizon" do
     plan = create(:training_plan, starts_on: Date.current - 7, ends_on: Date.current + 70)
     other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)

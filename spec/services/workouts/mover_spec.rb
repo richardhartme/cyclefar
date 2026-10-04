@@ -131,7 +131,7 @@ RSpec.describe Workouts::Mover, type: :service, generated_workouts: true do
     expect(workout.workout_steps).to be_empty
     expect(workout.progression_level).to eq(6)
     forecast = workout.estimated_tss
-    Planning::HorizonMaterializer.new(plan, date: today + 17).call
+    Planning::WorkoutBuilder.new(plan, date: today + 17).call
     expect(workout.reload).to be_structured
     expect(workout.progression_level).to eq(6)
     expect(workout.estimated_tss).to eq(forecast)
