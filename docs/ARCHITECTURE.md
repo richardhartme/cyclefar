@@ -89,7 +89,7 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 ## Integration
 
-`IntervalsIcu::WorkoutSerializer` turns expanded canonical steps into a flat workout-builder description and current-FTP event metadata. `IntervalsIcu::Client` isolates Basic auth, JSON, timeouts and one transient retry. `IntervalsIcu::SyncNextTwo` upserts the next eligible set, deletes stale owned events and persists sync metadata after success. Nullable workout foreign keys retain sync records after local deletion for later remote cleanup.
+`IntervalsIcu::WorkoutSerializer` turns expanded canonical steps into a flat workout-builder description and current-FTP event metadata. `IntervalsIcu::Client` isolates Basic auth, JSON, timeouts and one transient retry. `IntervalsIcu::SyncNextTwo` retains owned identities before upload, saves confirmed upserts, then deletes all of the rider's tracked calendar events outside the next eligible set. This includes missed/completed, past-moved, deleted and previous-plan workouts; local completed history and remote activities remain untouched. Stale metadata survives cleanup failure for retry, with a partial-sync message. Nullable workout foreign keys retain sync records after local deletion for later remote cleanup (CYF-14).
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the implemented request contract and reconciliation limits. Remote calls are stubbed in specs.
 

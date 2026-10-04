@@ -454,7 +454,7 @@ A `Sync to Intervals.icu` button syncs exactly the next two upcoming structured 
 - No automatic background syncing in V1.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
-- If one of the previously synced next-two workouts is no longer in the next-two set because it was moved/deleted/replanned, remove or update the corresponding app-owned Intervals.icu event as appropriate.
+- If one of the previously synced next-two workouts is no longer in the next-two set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
 - Never delete unrelated Intervals.icu calendar events.
 
 See `INTERVALS_ICU.md`.
