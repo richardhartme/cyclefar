@@ -12,7 +12,7 @@ control "ExistingPlanConfiguration" as ExistingConfiguration
 control "PlanBuilder" as Builder
 control "PreBreakProgression\nand ReturnRamp" as ReturnRules
 control "Generator and\nTargetBandLimiter" as Generator
-control "HorizonMaterializer" as Materializer
+control "WorkoutBuilder" as Materializer
 control "LoadContext, WeeklyLoadCap\nand LoadReduction" as LoadRules
 database "PostgreSQL" as Database
 

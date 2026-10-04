@@ -14,7 +14,7 @@ module Adaptations
         @workout.reload
         raise ArgumentError, "Only planned executable workouts can be completed" unless @workout.planned? && !@workout.ftp_test?
 
-        Planning::HorizonMaterializer.new(@workout.training_plan).materialize_for_completion!(@workout) if @workout.outline?
+        Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout) if @workout.outline?
 
         @workout.create_workout_feedback!(rpe: @rpe, completion_quality: @completion_quality)
         ftp = @workout.training_plan.ftp_watts_for_planning

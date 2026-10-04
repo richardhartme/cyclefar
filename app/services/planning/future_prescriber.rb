@@ -47,7 +47,7 @@ module Planning
           estimated_tss: item.metrics&.estimated_tss,
           estimated_work_kj: item.metrics&.estimated_work_kj)
       end
-      HorizonMaterializer.new(@plan).call
+      WorkoutBuilder.new(@plan).call
     end
 
     def replaceable_workouts(preserve_workout_ids)

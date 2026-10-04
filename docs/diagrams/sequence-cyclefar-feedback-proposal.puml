@@ -6,7 +6,7 @@ hide footbox
 
 actor Rider
 boundary "Owner-scoped\nRails controllers" as Controller
-control "HorizonMaterializer" as Materializer
+control "WorkoutBuilder" as Materializer
 control "CompletionRecorder" as Recorder
 control "FeedbackEvaluator" as Evaluator
 control "ProposalCreator +\nProposalFreshness" as Freshness
@@ -24,7 +24,7 @@ Controller -> Recorder: call(workout)
 group completion transaction under plan lock
   Recorder -> Database: lock plan; reload and validate source
   opt source is a due/overdue outline
-    Recorder -> Materializer: materialize_for_completion!(source)
+    Recorder -> Materializer: build_for_completion!(source)
     Materializer -> Database: read source context and fixed weekly load
     Materializer -> Materializer: generate source definition at current FTP with saved choices
     Materializer -> LoadRules: fit only source against context and weekly load

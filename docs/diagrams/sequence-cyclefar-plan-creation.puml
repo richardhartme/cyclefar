@@ -14,7 +14,7 @@ control "Workout engine" as Engine
 control "WeeklyLoadCap +\nLoadReduction" as LoadRules
 control "PreviewPresenter" as Presenter
 control "PlanCreator" as Creator
-control "HorizonMaterializer" as Materializer
+control "WorkoutBuilder" as Materializer
 database "PostgreSQL" as Database
 
 == Preview: no plan records are written ==

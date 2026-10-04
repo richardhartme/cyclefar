@@ -22,7 +22,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(calendar, "CalendarPresenter", "Planning presenter", "Reads persisted training and uses the shared recovery flags for calendar labels.")
   Component(presenter, "PreviewPresenter", "Planning presenter", "Formats a preview for the plan-creation interface.")
   Component(creator, "PlanCreator", "Planning service", "Persists a confirmed preview under the explicit user in one transaction.")
-  Component(materializer, "HorizonMaterializer", "Planning service", "Under the plan lock, structures executable outlines for today through day 13; applies accepted bias once and checks actual load and saves canonical steps, profile choices and generation references. Due/overdue completion structures only its source.")
+  Component(materializer, "WorkoutBuilder", "Planning service", "Under the plan lock, structures executable outlines for today through day 13; applies accepted bias once and checks actual load and saves canonical steps, profile choices and generation references. Due/overdue completion structures only its source.")
   Component(progression, "Progression", "Training::V1 pure calculation", "Applies global intensity bias, clamps levels to 1-7 and respects generation ceilings.")
   Component(load_cap, "WeeklyLoadCap and LoadReduction", "Planning::V1 pure calculations", "Apply ordered level, variation, target, broad-subtype and easy-filler reductions; preserve duration and saved endurance profiles; warn if infeasible.")
   Component(load_context, "LoadContext", "Planning::V1 service", "Uses shared recovery flags and excludes partial, assessment, taper, time-off and re-entry weeks from load references; enforces saved ceilings.")

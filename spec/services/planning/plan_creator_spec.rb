@@ -21,7 +21,7 @@ RSpec.describe Planning::PlanCreator, type: :service do
   it "materialises a later outline idempotently when it enters the horizon" do
     plan = described_class.new(configuration, user: user).create!
     future = plan.planned_workouts.outline.where(kind: :workout).order(:scheduled_on).first
-    Planning::HorizonMaterializer.new(plan, date: future.scheduled_on).call
+    Planning::WorkoutBuilder.new(plan, date: future.scheduled_on).call
     expect(future.reload).to be_structured
     expect(future.workout_steps).not_to be_empty
   end

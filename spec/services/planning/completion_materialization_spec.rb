@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
+RSpec.describe Planning::WorkoutBuilder, generated_workouts: true do
   let(:today) { Date.new(2026, 10, 5) }
   let(:plan) { create(:training_plan, starts_on: today - 28, ends_on: today + 55, progression_mode: :continuous, hard_weeks_before_recovery: nil) }
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on, kind: :build) }
@@ -29,8 +29,8 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     create(:rider_profile, user: plan.user, ftp_watts: 280)
     plan.update!(progression_state: { "intensity_bias" => 2 })
     workout = outline(variation_key: "redistributed_recovery", generation_context: { "baseline_level" => 3, "maximum_level" => 4 })
-    materializer = described_class.new(plan)
-    materializer.materialize_for_completion!(workout)
+    builder = described_class.new(plan)
+    builder.build_for_completion!(workout)
     definition = Workouts::Generator.new(
       subtype: :threshold,
       duration_minutes: 90,
@@ -43,7 +43,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     expect(workout).to have_attributes(progression_level: 4, variation_key: "redistributed_recovery")
     expect(workout.generation_context).to include("baseline_level" => 3, "maximum_level" => 4, "generated_level" => 4)
     before = snapshot(workout)
-    materializer.materialize_for_completion!(workout)
+    builder.build_for_completion!(workout)
     expect(snapshot(workout)).to eq(before)
   end
 
@@ -53,7 +53,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     other = outline(date: today - 6)
     current = outline(date: today)
     before = [ previous, other, current ].map { |item| snapshot(item) }
-    described_class.new(plan).materialize_for_completion!(workout)
+    described_class.new(plan).build_for_completion!(workout)
     expect(workout.reload.progression_level).to eq(1)
     expect([ previous, other, current ].map { |item| snapshot(item) }).to eq(before)
     expect(workout.duration_minutes).to eq(90)
@@ -61,10 +61,10 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
 
   it "FBK-003 saves an initial endurance profile and keeps it stable across repeat detail reads" do
     workout = outline(subtype: :endurance, intent: :endurance, progression_level: nil, variation_key: nil)
-    described_class.new(plan).materialize_for_completion!(workout)
+    described_class.new(plan).build_for_completion!(workout)
     expect(workout.variation_key).to be_in(%w[sustained alternating undulating])
     before = snapshot(workout)
-    described_class.new(plan).materialize_for_completion!(workout)
+    described_class.new(plan).build_for_completion!(workout)
     expect(snapshot(workout)).to eq(before)
   end
 
@@ -72,7 +72,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     workout = outline
     other_plan = create(:training_plan, starts_on: plan.starts_on, ends_on: plan.ends_on)
     before = snapshot(workout)
-    expect { described_class.new(other_plan).materialize_for_completion!(workout) }.to raise_error(ArgumentError)
+    expect { described_class.new(other_plan).build_for_completion!(workout) }.to raise_error(ArgumentError)
     expect(snapshot(workout)).to eq(before)
   end
 
@@ -83,7 +83,7 @@ RSpec.describe Planning::HorizonMaterializer, generated_workouts: true do
     future = outline(date: today + 1)
     [ missed, completed, test, future ].each do |workout|
       before = snapshot(workout)
-      expect { described_class.new(plan).materialize_for_completion!(workout) }.to raise_error(ArgumentError)
+      expect { described_class.new(plan).build_for_completion!(workout) }.to raise_error(ArgumentError)
       expect(snapshot(workout)).to eq(before)
     end
   end

@@ -49,7 +49,7 @@ RSpec.describe "CYF-11 persisted phase treatment", generated_workouts: true do
     snapshot = [ completed.reload.attributes, completed.workout_steps.map(&:attributes), completed.workout_feedback.attributes ]
     plan.update!(progression_state: { "intensity_bias" => 2 })
     taper = preview.phases.last
-    Planning::HorizonMaterializer.new(plan, date: taper.starts_on).call
+    Planning::WorkoutBuilder.new(plan, date: taper.starts_on).call
     preview.prescriptions.select { |item| item.phase == "taper" && item.intensity? }.each do |item|
       workout = plan.planned_workouts.find_by!(scheduled_on: item.scheduled_on)
       expect(workout).to be_structured

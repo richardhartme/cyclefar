@@ -22,7 +22,7 @@ class PlannedWorkoutsController < ApplicationController
 
   def show
     if @workout.planned? && @workout.outline? && !@workout.ftp_test? && @workout.scheduled_on <= Date.current
-      Planning::HorizonMaterializer.new(@workout.training_plan).materialize_for_completion!(@workout)
+      Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout)
     end
     @material_change_proposal = material_change_proposal
     @material_change_error = Adaptations::ProposalFreshness.new(@material_change_proposal).unavailability_message if @material_change_proposal

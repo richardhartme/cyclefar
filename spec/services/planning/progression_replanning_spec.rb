@@ -20,7 +20,7 @@ RSpec.describe "FBK-002 progression during explicit replanning", generated_worko
         progression_level: 3,
         duration_minutes: 90)
       plan.update!(progression_state: { "intensity_bias" => bias })
-      Planning::HorizonMaterializer.new(plan, date: today - 7).call
+      Planning::WorkoutBuilder.new(plan, date: today - 7).call
       reached = previous.reload.progression_level
       create(:time_off_period, training_plan: plan, starts_on: today - 3, ends_on: today - 1)
       prescriber = Planning::FuturePrescriber.new(plan: plan, slots: slots)
@@ -63,7 +63,7 @@ RSpec.describe "FBK-002 progression during explicit replanning", generated_worko
     expect(current.progression_level).to eq([ baseline - 1, 1 ].max)
     future = plan.planned_workouts.workout.outline.where("scheduled_on > ?", today + 13).order(:scheduled_on).first!
     forecast_level = future.progression_level
-    Planning::HorizonMaterializer.new(plan, date: future.scheduled_on).call
+    Planning::WorkoutBuilder.new(plan, date: future.scheduled_on).call
     expect(future.reload.progression_level).to be <= [ forecast_level - 1, 1 ].max
     expect(plan.reload.progression_state).to eq("intensity_bias" => -1)
   end
@@ -86,7 +86,7 @@ RSpec.describe "FBK-002 progression during explicit replanning", generated_worko
       subtype: :threshold,
       progression_level: 2,
       duration_minutes: 90)
-    Planning::HorizonMaterializer.new(event_plan).call
+    Planning::WorkoutBuilder.new(event_plan).call
     expect(workout.reload.progression_level).to eq(2)
   end
 end

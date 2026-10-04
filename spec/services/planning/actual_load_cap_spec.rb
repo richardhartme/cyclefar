@@ -30,12 +30,12 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
       actual = Workouts::Generator.new(subtype: :endurance, duration_minutes: 65, variation_key: profile).call
       expect(Metrics::WorkoutCalculator.new(steps: actual.steps, ftp_watts: 260).call.estimated_tss).to be > limit
 
-      expect(Planning::HorizonMaterializer.new(plan).call).to be_empty
+      expect(Planning::WorkoutBuilder.new(plan).call).to be_empty
       expect(workout.reload).to have_attributes(variation_key: profile, duration_minutes: 65)
       expect(workout.estimated_tss.to_f).to be <= limit
       expect(workout.generation_context.fetch("load_adjustments")).to eq("lower_targets" => true)
       saved = snapshot(workout)
-      Planning::HorizonMaterializer.new(plan).call
+      Planning::WorkoutBuilder.new(plan).call
       expect(snapshot(workout)).to eq(saved)
       expect(snapshot(reference)).to eq(fixed)
       expect(Workouts::Variations).to have_received(:for_generation).once
@@ -87,7 +87,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
       intent: :threshold,
       duration_minutes: 180,
       progression_level: 7)
-    warnings = Planning::HorizonMaterializer.new(plan).call
+    warnings = Planning::WorkoutBuilder.new(plan).call
     expect(workout.reload.duration_minutes).to eq(180)
     expect(workout.generation_context.fetch("load_adjustments")).to eq("lower_targets" => true, "easy_filler" => true)
     expect(workout.estimated_tss).to be > reference.estimated_tss * 1.08
@@ -117,7 +117,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
         intent: :threshold,
         duration_minutes: 90,
         progression_level: 3)
-      expect(Planning::HorizonMaterializer.new(plan).call).to be_empty
+      expect(Planning::WorkoutBuilder.new(plan).call).to be_empty
       expect(workout.reload.progression_level).to eq(3)
       review = Planning::WeeklyLoadReview.new(plan).call.find { |week| week.starts_on == today }
       expect(review.limit).to be_within(0.001).of(reference.estimated_tss.to_f * 1.08)
@@ -137,7 +137,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
       intent: :threshold,
       duration_minutes: 90,
       progression_level: 3)
-    expect(Planning::HorizonMaterializer.new(partial_plan).call).to be_empty
+    expect(Planning::WorkoutBuilder.new(partial_plan).call).to be_empty
     expect(workout.reload.progression_level).to eq(3)
     expect(Planning::WeeklyLoadReview.new(partial_plan).call.last.limit).to be_nil
   end
@@ -156,7 +156,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
       intent: :threshold,
       duration_minutes: 90,
       progression_level: 2)
-    expect(Planning::HorizonMaterializer.new(taper_plan).call).to be_empty
+    expect(Planning::WorkoutBuilder.new(taper_plan).call).to be_empty
     expect(workout.reload.progression_level).to eq(2)
     expect(Planning::WeeklyLoadReview.new(taper_plan).call.last.limit).to be_nil
   end
@@ -180,7 +180,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
     workout = created.planned_workouts.find_by!(scheduled_on: limited.scheduled_on)
     expect(workout).to be_outline
     expect(workout.generation_context.fetch("load_adjustments")).to eq(limited.definition.load_adjustments)
-    Planning::HorizonMaterializer.new(created, date: today + 1).call
+    Planning::WorkoutBuilder.new(created, date: today + 1).call
     expect(workout.reload).to be_structured
     expect(workout.workout_steps.reload.map { |step| Workouts::StepDefinition.from(step) }).to eq(limited.definition.steps)
   end
