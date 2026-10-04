@@ -1,13 +1,13 @@
 # CycleFar architecture diagrams
 
-These diagrams describe the implemented application, including owner-scoped requests and sync, account access, preview isolation, feedback comparisons, accepted progression bias and optional material-change replanning. All ten views were reviewed against the controllers, services and SQL schema on 2026-10-03, including proposal freshness, destination-aware moves, executable completion and ordered weekly load-cap enforcement through CYF-10. They do not certify all V1 requirements; outstanding behaviour is tracked in Jira.
+These diagrams describe the implemented application, including owner-scoped requests and sync, account access, preview isolation, feedback comparisons, accepted progression bias and optional material-change replanning. The views reflect changes through CYF-11 and were reviewed on 2026-10-04, including shared recovery scheduling, ranked FTP assessments and staged taper budgets. They do not certify all V1 requirements; outstanding behaviour is tracked in Jira.
 
 | View (PlantUML source) | PNG | Scope |
 | --- | --- | --- |
 | [System context](context-cyclefar-system.puml) | [PNG](png/context-cyclefar-system.png) | Rider, owner-scoped CycleFar, Intervals.icu and SMTP provider |
 | [Containers](container-cyclefar.puml) | [PNG](png/container-cyclefar.png) | Rails/Puma with supervised Solid Queue, PostgreSQL databases and SMTP provider |
 | [Application components](component-cyclefar-application.puml) | [PNG](png/component-cyclefar-application.png) | Authentication, controlled account access, request handling, presentation, domain services and persistence |
-| [Plan generation](component-cyclefar-plan-generation.puml) | [PNG](png/component-cyclefar-plan-generation.png) | Session draft, deterministic preview, confirmation, accepted bias and shared load limits during materialisation |
+| [Plan generation](component-cyclefar-plan-generation.puml) | [PNG](png/component-cyclefar-plan-generation.png) | Session draft, aligned recovery, ranked assessments, taper budgets, confirmation and saved generation choices during materialisation |
 | [Plan changes](component-cyclefar-plan-change.puml) | [PNG](png/component-cyclefar-plan-change.png) | Manual edits, completion, bounded feedback, before/after comparison, atomic acceptance, schedule and FTP updates |
 | [Intervals.icu sync](component-cyclefar-intervals-icu-sync.puml) | [PNG](png/component-cyclefar-intervals-icu-sync.png) | Selection, serialization, HTTP calls and local reconciliation metadata |
 
@@ -15,8 +15,8 @@ The component views answer **which parts own a responsibility**. For request ord
 
 | Sequence view (PlantUML source) | PNG | Follow this flow |
 | --- | --- | --- |
-| [Create a plan](sequence-cyclefar-plan-creation.puml) | [PNG](png/sequence-cyclefar-plan-creation.png) | Submit and review an owner-bound, in-memory preview; confirm, persist outlines and materialize the 14-day horizon. |
-| [Change future training](sequence-cyclefar-future-replanning.puml) | [PNG](png/sequence-cyclefar-future-replanning.png) | Availability, time-off or missed-workout replan enters `FuturePrescriber`, replaces affected future prescriptions and materializes nearby detail. |
+| [Create a plan](sequence-cyclefar-plan-creation.puml) | [PNG](png/sequence-cyclefar-plan-creation.png) | Review an owner-bound preview with shared scheduling and taper budgets; confirm, persist generation choices and materialize the 14-day horizon. |
+| [Change future training](sequence-cyclefar-future-replanning.puml) | [PNG](png/sequence-cyclefar-future-replanning.png) | Rebuild affected future prescriptions with assessment exclusions and saved taper context, then materialize nearby detail. |
 | [Feedback proposal](sequence-cyclefar-feedback-proposal.puml) | [PNG](png/sequence-cyclefar-feedback-proposal.png) | Completion saves an immutable snapshot; feedback creates an optional proposal; read-only comparison precedes acceptance or rejection. |
 | [Material Change Workout proposal](sequence-cyclefar-material-change-proposal.puml) | [PNG](png/sequence-cyclefar-material-change-proposal.png) | Change Workout immediately saves the selected workout; a separate optional acceptance replans the bounded following block. |
 
@@ -37,6 +37,12 @@ AWS Terraform/CloudFormation templates are separate infrastructure preparation. 
 Ordinary and missed Move share `Workouts::Mover` and `DestinationValidator`. Eligible same-context moves of at most seven days keep their structure; other moves regenerate from destination progression, retaining subtype and duration. Destination exclusions and weekly load warnings apply to both paths. Openers record immutable completion feedback without progression adaptation; late regular-workout feedback is suppressed only when the next scheduled workout is completed.
 
 `WeeklyLoadCap` and `LoadReduction` enforce the ordered section 27 strategy during previews, actual materialisation and feedback comparisons/acceptance: progression level, lower-load variation, work targets within existing bands, compatible subtype reduction for broad Intervals, then valid short main sets plus easy filler. Normal duration, specific subtype intent and sampled endurance profile identity remain fixed. Generation choices survive outline persistence; infeasible schedules show a non-blocking warning after valid options are exhausted. Partial, recovery, taper, assessment, time-off and re-entry weeks do not become comparable hard-week references. Manual one-off overrides retain separate automatic-load references.
+
+`RecoverySchedule` supplies the same flags to `PlanBuilder`, `CalendarPresenter` and `LoadContext`. A recovery within one week of a Build/Speciality transition can align to the preceding complete Monday–Sunday week; at least one hard week separates recoveries and the cycle resumes from the aligned week. Taper weeks are excluded; continuous progression adds no scheduled recoveries.
+
+`AssessmentSchedule` ranks configured intensity days, including specific subtypes, within the four-to-six-week window: first intensity after recovery, first intensity near a phase start, rest/recovery-preceded intensity, then other intensity and ordinary-day fallbacks. Ties use distance from the ideal five-week date and then the earlier date. If the whole window is unavailable, it uses the first later eligible slot. Recovery and taper are excluded; `ExistingPlanConfiguration` also excludes time off and return ramps before selection. The 14-day end exclusion applies to target events, not non-event plans. Short plans retain the no-routine-assessment policy.
+
+After hard-week load enforcement, `PlanBuilder` budgets taper stages against the highest comparable generated hard-week TSS. A long taper's earlier stage targets 75% of peak, prorated by its days; the final seven dates through the event target 50%, including for non-Sunday events. Early/final intensity work factors are 75%/60%, retaining normal power bands and positive 30-second segments. Duration adjusts toward the budget without adding training dates; the 30-minute minimum, event and opener remain fixed, so sparse availability can make the approximate target infeasible. Saved `load_adjustments.main_set_factor` and fitted progression ceilings survive outline persistence, horizon generation and post-break recalculation; positive bias cannot escalate saved tapered sets. Legacy taper outlines retain the level-2 ceiling fallback. The change does not bulk rewrite existing plans.
 
 ## Rendering and maintenance
 
@@ -60,4 +66,4 @@ PlantUML resolves this relative output directory beside each source, producing `
 
 When updating a view, compare it with the named controllers/services, routes and persistence schema. Check relationship endpoints, render the sources and inspect the resulting images. Keep implementation limits in diagram notes and this guide aligned with [ARCHITECTURE.md](../ARCHITECTURE.md), especially after proposal, move, completion or horizon changes.
 
-Validation on 2026-10-03 rendered all ten views to PNG and temporary SVG with PlantUML 1.2026.8, the previously downloaded C4 includes and the built-in Smetana layout engine. The exports were checked for rendering errors and visually reviewed; source/PNG links were checked.
+Validation on 2026-10-04 rendered all ten views to PNG and temporary SVG with PlantUML 1.2026.8, the previously downloaded C4 includes and the built-in Smetana layout engine. The exports were checked for rendering errors and visually reviewed; source/PNG links were checked.

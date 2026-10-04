@@ -42,12 +42,14 @@ group transaction under plan lock
     Prescriber -> Database: read pre-break levels and time-off context
     Prescriber -> Database: remove replaceable planned regular workouts\nand blocked-date planned specials
     Prescriber -> ExistingConfiguration: build from saved plan and supplied slots
-    ExistingConfiguration --> Prescriber: existing-plan configuration
+    ExistingConfiguration --> Prescriber: saved plan and slots; assessment exclusions for time off/return ramps
     Prescriber -> Builder: preview(configuration)
+    Builder -> Builder: align recovery; rank unblocked FTP-test dates\nforecast prescriptions and metrics
     Builder -> LoadRules: apply ordered cap reductions to forecasts
+    Builder -> Builder: budget taper stages against comparable peak load\nretain event/opener and save reduced main-set factors
     Builder --> Prescriber: deterministic prescriptions and generation choices
     Prescriber -> Prescriber: skip blocked dates; apply return-ramp/resumption rules
-    Prescriber -> Database: create outlines on empty dates\nretain target/filler choices and effective levels
+    Prescriber -> Database: create outlines on empty dates\nretain target/filler choices, taper factors, ceilings and effective levels
     Prescriber -> Materializer: call(plan)
     Materializer -> Database: lock plan; read eligible outlines and fixed workouts
     Materializer -> Materializer: apply accepted bias once; generate actual profiles/metrics
@@ -65,6 +67,8 @@ note over Prescriber, Database
   Missed Leave and Move do not enter this re-prescription flow;
   ordinary and missed Move use Workouts::Mover and shared destination rules.
   Normal hard-week duration and specific subtype intent remain fixed.
+  Taper duration follows stage budgets; saved work factors preserve power bands.
+  Only affected dates are replaced; existing plans are not bulk rewritten.
   Calendar review shows a warning when valid load reductions are exhausted.
 end note
 @enduml
