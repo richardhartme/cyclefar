@@ -186,6 +186,10 @@ Important:
 
 CYF-11 also saves `main_set_factor` for tapered intensity sets, alongside their fitted progression ceiling. It reduces hard time while retaining normal power bands when outlines become structured; completed rows are unchanged.
 
+CYF-12 saves `load_adjustments.return_target_band` for return-stage main power ranges and an overall step ceiling, plus `return_ramp_stage` (1–4) for the prescription's explanation. These choices survive initial endurance-profile sampling and later materialisation, including easy outlines. The final ramp stage retains its reduced progression ceiling. No migration or completed-row rewrite is required.
+
+Material-replan proposals with pre-break fingerprints from the previous baseline algorithm become stale and require dismissal/recreation. Their payload format remains readable; acceptance rechecks the current comparable baseline.
+
 The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing pending proposal payloads remain compatible.
 
 ## WorkoutStep

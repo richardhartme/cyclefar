@@ -97,18 +97,22 @@ module Planning
     end
 
     def illness_reentry(item, period)
-      stage = [ ((item.scheduled_on - period.ends_on - 1) * 4 / period.return_ramp_days).floor, 3 ].min
-      subtype, duration_factor, level = case stage
-      when 0 then [ :recovery, 0.60, nil ]
-      when 1 then [ :endurance, 0.70, nil ]
-      when 2 then [ item.intensity? ? :tempo : :endurance, 0.80, item.intensity? ? 1 : nil ]
-      else [ item.subtype, 1.0, item.intensity? ? resumed_level(item, period, reduction: 1) : nil ]
+      ramp = V1::ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days)
+      stage = ramp.stage_on(item.scheduled_on)
+      subtype, level = case stage
+      when 0 then [ :recovery, nil ]
+      when 1 then [ :endurance, nil ]
+      when 2 then [ item.intensity? ? :tempo : :endurance, item.intensity? ? 1 : nil ]
+      else [ item.subtype, item.intensity? ? resumed_level(item, period) : nil ]
       end
+      band = ramp.target_band(item.scheduled_on, intensity: item.intensity?)
       recalculate(
         item,
         subtype: subtype,
-        duration_minutes: reduced_duration(item.duration_minutes, duration_factor),
+        duration_minutes: reduced_duration(item.duration_minutes, ramp.duration_factor(item.scheduled_on)),
         progression_level: level,
+        load_adjustments: band ? { "return_target_band" => band } : {},
+        return_ramp_stage: stage + 1,
         purpose: "Return-to-training stage #{stage + 1} after #{period.reason.humanize.downcase}.")
     end
 
@@ -123,24 +127,25 @@ module Planning
         purpose: "Resuming progression after #{period.reason.humanize.downcase} time off.")
     end
 
-    def resumed_level(item, period, reduction: 0)
-      baseline = @pre_break_levels.fetch(period.id, 1)
-      weekly_progression = ((item.scheduled_on - period.ends_on - 1) / 7).to_i
+    def resumed_level(item, period)
+      baseline = @pre_break_levels.fetch(period.id).fetch(item.subtype, 1)
+      ceiling = if period.return_ramp_days
+        V1::ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days).progression_level(item.scheduled_on, baseline: baseline)
+      else
+        baseline + ((item.scheduled_on - period.ends_on - 1) / 7).floor
+      end
       biased_level = Training::V1::Progression.level(
         baseline: item.progression_level,
         bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
         maximum: item.phase == "taper" ? item.generation_context["maximum_level"] : nil)
-      [ biased_level, [ baseline - reduction + weekly_progression, 1 ].max ].min
+      [ biased_level, ceiling ].min
     end
 
     def reduced_duration(duration, factor)
       [ (duration * factor).round, Training::V1::Rules::MINIMUM_DURATION_MINUTES ].max
     end
 
-    def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:)
-      if item.intensity?
-        @generation_contexts[item.scheduled_on] = item.generation_context.merge("baseline_level" => item.progression_level, "maximum_level" => progression_level)
-      end
+    def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:, load_adjustments: {}, return_ramp_stage: nil)
       level = progression_level || 1
       definition = Workouts::Generator.new(
         subtype: subtype,
@@ -150,7 +155,13 @@ module Planning
         phase: item.phase,
         goal: @plan.goal,
         discipline: @plan.discipline,
-        load_adjustments: item.phase == "taper" ? item.definition.load_adjustments : {}).call
+        load_adjustments: (item.phase == "taper" ? item.definition.load_adjustments : {}).merge(load_adjustments)).call
+      context = item.generation_context.merge("load_adjustments" => definition.load_adjustments)
+      if item.intensity?
+        context.merge!("baseline_level" => item.progression_level, "maximum_level" => definition.progression_level)
+      end
+      context["return_ramp_stage"] = return_ramp_stage if return_ramp_stage
+      @generation_contexts[item.scheduled_on] = context
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
       item.with(
         subtype: definition.subtype,
@@ -168,11 +179,9 @@ module Planning
     end
 
     def pre_break_levels
+      workouts = @plan.planned_workouts.workout.where.not(status: :missed).where.not(progression_level: nil).to_a
       time_off_periods.to_h do |period|
-        level = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(progression_level: nil).map do |workout|
-          workout.generation_context.fetch("generated_level", workout.progression_level)
-        end.compact.max
-        [ period.id, level || 1 ]
+        [ period.id, V1::PreBreakProgression.levels(workouts, before: period.starts_on) ]
       end
     end
 

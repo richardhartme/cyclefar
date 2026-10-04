@@ -25,6 +25,9 @@ module Planning
       TAPER_FINAL_STAGE_DAYS = 7
       TAPER_NO_HARD_DAYS = 2
       MOVE_STRUCTURE_WINDOW_DAYS = 7
+      RETURN_RAMP_DURATION_FACTORS = [ 0.60, 0.70, 0.80, 1.0 ].freeze
+      RETURN_RAMP_TARGET_BANDS = [ [ 45, 60 ].freeze, [ 55, 68 ].freeze ].freeze
+      RETURN_RAMP_LEVEL_REDUCTION = 1
 
       PHASE_PROPORTIONS = {
         with_base: { base: 0.35, build: 0.40, speciality: 0.25 }.freeze,
