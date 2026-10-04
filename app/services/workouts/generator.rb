@@ -32,7 +32,8 @@ module Workouts
         duration_minutes: @duration_minutes,
         progression_level: @level,
         variation_key: @variation_key,
-        easy_filler: @load_adjustments["easy_filler"] == true).call
+        easy_filler: @load_adjustments["easy_filler"] == true,
+        work_factor: @load_adjustments.fetch("main_set_factor", 1.0)).call
       steps = fit.steps
       if @load_adjustments["lower_targets"] == true
         steps = steps.map do |step|
@@ -56,9 +57,9 @@ module Workouts
         phase: @phase,
         goal: @goal,
         discipline: @discipline,
-        name: "#{rules::SUBTYPE_NAMES.fetch(@subtype)} #{fit.name_suffix}",
+        name: @load_adjustments["main_set_factor"] ? "#{rules::SUBTYPE_NAMES.fetch(@subtype)} tapered intervals" : "#{rules::SUBTYPE_NAMES.fetch(@subtype)} #{fit.name_suffix}",
         purpose: "#{@phase.capitalize} phase. #{rules::PURPOSES.fetch(@subtype)}",
-        main_set_summary: fit.summary,
+        main_set_summary: @load_adjustments["main_set_factor"] ? "#{steps.select { |step| step.group_key == 'main' }.sum(&:duration_seconds) / 60.0} min of brief intensity with easy recovery" : fit.summary,
         steps: steps,
         reason_codes: reason_codes,
         load_adjustments: @load_adjustments)

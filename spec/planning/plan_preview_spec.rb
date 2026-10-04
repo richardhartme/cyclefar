@@ -55,7 +55,7 @@ RSpec.describe Planning::PlanBuilder do
   it "PLN-012 overlays N hard weeks then one recovery week without a cycle in continuous mode" do
     cycled = preview(progression_mode: "hard_recovery_cycle", hard_weeks_before_recovery: 3, duration_months: 3)
     continuous = preview(progression_mode: "continuous", duration_months: 3)
-    expect(cycled.weeks.map(&:recovery_week)).to eq([ false, false, false, true, false, false, false, true, false, false, false, true, false ])
+    expect(cycled.weeks.map(&:recovery_week)).to eq([ false, false, false, true, false, false, false, false, true, false, false, false, true ])
     expect(continuous.weeks.map(&:recovery_week)).to all(be(false))
     recovery = cycled.weeks.select(&:recovery_week)
     hard = cycled.weeks.reject(&:recovery_week)

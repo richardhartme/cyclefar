@@ -126,7 +126,10 @@ module Planning
     def resumed_level(item, period, reduction: 0)
       baseline = @pre_break_levels.fetch(period.id, 1)
       weekly_progression = ((item.scheduled_on - period.ends_on - 1) / 7).to_i
-      biased_level = Training::V1::Progression.level(baseline: item.progression_level, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i)
+      biased_level = Training::V1::Progression.level(
+        baseline: item.progression_level,
+        bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
+        maximum: item.phase == "taper" ? item.generation_context["maximum_level"] : nil)
       [ biased_level, [ baseline - reduction + weekly_progression, 1 ].max ].min
     end
 
@@ -136,7 +139,7 @@ module Planning
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:)
       if item.intensity?
-        @generation_contexts[item.scheduled_on] = { "baseline_level" => item.progression_level, "maximum_level" => progression_level }
+        @generation_contexts[item.scheduled_on] = item.generation_context.merge("baseline_level" => item.progression_level, "maximum_level" => progression_level)
       end
       level = progression_level || 1
       definition = Workouts::Generator.new(
@@ -146,7 +149,8 @@ module Planning
         variation_key: Workouts::Variations.default_key(subtype),
         phase: item.phase,
         goal: @plan.goal,
-        discipline: @plan.discipline).call
+        discipline: @plan.discipline,
+        load_adjustments: item.phase == "taper" ? item.definition.load_adjustments : {}).call
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
       item.with(
         subtype: definition.subtype,

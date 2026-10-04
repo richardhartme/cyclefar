@@ -4,6 +4,11 @@ module Planning
       def initialize(plan)
         @plan = plan
         @periods = plan.time_off_periods.to_a
+        @recovery_flags = RecoverySchedule.new(
+          starts_on: plan.starts_on,
+          ends_on: plan.ends_on,
+          phases: plan.plan_phases.sort_by(&:position),
+          hard_weeks: plan.hard_recovery_cycle? ? plan.hard_weeks_before_recovery : nil).flags
       end
 
       def comparable_week?(week_start, workouts)
@@ -22,7 +27,11 @@ module Planning
           maximum = [ maximum || Training::V1::Rules::PROGRESSION_LEVELS.end, workout.progression_level || 1 ].min
         end
         maximum = [ maximum || 7, Rules::RECOVERY_MAXIMUM_LEVEL ].min if recovery_week?(workout.scheduled_on.beginning_of_week)
-        maximum = [ maximum || 7, Rules::PHASE_LEVELS[:taper].end ].min if workout.plan_phase&.kind_taper?
+        # Saved tapered sets retain their normal intensity bands with reduced
+        # hard time; legacy taper prescriptions retain the level-2 fallback.
+        if workout.plan_phase&.kind_taper? && !workout.generation_context.fetch("load_adjustments", {}).key?("main_set_factor")
+          maximum = [ maximum || 7, Rules::PHASE_LEVELS[:taper].end ].min
+        end
         maximum
       end
 
@@ -34,10 +43,7 @@ module Planning
       end
 
       def recovery_week?(week_start)
-        return false unless @plan.hard_recovery_cycle?
-
-        index = ((week_start - @plan.starts_on.beginning_of_week) / 7).to_i
-        index % (@plan.hard_weeks_before_recovery + 1) == @plan.hard_weeks_before_recovery
+        @recovery_flags.fetch(week_start, false)
       end
     end
   end

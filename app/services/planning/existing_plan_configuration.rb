@@ -19,6 +19,12 @@ module Planning
     def event_discipline = plan.target_event&.discipline
     def event_expected_duration_minutes = plan.target_event&.expected_duration_minutes
 
+    def assessment_blocked?(date)
+      plan.time_off_periods.any? do |period|
+        date.between?(period.starts_on, period.ends_on + period.return_ramp_days.to_i)
+      end
+    end
+
     def slot_for(weekday)
       availability.find { |slot| slot.weekday == weekday }
     end
