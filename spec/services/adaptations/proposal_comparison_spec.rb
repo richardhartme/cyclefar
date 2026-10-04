@@ -166,6 +166,7 @@ RSpec.describe Adaptations::ProposalComparison, type: :service, generated_workou
   end
 
   it "LOAD-002 invalidates a proposal when fixed load is added, then caps a fresh proposal without editing fixed load" do
+    travel_to Date.new(2026, 10, 5) # Target and fixed load must share a calendar week.
     plan_with_reference = create(:training_plan, starts_on: Date.current.beginning_of_week - 14, ends_on: Date.current + 83, progression_mode: :continuous, hard_weeks_before_recovery: nil)
     reference_phase = create(:plan_phase, training_plan: plan_with_reference, starts_on: plan_with_reference.starts_on, ends_on: plan_with_reference.ends_on)
     reference = generated_workout(plan: plan_with_reference, phase: reference_phase, date: Date.current.beginning_of_week - 7, level: 5, duration: 90)

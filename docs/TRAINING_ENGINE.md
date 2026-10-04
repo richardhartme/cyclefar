@@ -191,6 +191,8 @@ Alignment preference:
 - if a planned recovery week naturally falls within one week of a Base→Build or Build→Speciality transition, align the recovery week immediately before the new phase when feasible;
 - do not insert a recovery week inside the final taper.
 
+CYF-11 shares this schedule across preview, calendar and load checks. A nearby recovery can move by one calendar week to the last complete Monday–Sunday week before a transition. An alignment must leave at least one hard week between recoveries; the N-hard-week cycle resumes from the aligned week. Midweek phase boundaries use the preceding complete week. Continuous progression adds no scheduled recovery weeks.
+
 ### Recovery-week load target
 
 Aim for approximately 55–70% of the most recent comparable hard week's planned TSS.
@@ -926,6 +928,8 @@ Rules:
 
 ## 42. FTP Test calendar behaviour
 
+CYF-11 ranks eligible configured intensity days, including specific subtypes, before ordinary-day fallbacks. Equal-ranked candidates use distance from the ideal five-week date, then the earlier date. If the entire four-to-six-week window is unavailable, use the first later eligible day. Existing-plan forecasts exclude time off and return ramps before selection. The 14-day exclusion applies only before a target event; a non-event plan can include an assessment near its end. Short plans retain the no-routine-assessment policy.
+
 Display `FTP Test` as a special workout replacement.
 
 Detail text should say, in effect:
@@ -965,6 +969,8 @@ For 10–14 day taper:
 - first taper week: ~70–80% of normal peak load;
 - event week: ~40–60% of normal peak load before the event;
 - retain brief intensity exposures.
+
+CYF-11 uses the final seven dates through the event as the event stage, including for non-Sunday events. The earlier stage of a long taper is prorated by its number of days. Stage targets are 75% and 50% of the highest comparable generated hard-week TSS; partial, recovery, assessment and taper weeks are excluded from that reference. Keep configured intensity exposures in the first stage with reduced hard time, then retain one early intensity session in the final stage. Normal intensity power bands remain unchanged. Tapered main sets use 75%/60% of ladder work time, rounded to positive 30-second segments, and saved progression ceilings prevent positive bias from escalating them. Adjust scheduled ride duration toward the stage budget; retain the 30-minute minimum and fixed opener even if sparse availability makes the approximate target infeasible. Do not add training dates to fill a budget. Existing plans are not bulk rewritten by this change.
 
 ## 45. Opener workout
 
