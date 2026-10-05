@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 460" role="img" aria-labelledby="t d" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Suggested plan change</title>
+  <desc id="d">A proposal to change Threshold 3x8 at 55 TSS to Threshold 3x10 at 63 TSS after an easy ride, with Accept and Not now buttons.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#312e81" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="640" height="460" rx="40" fill="#fce7f3"/>
+  <rect x="40" y="40" width="560" height="380" rx="24" fill="#fff" stroke="#e2e8f0" filter="url(#shadow)"/>
+  <text x="72" y="92" font-size="14" font-weight="700" letter-spacing="2" fill="#db2777">SUGGESTED CHANGE</text>
+  <text x="72" y="130" font-size="22" font-weight="700" fill="#0f172a">That felt easy. Make next week</text>
+  <text x="72" y="160" font-size="22" font-weight="700" fill="#0f172a">a little harder?</text>
+  <rect x="72" y="196" width="236" height="102" rx="12" fill="#f8fafc"/>
+  <text x="88" y="224" font-size="14" fill="#64748b">Before</text>
+  <text x="88" y="254" font-size="18" font-weight="600" fill="#0f172a">Threshold 3x8</text>
+  <text x="88" y="280" font-size="16" fill="#64748b">55 TSS</text>
+  <rect x="332" y="196" width="236" height="102" rx="12" fill="#eef2ff"/>
+  <text x="348" y="224" font-size="14" fill="#432dd7">After</text>
+  <text x="348" y="254" font-size="18" font-weight="600" fill="#0f172a">Threshold 3x10</text>
+  <text x="348" y="280" font-size="16" fill="#64748b">63 TSS</text>
+  <rect x="72" y="328" width="124" height="48" rx="10" fill="#432dd7"/>
+  <text x="134" y="358" font-size="16" font-weight="600" fill="#fff" text-anchor="middle">Accept</text>
+  <rect x="208" y="328" width="124" height="48" rx="10" fill="#fff" stroke="#cbd5e1"/>
+  <text x="270" y="358" font-size="16" font-weight="600" fill="#334155" text-anchor="middle">Not now</text>
+</svg>

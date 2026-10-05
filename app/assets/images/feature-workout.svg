@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 572" role="img" aria-labelledby="t d" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Structured workout</title>
+  <desc id="d">Threshold 3x8: three eight-minute threshold intervals, 45 minutes, 55 TSS, 91 percent of FTP. FTP rises from 260 to 267 watts and future targets update.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#312e81" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="640" height="572" rx="40" fill="#fef3c7"/>
+  <rect x="40" y="76" width="560" height="456" rx="24" fill="#fff" stroke="#e2e8f0" filter="url(#shadow)"/>
+  <text x="72" y="134" font-size="24" font-weight="700" fill="#0f172a">Threshold 3x8</text>
+  <text x="72" y="160" font-size="15" fill="#64748b">Build · Tuesday</text>
+  <rect x="476" y="114" width="96" height="28" rx="14" fill="#fef3c7"/>
+  <text x="524" y="133" font-size="14" font-weight="600" fill="#92400e" text-anchor="middle">Intervals</text>
+  <g transform="translate(72 190) scale(1.5)">
+    <line x1="0" y1="40" x2="320" y2="40" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+    <polygon points="0,110 0,78 40,60 40,110" fill="#94a3b8"/>
+    <rect x="40" y="78" width="30" height="32" fill="#7dd3fc"/>
+    <rect x="70" y="30" width="50" height="80" fill="#f59e0b"/>
+    <rect x="120" y="78" width="20" height="32" fill="#7dd3fc"/>
+    <rect x="140" y="30" width="50" height="80" fill="#f59e0b"/>
+    <rect x="190" y="78" width="20" height="32" fill="#7dd3fc"/>
+    <rect x="210" y="30" width="50" height="80" fill="#f59e0b"/>
+    <polygon points="260,78 320,92 320,110 260,110" fill="#7dd3fc"/>
+  </g>
+  <line x1="72" y1="390" x2="568" y2="390" stroke="#f1f5f9" stroke-width="2"/>
+  <text x="152" y="428" font-size="14" fill="#64748b" text-anchor="middle">Duration</text>
+  <text x="152" y="458" font-size="22" font-weight="700" fill="#0f172a" text-anchor="middle">45 min</text>
+  <text x="320" y="428" font-size="14" fill="#64748b" text-anchor="middle">Load</text>
+  <text x="320" y="458" font-size="22" font-weight="700" fill="#0f172a" text-anchor="middle">55 TSS</text>
+  <text x="488" y="428" font-size="14" fill="#64748b" text-anchor="middle">Target</text>
+  <text x="488" y="458" font-size="22" font-weight="700" fill="#0f172a" text-anchor="middle">91% FTP</text>
+  <rect x="16" y="16" width="252" height="76" rx="16" fill="#fff" stroke="#e2e8f0" filter="url(#shadow)"/>
+  <text x="36" y="44" font-size="14" fill="#64748b">FTP</text>
+  <text x="36" y="73" font-size="24" font-weight="700" fill="#0f172a">260 W<tspan font-size="16" font-weight="500" fill="#0d9488"> → 267 W</tspan></text>
+</svg>

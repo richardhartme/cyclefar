@@ -66,73 +66,15 @@
       </ul>
     </div>
 
-    <div class="relative isolate">
-      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-indigo-100"></div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-indigo-900/10" aria-hidden="true">
-        <p class="text-sm font-semibold text-slate-900">Training days</p>
-        <ul class="mt-4 space-y-2 text-sm">
-          <% [
-            [ "Mon", "Rest", nil ],
-            [ "Tue", "Intervals", "60 min" ],
-            [ "Wed", "Rest", nil ],
-            [ "Thu", "Endurance", "90 min" ],
-            [ "Fri", "Rest", nil ],
-            [ "Sat", "Intervals", "60 min" ],
-            [ "Sun", "Endurance", "120 min" ]
-          ].each do |day, kind, duration| %>
-            <li class="flex items-center justify-between rounded-lg px-3 py-2 <%= duration ? 'bg-slate-50' : '' %>">
-              <span class="w-10 font-medium <%= duration ? 'text-slate-900' : 'text-slate-400' %>"><%= day %></span>
-              <% if duration %>
-                <span class="rounded-full px-3 py-0.5 text-xs font-semibold <%= kind == 'Intervals' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800' %>"><%= kind %></span>
-                <span class="w-16 text-right text-slate-600"><%= duration %></span>
-              <% else %>
-                <span class="text-slate-400"><%= kind %></span>
-                <span class="w-16"></span>
-              <% end %>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-      <div class="absolute -bottom-6 right-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:-right-8" aria-hidden="true">
-        <p class="text-xs text-slate-500">Weekly total</p>
-        <p class="text-lg font-bold text-slate-900">330 min <span class="text-sm font-medium text-indigo-700">&middot; 12 weeks</span></p>
-      </div>
+    <div>
+      <%= image_tag "feature-schedule.svg", alt: "Weekly training days: intervals on Tuesday and Saturday, endurance on Thursday and Sunday, 330 minutes per week over 12 weeks", width: 640, height: 600, loading: "lazy", class: "block h-auto w-full" %>
     </div>
   </section>
 
   <%# Feature: workouts %>
   <section aria-labelledby="workout-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
-    <div class="relative isolate order-last lg:order-first">
-      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-amber-100"></div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-amber-900/10" aria-hidden="true">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-lg font-bold text-slate-900">Threshold 3x8</p>
-            <p class="text-sm text-slate-500">Build &middot; Tuesday</p>
-          </div>
-          <span class="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-800">Intervals</span>
-        </div>
-        <svg viewBox="0 0 320 110" class="mt-5 h-auto w-full" role="presentation">
-          <line x1="0" y1="40" x2="320" y2="40" stroke="#e2e8f0" stroke-dasharray="4 4"/>
-          <polygon points="0,110 0,78 40,60 40,110" fill="#94a3b8"/>
-          <rect x="40" y="78" width="30" height="32" fill="#7dd3fc"/>
-          <rect x="70" y="30" width="50" height="80" fill="#f59e0b"/>
-          <rect x="120" y="78" width="20" height="32" fill="#7dd3fc"/>
-          <rect x="140" y="30" width="50" height="80" fill="#f59e0b"/>
-          <rect x="190" y="78" width="20" height="32" fill="#7dd3fc"/>
-          <rect x="210" y="30" width="50" height="80" fill="#f59e0b"/>
-          <polygon points="260,78 320,92 320,110 260,110" fill="#7dd3fc"/>
-        </svg>
-        <dl class="mt-5 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
-          <div><dt class="text-xs text-slate-500">Duration</dt><dd class="font-bold text-slate-900">45 min</dd></div>
-          <div><dt class="text-xs text-slate-500">Load</dt><dd class="font-bold text-slate-900">55 TSS</dd></div>
-          <div><dt class="text-xs text-slate-500">Target</dt><dd class="font-bold text-slate-900">91% FTP</dd></div>
-        </dl>
-      </div>
-      <div class="absolute left-2 -top-6 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:-left-8" aria-hidden="true">
-        <p class="text-xs text-slate-500">FTP</p>
-        <p class="text-lg font-bold text-slate-900">260 W <span class="text-sm font-medium text-teal-600">&rarr; 267 W</span></p>
-      </div>
+    <div class="order-last lg:order-first">
+      <%= image_tag "feature-workout.svg", alt: "Threshold 3x8 workout profile showing three threshold intervals, 45 minutes, 55 TSS, with FTP updating from 260 W to 267 W", width: 640, height: 572, loading: "lazy", class: "block h-auto w-full" %>
     </div>
 
     <div>
@@ -160,50 +102,15 @@
       </ul>
     </div>
 
-    <div class="relative isolate">
-      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-pink-100"></div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-pink-900/10" aria-hidden="true">
-        <p class="text-xs font-semibold uppercase tracking-widest text-pink-600">Suggested change</p>
-        <p class="mt-2 font-bold text-slate-900">That felt easy. Make next week a little harder?</p>
-        <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-lg bg-slate-50 p-3">
-            <p class="text-xs text-slate-500">Before</p>
-            <p class="font-semibold text-slate-900">Threshold 3x8</p>
-            <p class="text-slate-500">55 TSS</p>
-          </div>
-          <div class="rounded-lg bg-indigo-50 p-3">
-            <p class="text-xs text-indigo-700">After</p>
-            <p class="font-semibold text-slate-900">Threshold 3x10</p>
-            <p class="text-slate-500">63 TSS</p>
-          </div>
-        </div>
-        <div class="mt-5 flex gap-2">
-          <span class="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white">Accept</span>
-          <span class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Not now</span>
-        </div>
-      </div>
+    <div>
+      <%= image_tag "feature-adaptation.svg", alt: "A suggested plan change comparing Threshold 3x8 with Threshold 3x10, with Accept and Not now buttons", width: 640, height: 460, loading: "lazy", class: "block h-auto w-full" %>
     </div>
   </section>
 
   <%# Feature: Intervals.icu %>
   <section aria-labelledby="sync-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
-    <div class="relative isolate order-last lg:order-first">
-      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-teal-100"></div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-teal-900/10" aria-hidden="true">
-        <div class="flex items-center justify-between">
-          <p class="font-bold text-slate-900">Intervals.icu</p>
-          <span class="rounded-full bg-teal-100 px-3 py-0.5 text-xs font-semibold text-teal-800">Synced</span>
-        </div>
-        <ul class="mt-4 space-y-3 text-sm">
-          <li class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <span class="font-semibold text-slate-900">Threshold 3x8</span><span class="text-slate-500">Tue</span>
-          </li>
-          <li class="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
-            <span class="font-semibold text-slate-900">Endurance 90 min</span><span class="text-slate-500">Thu</span>
-          </li>
-        </ul>
-        <p class="mt-4 text-xs text-slate-500">Last synced 34 minutes ago</p>
-      </div>
+    <div class="order-last lg:order-first">
+      <%= image_tag "feature-intervals-sync.svg", alt: "Two upcoming workouts synced to an Intervals.icu calendar", width: 640, height: 420, loading: "lazy", class: "block h-auto w-full" %>
     </div>
 
     <div>
@@ -222,7 +129,7 @@
     <div aria-hidden="true" class="absolute left-1/2 top-0 -z-10 h-56 w-96 -translate-x-1/2 rounded-full bg-teal-100/70 blur-3xl"></div>
     <p class="mx-auto inline-flex rounded-full border border-teal-200 bg-teal-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-teal-800">100% free</p>
     <h2 id="cta-heading" class="mx-auto mt-5 max-w-2xl text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">Build your training plan in a few minutes</h2>
-    <p class="mx-auto mt-5 max-w-xl text-lg text-slate-600">Set your FTP, choose your days, preview the plan, then sync your workouts to Intervals.icu. No cost, ever.</p>
+    <p class="mx-auto mt-5 max-w-xl text-lg text-balance text-slate-600">Set your FTP, choose your days, preview the plan, then sync your workouts to Intervals.icu. No cost, ever.</p>
     <div class="mt-9 flex flex-wrap justify-center gap-3">
       <%= link_to "Create your free plan", new_registration_path, class: "btn btn-primary btn-lg" %>
       <%= link_to "I already have an account", new_session_path, class: "btn btn-ghost btn-lg" %>
