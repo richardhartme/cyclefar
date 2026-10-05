@@ -136,11 +136,6 @@
                       <% elsif workout.structured? %>
                         <strong><%= link_to workout.name, planned_workout_path(workout), class: "link" %></strong>
                         <p class="text-sm"><%= workout_type_label(workout) %> · <%= workout.duration_minutes %> min</p>
-                        <dl aria-label="Main set" class="mt-2 space-y-2 text-sm">
-                          <% workout_main_set_entries(workout).each do |entry| %>
-                            <div><dt><%= entry[:summary] %></dt><dd class="font-medium"><%= entry[:targets] %></dd></div>
-                          <% end %>
-                        </dl>
                         <%= workout_profile_svg(workout) %>
                         <p class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm tabular-nums">
                           <span><%= workout.estimated_tss.round %> TSS</span>
