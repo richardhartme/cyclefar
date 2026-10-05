@@ -57,11 +57,13 @@ The `.puml` files are the maintained sources; PNG exports live in [`png/`](png/)
 
 The C4 sources load C4-PlantUML from the upstream URL in their `!include`, so rendering those views needs access to those includes (or a locally configured copy). The five sequence sources are self-contained. The upstream `master` reference is unpinned and may change C4 rendering independently of this repository.
 
-With a local PlantUML CLI installation, run from the repository root:
+With a local `plantuml` command on your `PATH`, run from the repository root:
 
 ```sh
-plantuml -nometadata -tpng -o png docs/diagrams/*.puml
+docs/diagrams/generate-pngs.sh
 ```
+
+The script works from any working directory, checks all sources before rendering, and regenerates every `.puml` file into `png/` without embedded source metadata. It defaults `PLANTUML_LIMIT_SIZE` to 16384; set that environment variable to override the limit. Rendering failures exit with a nonzero status without generating error images.
 
 With a standalone JAR, use:
 
