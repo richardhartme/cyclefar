@@ -30,8 +30,15 @@ module CalendarHelper
     # preparation/recovery groups rather than inventing a generated main set.
     steps = workout.workout_steps.reject { |step| %w[warm_up cool_down recovery filler].include?(step.group_key) } if steps.empty?
     steps.group_by { |step|
-      [ step.label, step.duration_seconds, step.kind, step.target_low_pct_ftp, step.target_high_pct_ftp,
-        step.end_target_low_pct_ftp, step.end_target_high_pct_ftp ]
+      [
+        step.label,
+        step.duration_seconds,
+        step.kind,
+        step.target_low_pct_ftp,
+        step.target_high_pct_ftp,
+        step.end_target_low_pct_ftp,
+        step.end_target_high_pct_ftp
+      ]
     }.values.map do |repetitions|
       step = repetitions.first
       minutes, seconds = step.duration_seconds.divmod(60)

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe Planning::AvailabilityChanger, type: :service do
-  let(:plan) { create(:training_plan, :event, starts_on: Date.current - 7, ends_on: Date.current + 70) }
+  let(:plan) { create(:training_plan, :event, starts_on: Date.current - 7, ends_on: Date.current + 70, progression_mode: :continuous, hard_weeks_before_recovery: nil) }
   let(:phase) { create(:plan_phase, training_plan: plan, starts_on: plan.starts_on, ends_on: plan.ends_on) }
   let(:initial_template) { create(:availability_template, training_plan: plan, effective_from: plan.starts_on) }
   let(:next_week) { Date.current.beginning_of_week + 7 }
@@ -13,6 +13,7 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
   end
 
   before do
+    travel_to Date.new(2026, 9, 7)
     create(:availability_slot, availability_template: initial_template, weekday: 2, duration_minutes: 60, intent: :intervals)
   end
 

@@ -12,36 +12,24 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
     sign_in_as(user)
   end
 
-  it "CAL-002 shows canonical main-set repetitions, work targets, type and metrics" do
+  it "CAL-002 shows the workout name, type, duration, graph and metrics without a breakdown" do
     workout = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 1, level: 2)
 
     get root_path
 
-    card = workout_card(workout)
-    main_set = card.at_css('dl[aria-label="Main set"]')
-    expect(main_set.css("dt").map(&:text)).to eq([ "Threshold · 3 × 8 min" ])
-    expect(main_set.css("dd").map(&:text)).to eq([ "247–265 W" ])
-    expect(card.text).to include(
-      "Threshold · 60 min",
-      "#{workout.estimated_tss.round} TSS",
-      "IF #{format('%.2f', workout.estimated_if)}",
-      "#{workout.estimated_work_kj.round} kJ")
-    expect(card.at_css('svg[role="img"]')["aria-label"]).to include("Workout power profile")
+    expect_compact_card(workout, type: "Threshold")
   end
 
-  it "CAL-002 distinguishes under/over work ranges from warm-up and recovery targets" do
+  it "CAL-002 shows an under/over workout without individual work ranges" do
     phase
     workout = Workouts::Creator.new(plan).create!(scheduled_on: plan.starts_on + 1, subtype: :over_under, duration_minutes: 60)
 
     get root_path
 
-    main_set = workout_card(workout).at_css('dl[aria-label="Main set"]')
-    expect(main_set.css("dt").map(&:text)).to eq([ "Under · 6 × 2 min", "Over · 6 × 1 min" ])
-    expect(main_set.css("dd").map(&:text)).to eq([ "229–244 W", "265–281 W" ])
-    expect(main_set.text).not_to include("Warm", "Recovery", "Easy")
+    expect_compact_card(workout, type: "Over-Unders")
   end
 
-  it "CAL-002 shows both ramp endpoints for undulating endurance" do
+  it "CAL-002 shows an undulating endurance profile without a ramp breakdown" do
     workout = generated_workout(
       plan: plan,
       phase: phase,
@@ -52,31 +40,18 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
 
     get root_path
 
-    main_set = workout_card(workout).at_css('dl[aria-label="Main set"]')
-    expect(main_set.text).to include(
-      "Rising endurance",
-      "Falling endurance",
-      "166–177 → 182–192 W",
-      "182–192 → 166–177 W")
-    # Non-uniform segment durations must remain separate in the summary.
-    summaries = [
-      "Rising endurance · 3 × 6 min", "Falling endurance · 3 × 6 min",
-      "Rising endurance · 5 min 30 sec", "Falling endurance · 5 min 30 sec"
-    ]
-    expect(main_set.css("dt").map(&:text)).to eq(summaries)
+    expect_compact_card(workout, type: "Endurance")
+    expect(workout_card(workout).text).not_to include("Rising endurance", "Falling endurance")
   end
 
-  it "CAL-002 shows opener activation efforts including sub-minute durations" do
+  it "CAL-002 shows an opener without individual activation efforts" do
     phase
     workout = Workouts::Creator.new(plan).create!(scheduled_on: plan.starts_on + 1, subtype: "opener", duration_minutes: 30)
 
     get root_path
 
-    card = workout_card(workout)
-    expect(card.text).to include("Opener · 30 min")
-    main_set = card.at_css('dl[aria-label="Main set"]')
-    expect(main_set.css("dt").map(&:text)).to eq([ "Threshold activation · 3 × 1 min", "VO2 activation · 3 × 30 sec" ])
-    expect(main_set.css("dd").map(&:text)).to eq([ "260–281 W", "281–307 W" ])
+    expect_compact_card(workout, type: "Opener")
+    expect(workout_card(workout).text).not_to include("Threshold activation", "VO2 activation")
   end
 
   it "CAL-002 shows outline purpose and phase without detailed targets, graphs or metrics" do
@@ -101,7 +76,7 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
     expect(workout.workout_steps).to be_empty
   end
 
-  it "CAL-002 updates planned targets and work after FTP changes while completed ramp history stays frozen" do
+  it "SET-001 updates planned work and detail targets after FTP changes while completed history stays frozen" do
     completed = generated_workout(
       plan: plan,
       phase: phase,
@@ -115,15 +90,24 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
 
     get root_path
     historical_card = workout_card(completed).text
-    expect(historical_card).to include("117–130 → 130–143 W", "Completed")
+    expect(historical_card).to include("Completed", "#{completed.estimated_work_kj.round} kJ")
+    get planned_workout_path(completed)
+    historical_steps = Nokogiri::HTML(response.body).at_css("ol").text
+    expect(historical_steps).to include("117–130 W")
+    get planned_workout_path(planned)
+    expect(Nokogiri::HTML(response.body).at_css("ol").text).to include("247–265 W")
     old_work = planned.estimated_work_kj.round
 
     Settings::Update.new(profile: profile, attributes: { ftp_watts: 300 }).call
     get root_path
 
-    expect(workout_card(planned).text).to include("285–306 W", "#{planned.reload.estimated_work_kj.round} kJ")
+    expect(workout_card(planned).text).to include("#{planned.reload.estimated_work_kj.round} kJ")
     expect(planned.estimated_work_kj.round).to be > old_work
     expect(workout_card(completed).text).to eq(historical_card)
+    get planned_workout_path(planned)
+    expect(Nokogiri::HTML(response.body).at_css("ol").text).to include("285–306 W")
+    get planned_workout_path(completed)
+    expect(Nokogiri::HTML(response.body).at_css("ol").text).to eq(historical_steps)
     expect(completed.reload.attributes).to eq(snapshot)
     expect(completed.workout_steps.map(&:attributes)).to eq(steps)
   end
@@ -170,6 +154,19 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
 
     expect(event_card.text).to include("Autumn sportive", "Target event · Road")
     expect(event_card.css("dl")).to be_empty
+  end
+
+  def expect_compact_card(workout, type:)
+    card = workout_card(workout)
+    expect(card.text).to include(
+      workout.name,
+      "#{type} · #{workout.duration_minutes} min",
+      "#{workout.estimated_tss.round} TSS",
+      "IF #{format('%.2f', workout.estimated_if)}",
+      "#{workout.estimated_work_kj.round} kJ")
+    expect(card.at_css('svg[role="img"]')["aria-label"]).to include("Workout power profile")
+    expect(card.css('dl[aria-label="Main set"], ol')).to be_empty
+    expect(card.text).not_to include(" W")
   end
 
   def workout_card(workout)
