@@ -1,40 +1,230 @@
-<div class="space-y-12">
-  <section class="hero bg-base-100 border-base-300 rounded-box border shadow-sm">
-    <div class="hero-content w-full flex-col gap-10 px-6 py-14 text-center sm:py-20">
-      <div class="max-w-2xl">
-        <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Plan smart. Ride far.</h1>
-        <p class="text-base-content/70 mx-auto mt-5 text-lg">Build a training plan around your goals, the time you have to ride, and sync the workouts directly to intervals.icu</p>
-        <div class="mt-8 flex flex-wrap justify-center gap-3">
-          <%= link_to "Register", new_registration_path, class: "btn btn-primary" %>
-          <%= link_to "Sign In", new_session_path, class: "btn btn-outline btn-primary" %>
-        </div>
+<div class="space-y-28 overflow-x-clip pb-10">
+  <%# Hero %>
+  <section class="relative isolate overflow-x-clip text-center">
+    <div aria-hidden="true" class="absolute -left-24 top-0 -z-10 h-96 w-96 rounded-full bg-indigo-200/60 blur-3xl"></div>
+    <div aria-hidden="true" class="absolute -right-24 top-24 -z-10 h-96 w-96 rounded-full bg-pink-200/60 blur-3xl"></div>
+
+    <div class="mx-auto max-w-3xl pt-8 sm:pt-14">
+      <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-indigo-700">
+        Indoor cycling training planner
+      </p>
+      <h1 class="mt-6 text-5xl font-bold tracking-tight text-slate-900 sm:text-7xl">Plan smart. Ride far.</h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl">
+        You choose the days you can ride. CycleFar builds a periodised plan around them, picks every workout, and adapts when life gets in the way.
+      </p>
+      <div class="mt-9 flex flex-wrap justify-center gap-3">
+        <%= link_to "Register", new_registration_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "Sign In", new_session_path, class: "btn btn-ghost btn-lg" %>
       </div>
-      <%= image_tag "/screenshot.png", alt: "CycleFar training calendar with weekly load and scheduled workouts", width: 3826, height: 2866, class: "mt-4 h-auto w-full max-w-6xl rounded-lg border border-base-300" %>
+      <p class="mt-4 text-sm text-slate-500">Free to start. Bring your FTP and your calendar.</p>
+    </div>
+
+    <div class="relative mx-auto mt-16 max-w-6xl">
+      <div aria-hidden="true" class="absolute inset-x-10 -bottom-6 top-10 -z-10 rounded-[2rem] bg-indigo-300/50 blur-2xl"></div>
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-indigo-900/10">
+        <div class="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3" aria-hidden="true">
+          <span class="h-3 w-3 rounded-full bg-red-300"></span>
+          <span class="h-3 w-3 rounded-full bg-amber-300"></span>
+          <span class="h-3 w-3 rounded-full bg-green-300"></span>
+          <span class="mx-auto rounded-md bg-white px-10 py-1 text-xs text-slate-400">cyclefar.com</span>
+        </div>
+        <%= image_tag "/screenshot.png", alt: "CycleFar training calendar with weekly load chart and scheduled workouts", width: 3826, height: 2866, class: "block h-auto w-full" %>
+      </div>
     </div>
   </section>
 
-  <section aria-labelledby="features-heading">
-    <div class="grid gap-6 lg:grid-cols-3">
-      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
-        <div class="card-body">
-          <h3 class="card-title">Plan around your week</h3>
-          <p class="text-base-content/70">Choose your goal and available training days, then preview the plan before you confirm it.</p>
-        </div>
-      </article>
+  <%# Value strip %>
+  <section aria-label="Highlights" class="mx-auto max-w-5xl">
+    <dl class="grid gap-8 text-center sm:grid-cols-3">
+      <div>
+        <dt class="text-sm font-semibold uppercase tracking-widest text-indigo-700">You decide</dt>
+        <dd class="mt-2 text-slate-600">Which days, how long, and what kind of session.</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-semibold uppercase tracking-widest text-pink-600">We decide</dt>
+        <dd class="mt-2 text-slate-600">Periodisation, progression and every interval.</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-semibold uppercase tracking-widest text-teal-600">Nothing hidden</dt>
+        <dd class="mt-2 text-slate-600">Deterministic rules. Changes are proposed, never sprung on you.</dd>
+      </div>
+    </dl>
+  </section>
 
-      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
-        <div class="card-body">
-          <h3 class="card-title">See the whole plan</h3>
-          <p class="text-base-content/70">Follow your training in a continuous calendar with upcoming workouts and weekly load.</p>
-        </div>
-      </article>
+  <%# Feature: schedule %>
+  <section aria-labelledby="schedule-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-indigo-700">Your week</p>
+      <h2 id="schedule-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A plan that fits the time you actually have</h2>
+      <p class="mt-5 text-lg text-slate-600">
+        Pick a goal, a discipline and your training days. Say whether each day is intervals, endurance or recovery, and for how long. Preview the whole plan before you commit to it.
+      </p>
+      <ul class="mt-6 space-y-3 text-slate-700">
+        <li class="flex gap-3"><span aria-hidden="true" class="text-indigo-600">&#10003;</span> General fitness, FTP, endurance, climbing or an event</li>
+        <li class="flex gap-3"><span aria-hidden="true" class="text-indigo-600">&#10003;</span> Base, Build, Speciality and Taper phases</li>
+        <li class="flex gap-3"><span aria-hidden="true" class="text-indigo-600">&#10003;</span> Hard weeks and recovery weeks on your cycle</li>
+      </ul>
+    </div>
 
-      <article class="card bg-base-100 border-base-300 overflow-hidden border shadow-sm">
-        <div class="card-body">
-          <h3 class="card-title">Know what to ride</h3>
-          <p class="text-base-content/70">Open a workout to see its structure, power targets, and profile before you start.</p>
+    <div class="relative isolate">
+      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-indigo-100"></div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-indigo-900/10" aria-hidden="true">
+        <p class="text-sm font-semibold text-slate-900">Training days</p>
+        <ul class="mt-4 space-y-2 text-sm">
+          <% [
+            [ "Mon", "Rest", nil ],
+            [ "Tue", "Intervals", "60 min" ],
+            [ "Wed", "Rest", nil ],
+            [ "Thu", "Endurance", "90 min" ],
+            [ "Fri", "Rest", nil ],
+            [ "Sat", "Intervals", "60 min" ],
+            [ "Sun", "Endurance", "120 min" ]
+          ].each do |day, kind, duration| %>
+            <li class="flex items-center justify-between rounded-lg px-3 py-2 <%= duration ? 'bg-slate-50' : '' %>">
+              <span class="w-10 font-medium <%= duration ? 'text-slate-900' : 'text-slate-400' %>"><%= day %></span>
+              <% if duration %>
+                <span class="rounded-full px-3 py-0.5 text-xs font-semibold <%= kind == 'Intervals' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800' %>"><%= kind %></span>
+                <span class="w-16 text-right text-slate-600"><%= duration %></span>
+              <% else %>
+                <span class="text-slate-400"><%= kind %></span>
+                <span class="w-16"></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+      <div class="absolute -bottom-6 right-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:-right-8" aria-hidden="true">
+        <p class="text-xs text-slate-500">Weekly total</p>
+        <p class="text-lg font-bold text-slate-900">330 min <span class="text-sm font-medium text-indigo-700">&middot; 12 weeks</span></p>
+      </div>
+    </div>
+  </section>
+
+  <%# Feature: workouts %>
+  <section aria-labelledby="workout-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
+    <div class="relative isolate order-last lg:order-first">
+      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-amber-100"></div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-amber-900/10" aria-hidden="true">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-lg font-bold text-slate-900">Threshold 3x8</p>
+            <p class="text-sm text-slate-500">Build &middot; Tuesday</p>
+          </div>
+          <span class="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-800">Intervals</span>
         </div>
-      </article>
+        <svg viewBox="0 0 320 110" class="mt-5 h-auto w-full" role="presentation">
+          <line x1="0" y1="40" x2="320" y2="40" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+          <polygon points="0,110 0,78 40,60 40,110" fill="#94a3b8"/>
+          <rect x="40" y="78" width="30" height="32" fill="#7dd3fc"/>
+          <rect x="70" y="30" width="50" height="80" fill="#f59e0b"/>
+          <rect x="120" y="78" width="20" height="32" fill="#7dd3fc"/>
+          <rect x="140" y="30" width="50" height="80" fill="#f59e0b"/>
+          <rect x="190" y="78" width="20" height="32" fill="#7dd3fc"/>
+          <rect x="210" y="30" width="50" height="80" fill="#f59e0b"/>
+          <polygon points="260,78 320,92 320,110 260,110" fill="#7dd3fc"/>
+        </svg>
+        <dl class="mt-5 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
+          <div><dt class="text-xs text-slate-500">Duration</dt><dd class="font-bold text-slate-900">45 min</dd></div>
+          <div><dt class="text-xs text-slate-500">Load</dt><dd class="font-bold text-slate-900">55 TSS</dd></div>
+          <div><dt class="text-xs text-slate-500">Target</dt><dd class="font-bold text-slate-900">91% FTP</dd></div>
+        </dl>
+      </div>
+      <div class="absolute left-2 -top-6 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg lg:-left-8" aria-hidden="true">
+        <p class="text-xs text-slate-500">FTP</p>
+        <p class="text-lg font-bold text-slate-900">260 W <span class="text-sm font-medium text-teal-600">&rarr; 267 W</span></p>
+      </div>
+    </div>
+
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-amber-700">Workouts</p>
+      <h2 id="workout-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Know exactly what to ride</h2>
+      <p class="mt-5 text-lg text-slate-600">
+        Every upcoming workout is fully structured, with warm-up, intervals and cool-down shown as a profile and as power targets. Targets are stored as a percentage of FTP, so when your FTP changes your future watts update automatically.
+      </p>
+      <p class="mt-4 text-lg text-slate-600">Completed rides never change. Your history stays true to what you did.</p>
+    </div>
+  </section>
+
+  <%# Feature: adaptation %>
+  <section aria-labelledby="adapt-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-pink-600">Adapts to you</p>
+      <h2 id="adapt-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Life happens. The plan keeps up.</h2>
+      <p class="mt-5 text-lg text-slate-600">
+        Log a ride with a quick effort rating and CycleFar may suggest an adjustment, showing the before and after. Nothing changes until you accept it.
+      </p>
+      <ul class="mt-6 space-y-3 text-slate-700">
+        <li class="flex gap-3"><span aria-hidden="true" class="text-pink-600">&#10003;</span> Shuffle, change, move or copy any workout</li>
+        <li class="flex gap-3"><span aria-hidden="true" class="text-pink-600">&#10003;</span> Change availability for a week or from a date onward</li>
+        <li class="flex gap-3"><span aria-hidden="true" class="text-pink-600">&#10003;</span> Book holidays and illness, with a gentle return ramp</li>
+      </ul>
+    </div>
+
+    <div class="relative isolate">
+      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-pink-100"></div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-pink-900/10" aria-hidden="true">
+        <p class="text-xs font-semibold uppercase tracking-widest text-pink-600">Suggested change</p>
+        <p class="mt-2 font-bold text-slate-900">That felt easy. Make next week a little harder?</p>
+        <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg bg-slate-50 p-3">
+            <p class="text-xs text-slate-500">Before</p>
+            <p class="font-semibold text-slate-900">Threshold 3x8</p>
+            <p class="text-slate-500">55 TSS</p>
+          </div>
+          <div class="rounded-lg bg-indigo-50 p-3">
+            <p class="text-xs text-indigo-700">After</p>
+            <p class="font-semibold text-slate-900">Threshold 3x10</p>
+            <p class="text-slate-500">63 TSS</p>
+          </div>
+        </div>
+        <div class="mt-5 flex gap-2">
+          <span class="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white">Accept</span>
+          <span class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Not now</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# Feature: Intervals.icu %>
+  <section aria-labelledby="sync-heading" class="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
+    <div class="relative isolate order-last lg:order-first">
+      <div aria-hidden="true" class="absolute -inset-6 -z-10 rounded-[2rem] bg-teal-100"></div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-teal-900/10" aria-hidden="true">
+        <div class="flex items-center justify-between">
+          <p class="font-bold text-slate-900">Intervals.icu</p>
+          <span class="rounded-full bg-teal-100 px-3 py-0.5 text-xs font-semibold text-teal-800">Synced</span>
+        </div>
+        <ul class="mt-4 space-y-3 text-sm">
+          <li class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <span class="font-semibold text-slate-900">Threshold 3x8</span><span class="text-slate-500">Tue</span>
+          </li>
+          <li class="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
+            <span class="font-semibold text-slate-900">Endurance 90 min</span><span class="text-slate-500">Thu</span>
+          </li>
+        </ul>
+        <p class="mt-4 text-xs text-slate-500">Last synced 34 minutes ago</p>
+      </div>
+    </div>
+
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-widest text-teal-700">Integration</p>
+      <h2 id="sync-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Send your next rides to Intervals.icu</h2>
+      <p class="mt-5 text-lg text-slate-600">
+        One click pushes your next two workouts to your Intervals.icu calendar, ready for your trainer or head unit. CycleFar only touches the events it created, and never anything else on your calendar.
+      </p>
+    </div>
+  </section>
+
+  <%# Closing CTA %>
+  <section aria-labelledby="cta-heading" class="relative isolate overflow-hidden rounded-3xl bg-slate-900 px-6 py-20 text-center sm:px-12">
+    <div aria-hidden="true" class="absolute -left-20 -top-20 -z-10 h-72 w-72 rounded-full bg-indigo-600/50 blur-3xl"></div>
+    <div aria-hidden="true" class="absolute -bottom-24 -right-16 -z-10 h-72 w-72 rounded-full bg-pink-500/40 blur-3xl"></div>
+    <p class="text-sm font-semibold uppercase tracking-widest text-teal-300">Ready when you are</p>
+    <h2 id="cta-heading" class="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">Build your training plan in a few minutes</h2>
+    <p class="mx-auto mt-5 max-w-xl text-lg text-slate-300">Set your FTP, choose your days, preview the plan, and start riding.</p>
+    <div class="mt-9 flex flex-wrap justify-center gap-3">
+      <%= link_to "Create your plan", new_registration_path, class: "btn btn-primary btn-lg" %>
+      <%= link_to "I already have an account", new_session_path, class: "btn btn-lg border-white/30 bg-transparent text-white hover:bg-white/10" %>
     </div>
   </section>
 </div>
