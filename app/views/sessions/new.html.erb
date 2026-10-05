@@ -1,28 +1,21 @@
-<section class="card bg-base-100 border-base-300 mx-auto w-full max-w-lg border shadow-sm">
-  <div class="card-body gap-6 p-6 sm:p-8">
-    <header>
-      <h1 class="card-title text-3xl">Sign In</h1>
-      <p class="text-base-content/70 mt-2">Welcome back to CycleFar.</p>
-    </header>
+<%= render layout: "shared/auth_shell", locals: { title: "Sign In", subtitle: "Welcome back to CycleFar." } do %>
+  <%= form_with url: session_path, class: "space-y-5" do |form| %>
+    <fieldset class="fieldset">
+      <%= form.label :email_address, "Email address", class: "fieldset-legend" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], class: "input w-full" %>
+    </fieldset>
 
-    <%= form_with url: session_path, class: "space-y-5" do |form| %>
-      <fieldset class="fieldset">
-        <%= form.label :email_address, "Email address", class: "fieldset-legend" %>
-        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], class: "input w-full" %>
-      </fieldset>
+    <fieldset class="fieldset">
+      <%= form.label :password, class: "fieldset-legend" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72, class: "input w-full" %>
+      <div class="mt-2 text-right">
+        <%= link_to "Forgot password?", new_password_path, class: "link link-primary text-sm" %>
+      </div>
+    </fieldset>
 
-      <fieldset class="fieldset">
-        <%= form.label :password, class: "fieldset-legend" %>
-        <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72, class: "input w-full" %>
-        <div class="mt-2 text-right">
-          <%= link_to "Forgot password?", new_password_path, class: "link link-primary text-sm" %>
-        </div>
-      </fieldset>
+    <%= form.submit "Sign In", class: "btn btn-primary w-full" %>
+  <% end %>
 
-      <%= form.submit "Sign In", class: "btn btn-primary w-full" %>
-    <% end %>
-
-    <div class="divider my-0 text-sm">New to CycleFar?</div>
-    <%= link_to "Register", new_registration_path, class: "btn btn-outline btn-primary w-full" %>
-  </div>
-</section>
+  <div class="divider my-0 text-sm">New to CycleFar?</div>
+  <%= link_to "Register", new_registration_path, class: "btn btn-outline btn-primary w-full" %>
+<% end %>
