@@ -51,10 +51,10 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
   scan_js:
     runs-on: ubuntu-latest
 
@@ -95,27 +95,3 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
-
-  # Builds the production image and pushes it to the registry, tagged with the commit SHA.
-  # It does not deploy: pick an image to ship with the "Deploy" workflow.
-  build:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [ test, scan_ruby, scan_js, lint ]
-    runs-on: ubuntu-latest
-    env:
-      KAMAL_REGISTRY_USER: ${{ vars.KAMAL_REGISTRY_USER }}
-      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
-      # config/deploy.yml reads these with ENV.fetch, so they must exist even though a build never connects.
-      CYCLEFAR_WEB_HOST: ${{ vars.CYCLEFAR_WEB_HOST }}
-      CYCLEFAR_DB_HOST: ${{ vars.CYCLEFAR_DB_HOST }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-
-      - name: Build and push image
-        run: bin/kamal build push --version="$GITHUB_SHA"

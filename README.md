@@ -139,6 +139,8 @@ API-contract limits.
 ## Deployment
 
 The application uses Kamal **2.12.0**, Docker and an external PostgreSQL server.
+Production images are built and deployed from the developer's machine. GitHub
+Actions runs validation only; it does not build production images or deploy.
 The [Terraform guide](infra/README.md) and
 [CloudFormation alternative](infra/cloudformation/README.md) provision AWS
 infrastructure separately; use one infrastructure tool per environment.
@@ -156,10 +158,11 @@ bin/rails credentials:edit
 ```
 
 Use [the credentials example](config/credentials.yml.enc.example) as the guide.
-The current `.kamal/secrets` reads `secret_key_base`, `kamal.registry_password`
-and `db.password` from that local encrypted file. Retain existing production
-values when configuring an existing deployment. The encrypted credentials file
-and its master key are ignored by Git.
+The current `.kamal/secrets` prefers exported environment variables and falls
+back to `secret_key_base`, `kamal.registry_password`, `db.password` and
+`active_record_encryption` values in that local encrypted file. Retain existing
+production values when configuring an existing deployment. The encrypted
+credentials file and its master key are ignored by Git.
 
 Create a private `.env.deploy` in the repository root containing shell
 assignments for these variables:
@@ -179,13 +182,21 @@ assignments for these variables:
 | `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Existing production derivation salt |
 
 For example, an assignment has the form `CYCLEFAR_WEB_HOST='your-server-address'`.
-`.env.deploy` is ignored by Git and excluded from Docker builds. Restrict access
-and load it explicitly when deploying from the repository root:
+`.env.deploy` is ignored by Git and excluded from Docker builds. Start Docker on
+the deploying machine, use a committed revision whose GitHub CI checks have
+passed, and ensure the server permits SSH from that machine's IP address.
+Restrict access to the environment file and load it explicitly when deploying
+from the repository root:
 
 ```sh
 chmod 600 .env.deploy
 ( set -a; source .env.deploy; set +a; bin/kamal deploy )
 ```
+
+This command builds the image locally, pushes it to the registry, and deploys it
+to the application server. The local SSH key stays in its file, referenced by
+`KAMAL_SSH_KEY`; local SSH host trust uses `~/.ssh/known_hosts`. The GitHub-only
+`SSH_PRIVATE_KEY` and `SSH_KNOWN_HOSTS` settings are not used.
 
 For the first deployment to a prepared environment, use `bin/kamal setup` in
 place of `bin/kamal deploy`. `set -a` exports the loaded assignments; the
