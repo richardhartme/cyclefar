@@ -7,6 +7,42 @@
   themes: light;
 }
 
+/*
+ * CycleFar theme. daisyUI components read these variables, so brand colour changes belong here.
+ * Values are the Tailwind slate/indigo/pink/teal palette used on the public landing page.
+ */
+[data-theme="cyclefar"] {
+  color-scheme: light;
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98.4% 0.003 247.858); /* slate-50 */
+  --color-base-300: oklch(92.9% 0.013 255.508); /* slate-200 */
+  --color-base-content: oklch(20.8% 0.042 265.755); /* slate-900 */
+  --color-primary: oklch(45.7% 0.24 277.023); /* indigo-700 */
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(59.2% 0.249 0.584); /* pink-600 */
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(51.1% 0.096 186.391); /* teal-700 */
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(20.8% 0.042 265.755); /* slate-900 */
+  --color-neutral-content: oklch(98.4% 0.003 247.858);
+  --color-info: oklch(50% 0.134 242.749); /* sky-700 */
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(52.7% 0.154 150.069); /* green-700 */
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(76.9% 0.188 70.08); /* amber-500 */
+  --color-warning-content: oklch(27.9% 0.077 45.635); /* amber-950 */
+  --color-error: oklch(50.5% 0.213 27.518); /* red-700 */
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 9999px;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 @layer base {
   html,
   body {
