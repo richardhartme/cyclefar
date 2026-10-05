@@ -1,0 +1,76 @@
+name: Deploy
+
+# Deploys an image that CI already built and pushed (see the "build" job in ci.yml).
+# Run it from the Actions tab. Leave "version" blank to deploy the latest main commit, or give
+# the full commit SHA of an earlier image to roll back to it.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Full commit SHA of the image to deploy (blank = latest commit on the selected branch)
+        required: false
+        type: string
+
+# One deploy at a time; a second run waits instead of cancelling a deploy part-way through.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERSION: ${{ inputs.version || github.sha }}
+      KAMAL_REGISTRY_USER: ${{ vars.KAMAL_REGISTRY_USER }}
+      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      CYCLEFAR_WEB_HOST: ${{ vars.CYCLEFAR_WEB_HOST }}
+      CYCLEFAR_DB_HOST: ${{ vars.CYCLEFAR_DB_HOST }}
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      CYCLEFAR_MAIL_FROM: ${{ secrets.CYCLEFAR_MAIL_FROM }}
+      CYCLEFAR_SMTP_HOST: ${{ secrets.CYCLEFAR_SMTP_HOST }}
+      CYCLEFAR_SMTP_USERNAME: ${{ secrets.CYCLEFAR_SMTP_USERNAME }}
+      CYCLEFAR_SMTP_PASSWORD: ${{ secrets.CYCLEFAR_SMTP_PASSWORD }}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${{ secrets.ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY }}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${{ secrets.ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY }}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${{ secrets.ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
+    steps:
+      - name: Check inputs and required settings
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::version must be a full 40-character commit SHA"; exit 1
+          fi
+          missing=0
+          for name in KAMAL_REGISTRY_USER KAMAL_REGISTRY_PASSWORD CYCLEFAR_WEB_HOST CYCLEFAR_DB_HOST \
+            SECRET_KEY_BASE DB_PASSWORD CYCLEFAR_MAIL_FROM CYCLEFAR_SMTP_HOST CYCLEFAR_SMTP_USERNAME \
+            CYCLEFAR_SMTP_PASSWORD ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY \
+            ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT SSH_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then echo "::error::$name is not set"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Configure SSH
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "$CYCLEFAR_WEB_HOST" > ~/.ssh/known_hosts
+          fi
+          echo "KAMAL_SSH_KEY=$HOME/.ssh/deploy_key" >> "$GITHUB_ENV"
+
+      - name: Deploy
+        run: bin/kamal deploy --skip-push --version="$VERSION"
