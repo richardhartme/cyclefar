@@ -6,17 +6,17 @@
 
     <div class="mx-auto max-w-3xl pt-8 sm:pt-14">
       <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-indigo-700">
-        Indoor cycling training planner
+        100% free &middot; Built for Intervals.icu
       </p>
       <h1 class="mt-6 text-5xl font-bold tracking-tight text-slate-900 sm:text-7xl">Plan smart. Ride far.</h1>
-      <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl">
-        You choose the days you can ride. CycleFar builds a periodised plan around them, picks every workout, and adapts when life gets in the way.
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-balance text-slate-600 sm:text-xl">
+        You choose the days you can ride. CycleFar builds a periodised plan around them, picks every workout, and syncs it straight to Intervals.icu. Completely&nbsp;free.
       </p>
       <div class="mt-9 flex flex-wrap justify-center gap-3">
         <%= link_to "Register", new_registration_path, class: "btn btn-primary btn-lg" %>
         <%= link_to "Sign In", new_session_path, class: "btn btn-ghost btn-lg" %>
       </div>
-      <p class="mt-4 text-sm text-slate-500">Free to start. Bring your FTP and your calendar.</p>
+      <p class="mt-4 text-sm text-slate-500">100% free. Bring your FTP and your Intervals.icu account.</p>
     </div>
 
     <div class="relative mx-auto mt-16 max-w-6xl">
@@ -207,8 +207,8 @@
     </div>
 
     <div>
-      <p class="text-sm font-semibold uppercase tracking-widest text-teal-700">Integration</p>
-      <h2 id="sync-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Send your next rides to Intervals.icu</h2>
+      <p class="text-sm font-semibold uppercase tracking-widest text-teal-700">Made for Intervals.icu</p>
+      <h2 id="sync-heading" class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Your plan, straight in Intervals.icu</h2>
       <p class="mt-5 text-lg text-slate-600">
         One click pushes your next two workouts to your Intervals.icu calendar, ready for your trainer or head unit. CycleFar only touches the events it created, and never anything else on your calendar.
       </p>
@@ -216,15 +216,16 @@
   </section>
 
   <%# Closing CTA %>
-  <section aria-labelledby="cta-heading" class="relative isolate overflow-hidden rounded-3xl bg-slate-900 px-6 py-20 text-center sm:px-12">
-    <div aria-hidden="true" class="absolute -left-20 -top-20 -z-10 h-72 w-72 rounded-full bg-indigo-600/50 blur-3xl"></div>
-    <div aria-hidden="true" class="absolute -bottom-24 -right-16 -z-10 h-72 w-72 rounded-full bg-pink-500/40 blur-3xl"></div>
-    <p class="text-sm font-semibold uppercase tracking-widest text-teal-300">Ready when you are</p>
-    <h2 id="cta-heading" class="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">Build your training plan in a few minutes</h2>
-    <p class="mx-auto mt-5 max-w-xl text-lg text-slate-300">Set your FTP, choose your days, preview the plan, and start riding.</p>
+  <section aria-labelledby="cta-heading" class="relative isolate overflow-hidden rounded-3xl border border-indigo-100 bg-white px-6 py-20 text-center shadow-xl shadow-indigo-900/5 sm:px-12">
+    <div aria-hidden="true" class="absolute -left-20 -top-24 -z-10 h-80 w-80 rounded-full bg-indigo-100 blur-3xl"></div>
+    <div aria-hidden="true" class="absolute -bottom-28 -right-16 -z-10 h-80 w-80 rounded-full bg-pink-100 blur-3xl"></div>
+    <div aria-hidden="true" class="absolute left-1/2 top-0 -z-10 h-56 w-96 -translate-x-1/2 rounded-full bg-teal-100/70 blur-3xl"></div>
+    <p class="mx-auto inline-flex rounded-full border border-teal-200 bg-teal-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-teal-800">100% free</p>
+    <h2 id="cta-heading" class="mx-auto mt-5 max-w-2xl text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">Build your training plan in a few minutes</h2>
+    <p class="mx-auto mt-5 max-w-xl text-lg text-slate-600">Set your FTP, choose your days, preview the plan, then sync your workouts to Intervals.icu. No cost, ever.</p>
     <div class="mt-9 flex flex-wrap justify-center gap-3">
-      <%= link_to "Create your plan", new_registration_path, class: "btn btn-primary btn-lg" %>
-      <%= link_to "I already have an account", new_session_path, class: "btn btn-lg border-white/30 bg-transparent text-white hover:bg-white/10" %>
+      <%= link_to "Create your free plan", new_registration_path, class: "btn btn-primary btn-lg" %>
+      <%= link_to "I already have an account", new_session_path, class: "btn btn-ghost btn-lg" %>
     </div>
   </section>
 </div>
