@@ -32,7 +32,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(materializer, "WorkoutBuilder", "Planning service", "Applies accepted bias once when outlines enter the next 14 days; saves fitted levels, steps and automatic load references under the plan lock.")
   Component(load_rules, "LoadContext, WeeklyLoadCap and LoadReduction", "Planning services", "Use shared RecoverySchedule flags, comparable-week rules and ceilings; apply ordered reductions while retaining hard-week duration and endurance profiles.")
   Component(progression, "Progression", "Training pure calculation", "Combines baseline and bias; clamps to 1-7 and reduced-load ceilings.")
-  Component(ftp, "Settings::Update and FtpRecalculator", "Settings and Planning services", "Record FTP history and recalculate future structured-workout metrics without changing completed snapshots.")
+  Component(ftp, "Settings::Update, FtpHistory and FtpRecalculator", "Settings and Planning services", "Record, edit and delete FTP history, sync current FTP from the newest reading and recalculate future structured-workout metrics without changing completed snapshots.")
   Component(engine, "Workout engine and TargetBandLimiter", "Workouts and Metrics services", "Generate definitions and metrics; constrain saved return main targets and every step ceiling, including sampled endurance profiles.")
   Component(models, "Plan and workout models", "Active Record", "Enforce validations and completed-workout immutability while persisting plans, workouts, steps, feedback, proposals, settings and time off.")
 }
