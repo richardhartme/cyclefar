@@ -1,0 +1,31 @@
+<section aria-labelledby="load-guidance-heading" class="rounded-box border border-base-300 bg-base-100 p-5">
+  <h2 id="load-guidance-heading" class="text-lg font-semibold"><%= pluralize(weeks.size, "week") %> above the load growth target</h2>
+  <p class="mt-2 max-w-prose">These are advisory warnings; you can keep your schedule. Projected training load exceeds CycleFar’s 8% growth target compared with the last comparable hard week. Recovery, taper and time-off weeks are excluded from that comparison.</p>
+  <p class="mt-2 max-w-prose">To lower load, edit an affected week to reduce training minutes or choose an easier workout intent. You can also open an individual workout in the calendar and use Easier, Shorter or Change workout.</p>
+  <details class="mt-4">
+    <summary class="cursor-pointer font-semibold">Review affected weeks</summary>
+    <div class="mt-3 overflow-x-auto">
+      <table class="table">
+        <caption class="sr-only">Weeks above the 8% growth target, with projected load and actions to reduce it</caption>
+        <thead>
+          <tr><th scope="col">Week of</th><th scope="col">Projected TSS</th><th scope="col">Target TSS</th><th scope="col">Actions</th></tr>
+        </thead>
+        <tbody>
+          <% weeks.each do |week| %>
+            <tr>
+              <th scope="row" class="whitespace-nowrap"><%= week.starts_on.to_fs(:long) %></th>
+              <td class="tabular-nums"><%= number_with_precision(week.estimated_tss, precision: 1) %></td>
+              <td class="tabular-nums"><%= number_with_precision(week.limit, precision: 1) %></td>
+              <td>
+                <div class="flex flex-wrap items-center gap-3">
+                  <%= link_to "Edit this week", new_availability_change_path(effective_from: week.starts_on.iso8601), class: "btn btn-outline btn-primary btn-sm", aria: { label: "Edit availability for week of #{week.starts_on.to_fs(:long)}" } %>
+                  <%= link_to "View in calendar", "#calendar-week-#{week.starts_on.iso8601}", class: "link link-primary", aria: { label: "View week of #{week.starts_on.to_fs(:long)} in calendar" } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>

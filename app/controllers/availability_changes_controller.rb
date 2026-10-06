@@ -1,6 +1,13 @@
 class AvailabilityChangesController < ApplicationController
   def new
     @plan = Current.user.training_plans.active.sole
+    @effective_from = params[:effective_from].present? ? Date.iso8601(params[:effective_from]) : Date.current.clamp(@plan.starts_on, @plan.ends_on)
+    unless @effective_from.between?(@plan.starts_on, @plan.ends_on)
+      raise ArgumentError, "Choose a date within your plan"
+    end
+    @slots_by_weekday = Planning::AvailabilityForWeek.new(@plan, date: @effective_from).call
+  rescue Date::Error, ArgumentError => error
+    redirect_to new_availability_change_path, alert: error.message
   end
 
   def create

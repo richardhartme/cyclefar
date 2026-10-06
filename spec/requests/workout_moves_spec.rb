@@ -46,10 +46,10 @@ RSpec.describe "WKO-006 / MIS-001 destination-aware moves", type: :request, gene
         expect(response).to redirect_to(root_path)
         expect(workout.reload.progression_level).to eq(1)
         follow_redirect!
-        warning = Planning::V1::WeeklyLoadCap.warning(destination.beginning_of_week)
-        expect(response.body).to include(warning)
+        expect(response.body).to include("above the load growth target")
+        expect(response.body).to include(new_availability_change_path(effective_from: destination.beginning_of_week.iso8601).gsub("&", "&amp;"))
         get root_path
-        expect(response.body).to include(warning)
+        expect(response.body).to include("above the load growth target", destination.beginning_of_week.to_fs(:long))
       end
 
       it "does not disclose or mutate another rider's workout on a regeneration request" do

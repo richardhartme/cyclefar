@@ -2,8 +2,12 @@ module Planning
   # Read-only load review, including explicit moves outside the detail horizon.
   class WeeklyLoadReview
     Week = Data.define(:starts_on, :workouts, :estimated_tss, :limit) do
+      def above_target?
+        limit && estimated_tss > limit
+      end
+
       def warning
-        V1::WeeklyLoadCap.warning(starts_on) if limit && estimated_tss > limit
+        V1::WeeklyLoadCap.warning(starts_on) if above_target?
       end
     end
 
@@ -31,7 +35,11 @@ module Planning
     end
 
     def warnings(from: Date.current.beginning_of_week)
-      call.select { |week| week.starts_on >= from }.filter_map(&:warning)
+      weeks_above_target(from: from).map(&:warning)
+    end
+
+    def weeks_above_target(from: Date.current.beginning_of_week)
+      call.select { |week| week.starts_on >= from && week.above_target? }
     end
 
     def estimated_tss(workout)

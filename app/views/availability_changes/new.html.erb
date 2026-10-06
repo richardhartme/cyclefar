@@ -12,11 +12,11 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <%= label_tag :scope, "Apply change", class: "label font-semibold" %>
-            <%= select_tag :scope, options_for_select([["This week only", "one_week"], ["From date onward", "from_date"]]), class: "select w-full" %>
+            <%= select_tag :scope, options_for_select([["This week only", "one_week"], ["From date onward", "from_date"]], "one_week"), class: "select w-full" %>
           </div>
           <div>
             <%= label_tag :effective_from, "Date", class: "label font-semibold" %>
-            <%= date_field_tag :effective_from, Date.current, min: @plan.starts_on, max: @plan.ends_on, class: "input w-full" %>
+            <%= date_field_tag :effective_from, @effective_from, min: @plan.starts_on, max: @plan.ends_on, class: "input w-full" %>
           </div>
         </div>
       </fieldset>
@@ -24,24 +24,25 @@
       <fieldset class="fieldset">
         <legend class="fieldset-legend text-lg">Weekly availability</legend>
         <div role="note" class="alert alert-info alert-soft">
-          <span>Select each day you can train. Unselected days remain rest days.</span>
+          <span>Your schedule for the week of <%= @effective_from.beginning_of_week.to_fs(:long) %> is filled in below. Reduce minutes, choose an easier intent, or uncheck a day to lower load. Saving replans future, uncompleted workouts in the selected scope.</span>
         </div>
 
         <div class="mt-2 grid gap-3">
           <% (1..7).each do |day| %>
+            <% slot = @slots_by_weekday[day] %>
             <div class="border-base-300 bg-base-100 grid items-center gap-4 rounded-box border p-4 sm:grid-cols-[10rem_1fr_1fr]">
               <div class="flex items-center gap-3">
                 <%= hidden_field_tag "slots[#{day}][weekday]", day %>
-                <%= check_box_tag "slots[#{day}][enabled]", "1", false, id: "availability_day_#{day}", class: "checkbox checkbox-primary" %>
+                <%= check_box_tag "slots[#{day}][enabled]", "1", slot.present?, id: "availability_day_#{day}", class: "checkbox checkbox-primary" %>
                 <%= label_tag "availability_day_#{day}", Date::DAYNAMES.rotate.fetch(day - 1), class: "label cursor-pointer font-semibold" %>
               </div>
               <div>
                 <%= label_tag "availability_duration_#{day}", "Minutes", class: "label text-xs font-semibold uppercase tracking-wide sm:sr-only" %>
-                <%= number_field_tag "slots[#{day}][duration_minutes]", 60, min: 30, id: "availability_duration_#{day}", class: "input w-full", aria: { label: "#{Date::DAYNAMES.rotate.fetch(day - 1)} duration in minutes" } %>
+                <%= number_field_tag "slots[#{day}][duration_minutes]", slot&.duration_minutes || 60, min: 30, id: "availability_duration_#{day}", class: "input w-full", aria: { label: "#{Date::DAYNAMES.rotate.fetch(day - 1)} duration in minutes" } %>
               </div>
               <div>
                 <%= label_tag "availability_intent_#{day}", "Workout intent", class: "label text-xs font-semibold uppercase tracking-wide sm:sr-only" %>
-                <%= select_tag "slots[#{day}][intent]", options_for_select(AvailabilitySlot::INTENTS.map { |intent| [intent.humanize, intent] }), id: "availability_intent_#{day}", class: "select w-full", aria: { label: "#{Date::DAYNAMES.rotate.fetch(day - 1)} workout intent" } %>
+                <%= select_tag "slots[#{day}][intent]", options_for_select(AvailabilitySlot::INTENTS.map { |intent| [intent.humanize, intent] }, slot&.intent), id: "availability_intent_#{day}", class: "select w-full", aria: { label: "#{Date::DAYNAMES.rotate.fetch(day - 1)} workout intent" } %>
               </div>
             </div>
           <% end %>

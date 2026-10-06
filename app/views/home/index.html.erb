@@ -29,9 +29,7 @@
       </div>
     </header>
 
-    <% @load_warnings.each do |warning| %>
-      <p role="status" class="alert alert-warning"><%= warning %></p>
-    <% end %>
+    <%= render "load_guidance", weeks: @load_warning_weeks if @load_warning_weeks.any? %>
 
     <% @plan.adaptation_proposals.each do |proposal| %>
       <% if proposal.material_change_replan? %>
@@ -75,7 +73,7 @@
 
   <div class="bg-base-100 border-base-300 overflow-x-auto rounded-box border shadow-sm">
     <% weeks.each do |week| %>
-      <section class="divide-base-300 border-base-300 grid <%= @plan ? "min-w-[1296px]" : "min-w-[840px]" %> divide-x border-b last:border-b-0" style="grid-template-columns: repeat(7, minmax(<%= @plan ? 160 : 120 %>px, 1fr))<%= " 11rem" if @plan %>" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">
+      <section id="calendar-week-<%= week.starts_on.iso8601 %>" class="divide-base-300 border-base-300 grid <%= @plan ? "min-w-[1296px]" : "min-w-[840px]" %> divide-x border-b last:border-b-0" style="grid-template-columns: repeat(7, minmax(<%= @plan ? 160 : 120 %>px, 1fr))<%= " 11rem" if @plan %>" aria-label="Week of <%= week.starts_on.to_fs(:long) %>">
           <% week.days.each do |date| %>
             <div class="hover:bg-base-200/50 min-h-48 p-3 transition-colors">
               <% can_add_workout = @plan && @calendar.workouts_on(date).empty? && !@calendar.event_on(date) && !@calendar.time_off_on(date) %>
