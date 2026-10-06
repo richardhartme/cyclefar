@@ -10,6 +10,7 @@ RSpec.describe Planning::PlanCreator, type: :service do
     preview = Planning::PlanBuilder.new(configuration).preview
     plan = described_class.new(configuration, user: user).create!
     expect(plan).to be_active
+    expect(plan.planned_workouts.pluck(:kind).uniq).to eq([ "workout" ])
     expect(plan.plan_phases.map { |phase| [ phase.kind, phase.starts_on, phase.ends_on ] }).to eq(preview.phases.map { |phase| [ phase.kind, phase.starts_on, phase.ends_on ] })
     expect(plan.planned_workouts.count).to eq(preview.prescriptions.count { |item| item.kind != "event" })
     expect(plan.planned_workouts.structured.pluck(:scheduled_on)).to all(be_between(Date.current, Date.current + 13))

@@ -23,7 +23,7 @@ The accepted bias is still global, although repeated-pattern detection reads the
 3. Power prescriptions are ranges of FTP, not single watt targets.
 4. Normal workouts are at least 30 minutes.
 5. Generated structured workouts sum exactly to requested duration.
-6. The rider's chosen workout-day intent is respected except for explicit recovery, taper, time-off/re-entry and FTP-test overrides.
+6. The rider's chosen workout-day intent is respected except for explicit recovery, taper and time-off/re-entry overrides.
 7. The plan controls generated weekly load growth.
 8. Manual rider overrides (Harder/Longer/etc.) may exceed normal generated-load rules because they are explicit choices; do not use the rider's manual override as evidence that future generated sessions should also be harder.
 9. Completed workouts are immutable.
@@ -900,48 +900,13 @@ Pre-break progression uses the latest planned or completed regular session in th
 
 ---
 
-# Part I — FTP-test placement
+# Part I — FTP assessments (retired)
 
-## 40. When to schedule assessments
+## 40–42. No scheduled FTP tests
 
-Do not schedule routine FTP tests in plans shorter than 6 weeks unless a natural major phase transition occurs and there is enough time for the new FTP to matter.
+CYF-77 removes automatic assessment placement and FTP-test workout records. Configured training dates retain their normal prescriptions in preview, creation and replanning. There is no assessment protocol or completion action. Riders may assess independently and update FTP in Settings.
 
-For longer plans:
-
-- target reassessment roughly every 4–6 weeks;
-- use 5 weeks as the ideal spacing;
-- move the date within the 4–6 week window to a better training location.
-
-## 41. Candidate ranking
-
-Prefer, in order:
-
-1. first configured intensity day after a recovery week;
-2. first configured intensity day at the start of Build or Speciality;
-3. an intensity day preceded by rest/recovery;
-4. another normal workout day if no intensity day exists.
-
-Rules:
-
-- replace that day's normal workout;
-- do not schedule during time off or return-to-training ramp;
-- do not schedule within 14 days of the target event;
-- avoid placing two FTP tests <28 days apart or >42 days apart when a valid slot exists;
-- do not invent a test protocol;
-- no planned TSS/IF/work for FTP Test because execution protocol is unknown.
-
-## 42. FTP Test calendar behaviour
-
-CYF-11 ranks eligible configured intensity days, including specific subtypes, before ordinary-day fallbacks. Equal-ranked candidates use distance from the ideal five-week date, then the earlier date. If the entire four-to-six-week window is unavailable, use the first later eligible day. Existing-plan forecasts exclude time off and return ramps before selection. The 14-day exclusion applies only before a target event; a non-event plan can include an assessment near its end. Short plans retain the no-routine-assessment policy.
-
-Display `FTP Test` as a special workout replacement.
-
-Detail text should say, in effect:
-
-- perform the rider's preferred FTP assessment;
-- then update FTP in Settings.
-
-A simple `Test done` status action may be implemented without RPE/completion-quality feedback. Updating FTP remains a Settings operation in V1.
+The cleanup deletes existing FTP-test records, including completed tests, without rebuilding plans or rewriting ordinary completed workouts. Removed dates stay empty until an explicit replan. Section numbering is retained for existing references.
 
 ---
 
@@ -974,7 +939,7 @@ For 10–14 day taper:
 - event week: ~40–60% of normal peak load before the event;
 - retain brief intensity exposures.
 
-CYF-11 uses the final seven dates through the event as the event stage, including for non-Sunday events. The earlier stage of a long taper is prorated by its number of days. Stage targets are 75% and 50% of the highest comparable generated hard-week TSS; partial, recovery, assessment and taper weeks are excluded from that reference. Keep configured intensity exposures in the first stage with reduced hard time, then retain one early intensity session in the final stage. Normal intensity power bands remain unchanged. Tapered main sets use 75%/60% of ladder work time, rounded to positive 30-second segments, and saved progression ceilings prevent positive bias from escalating them. Adjust scheduled ride duration toward the stage budget; retain the 30-minute minimum and fixed opener even if sparse availability makes the approximate target infeasible. Do not add training dates to fill a budget. Existing plans are not bulk rewritten by this change.
+CYF-11 uses the final seven dates through the event as the event stage, including for non-Sunday events. The earlier stage of a long taper is prorated by its number of days. Stage targets are 75% and 50% of the highest comparable generated hard-week TSS; partial, recovery and taper weeks are excluded from that reference. Keep configured intensity exposures in the first stage with reduced hard time, then retain one early intensity session in the final stage. Normal intensity power bands remain unchanged. Tapered main sets use 75%/60% of ladder work time, rounded to positive 30-second segments, and saved progression ceilings prevent positive bias from escalating them. Adjust scheduled ride duration toward the stage budget; retain the 30-minute minimum and fixed opener even if sparse availability makes the approximate target infeasible. Do not add training dates to fill a budget. Existing plans are not bulk rewritten by this change.
 
 ## 45. Opener workout
 
@@ -1041,7 +1006,7 @@ Once a detailed workout is generated, keep its structure stable unless one of th
 - missed-workout replan;
 - schedule change affecting it;
 - time-off replan affecting it;
-- taper/FTP-test plan operation that explicitly rewrites it.
+- taper plan operation that explicitly rewrites it.
 
 A mere horizon roll or FTP change is not a reason to change percentage structure.
 
@@ -1063,7 +1028,6 @@ Examples:
 - `Endurance 90 min`
 - `Recovery 45 min`
 - `Event Opener`
-- `FTP Test`
 
 Do not generate arbitrary branded names.
 

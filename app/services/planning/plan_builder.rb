@@ -9,10 +9,9 @@ require_relative "v1/weekly_load_cap"
 require_relative "v1/load_reduction"
 require_relative "v1/phase_progression"
 require_relative "v1/recovery_schedule"
-require_relative "v1/assessment_schedule"
 
 module Planning
-  # Builds a training plan preview with workouts, weeks, FTP tests and load enforcement.
+  # Builds a training plan preview with workouts, weeks and load enforcement.
   class PlanBuilder
     Prescription = Data.define(
       :scheduled_on,
@@ -93,8 +92,8 @@ module Planning
       end
     end
 
-    Preview = Data.define(:configuration, :starts_on, :ends_on, :phases, :prescriptions, :weeks, :ftp_test_dates, :warnings) do
-      def initialize(configuration:, starts_on:, ends_on:, phases:, prescriptions:, weeks:, ftp_test_dates:, warnings:)
+    Preview = Data.define(:configuration, :starts_on, :ends_on, :phases, :prescriptions, :weeks, :warnings) do
+      def initialize(configuration:, starts_on:, ends_on:, phases:, prescriptions:, weeks:, warnings:)
         super(
           configuration: configuration,
           starts_on: starts_on,
@@ -102,7 +101,6 @@ module Planning
           phases: phases.freeze,
           prescriptions: prescriptions.freeze,
           weeks: weeks.freeze,
-          ftp_test_dates: ftp_test_dates.freeze,
           warnings: warnings.map { |warning| warning.dup.freeze }.freeze)
       end
     end
@@ -117,7 +115,6 @@ module Planning
       @phases = PhaseAllocator.new(@configuration).call
       @week_flags = recovery_week_flags
       prescriptions = build_prescriptions
-      prescriptions = place_ftp_tests(prescriptions)
       evaluated = prescriptions.map { |prescription| evaluate(prescription) }
       evaluated, warnings = enforce_load_cap(evaluated)
       evaluated = taper_load(evaluated)
@@ -129,7 +126,6 @@ module Planning
         phases: @phases,
         prescriptions: evaluated.sort_by(&:scheduled_on),
         weeks: weeks,
-        ftp_test_dates: evaluated.select { |prescription| prescription.kind == "ftp_test" }.map(&:scheduled_on),
         warnings: warnings)
     end
 
@@ -266,21 +262,6 @@ module Planning
       V1::PhaseProgression.level(date: date, kind: phase.kind, starts_on: phase.starts_on, ends_on: phase.ends_on)
     end
 
-    def place_ftp_tests(prescriptions)
-      selected = V1::AssessmentSchedule.new(
-        configuration: @configuration,
-        phases: @phases,
-        recovery_flags: @week_flags,
-        prescriptions: prescriptions).dates
-      prescriptions.map do |prescription|
-        if selected.include?(prescription.scheduled_on)
-          special(prescription.scheduled_on, :ftp_test, phase_for(prescription.scheduled_on), "FTP Test", "Perform your preferred FTP assessment, then update Settings.")
-        else
-          prescription
-        end
-      end
-    end
-
     def evaluate(prescription)
       return prescription unless prescription.executable?
 
@@ -323,7 +304,7 @@ module Planning
       return prescriptions unless taper
 
       peak_items = prescriptions.group_by { |item| item.scheduled_on.beginning_of_week }.filter_map do |week_start, items|
-        next if partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start) || assessment_week?(items)
+        next if partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start)
 
         items
       end.max_by { |items| tss_for(items) }
@@ -379,7 +360,7 @@ module Planning
       reference_tss = nil
       weekly_starts.each do |week_start|
         week_prescriptions = adjusted.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }
-        next if week_prescriptions.empty? || partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start) || assessment_week?(week_prescriptions)
+        next if week_prescriptions.empty? || partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start)
 
         current_tss = tss_for(week_prescriptions)
         if reference_tss && current_tss > reference_tss * (1 + V1::Rules::HARD_WEEK_GROWTH_CAP)
@@ -442,12 +423,6 @@ module Planning
       (week_start..week_start + 6).any? do |date|
         date.between?(@configuration.starts_on, @configuration.ends_on) && phase_for(date).kind == "taper"
       end
-    end
-
-    def assessment_week?(prescriptions)
-      # An FTP test has no prescribed load, so its reduced total is not a
-      # comparable hard-week reference for the automatic 8% growth rule.
-      prescriptions.any? { |prescription| prescription.kind == "ftp_test" }
     end
   end
 end

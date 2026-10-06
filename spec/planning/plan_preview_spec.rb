@@ -89,22 +89,20 @@ RSpec.describe Planning::PlanBuilder do
     expect(long_taper.prescriptions.find { |item| item.kind == "event" }.scheduled_on).to eq(Date.new(2026, 12, 6))
   end
 
-  it "places no routine FTP test in short plans and replaces eligible workout days every four to six weeks in longer plans" do
-    expect(preview(duration_mode: "custom", custom_duration_weeks: 5).ftp_test_dates).to be_empty
-    long = preview(duration_months: 6)
-    expect(long.ftp_test_dates).not_to be_empty
-    expect(long.ftp_test_dates.each_cons(2).all? { |first, second| (second - first).between?(28, 42) }).to be(true)
-    long.ftp_test_dates.each do |date|
-      item = long.prescriptions.find { |prescription| prescription.scheduled_on == date }
-      expect(item.kind).to eq("ftp_test")
-      expect(item.metrics).to be_nil
+  it "CYF-77 keeps configured workout dates and loads in short and long plans without FTP-test replacements" do
+    [ 4, 5, 12, 26 ].each do |weeks|
+      result = preview(duration_mode: "custom", custom_duration_weeks: weeks)
+      dates = (result.starts_on..result.ends_on).select { |date| [ 1, 3, 6 ].include?(date.cwday) }
+      expect(result.prescriptions.map(&:scheduled_on)).to eq(dates)
+      expect(result.prescriptions.map(&:kind).uniq).to eq([ "workout" ])
+      expect(result.prescriptions).to all(have_attributes(metrics: be_present, duration_minutes: be >= 30))
     end
   end
 
   it "PLN-013 caps generated comparable hard-week load growth at 8% when the schedule permits" do
     plan = preview(duration_months: 6)
     comparable = plan.weeks.reject do |week|
-      week.partial || week.recovery_week || week.phase == "taper" || week.warning || week.prescriptions.any? { |item| item.kind == "ftp_test" }
+      week.partial || week.recovery_week || week.phase == "taper" || week.warning
     end
     expect(comparable.each_cons(2).all? { |first, second| second.estimated_tss <= first.estimated_tss * 1.08 + 1e-8 }).to be(true)
   end

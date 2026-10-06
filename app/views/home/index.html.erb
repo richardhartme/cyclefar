@@ -130,10 +130,7 @@
                 <article class="card mt-3 border shadow-sm <%= workout_card_colors(workout) %>">
                   <div class="card-body gap-1 p-3">
                     <div class="<%= "opacity-50 grayscale" if workout.missed? %>">
-                      <% if workout.ftp_test? %>
-                        <strong><%= link_to "FTP Test", planned_workout_path(workout), class: "link" %></strong>
-                        <p class="text-sm">Use your preferred assessment, then update Settings.</p>
-                      <% elsif workout.structured? %>
+                      <% if workout.structured? %>
                         <strong><%= link_to workout.name, planned_workout_path(workout), class: "link" %></strong>
                         <p class="text-sm"><%= workout_type_label(workout) %> · <%= workout.duration_minutes %> min</p>
                         <%= workout_profile_svg(workout) %>

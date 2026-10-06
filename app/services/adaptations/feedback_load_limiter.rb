@@ -73,7 +73,6 @@ module Adaptations
 
     def fixed_tss(workout)
       return workout.estimated_tss.to_f if workout.estimated_tss
-      return 0 if workout.ftp_test?
 
       steps = if workout.structured?
         workout.workout_steps

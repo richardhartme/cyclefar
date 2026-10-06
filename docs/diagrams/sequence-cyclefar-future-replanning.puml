@@ -46,9 +46,9 @@ group transaction under plan lock
     ReturnRules --> Prescriber: family baseline, default level 1
     Prescriber -> Database: remove replaceable planned regular workouts\nand blocked-date planned specials
     Prescriber -> ExistingConfiguration: build from saved plan and supplied slots
-    ExistingConfiguration --> Prescriber: saved plan and slots; initial plan FTP for forecasts\nassessment exclusions for time off/return ramps
+    ExistingConfiguration --> Prescriber: saved plan and slots; initial plan FTP for forecasts
     Prescriber -> Builder: preview(configuration)
-    Builder -> Builder: align recovery; rank unblocked FTP-test dates\nforecast prescriptions and metrics
+    Builder -> Builder: align recovery; forecast prescriptions and metrics
     Builder -> LoadRules: apply ordered cap reductions to forecasts
     Builder -> Builder: budget taper stages against comparable peak load\nretain event/opener and save reduced main-set factors
     Builder --> Prescriber: deterministic prescriptions and generation choices

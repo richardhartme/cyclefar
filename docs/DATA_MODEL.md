@@ -148,10 +148,10 @@ This represents both high-level prescriptions and detailed workouts.
 Fields:
 
 - `scheduled_on: date, null: false`
-- `kind: enum` — `workout`, `ftp_test`, `opener`
+- `kind: enum` — `workout`, `opener`
 - `intent: enum` — same broad/specific domain as schedule where applicable
 - `subtype: enum, nullable` — `recovery`, `endurance`, `tempo`, `sweet_spot`, `threshold`, `vo2_max`, `over_under`
-- `duration_minutes: integer, nullable` — FTP test can be nil/unknown
+- `duration_minutes: integer` — required and at least 30 minutes (model and database check)
 - `name: string`
 - `purpose: string`
 - `detail_status: enum` — `outline`, `structured`
@@ -177,7 +177,7 @@ Important:
 
 - Do not store planned target watts as the source of truth. Store percentage targets in steps and derive watts from current FTP.
 - On completion, snapshot watts/metrics so later FTP changes do not alter history.
-- Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes.
+- Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes. CYF-77 uses a transaction with table locks for a one-time deletion of all legacy FTP-test records, including completed tests; ordinary completed history is unchanged.
 - Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them.
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.

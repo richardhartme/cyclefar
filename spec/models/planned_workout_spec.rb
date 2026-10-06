@@ -1,9 +1,9 @@
 require "rails_helper"
 
 RSpec.describe PlannedWorkout, type: :model do
-  it "WKO-006 enforces one workout per plan/date, including FTP tests" do
+  it "WKO-006 enforces one workout per plan/date" do
     workout = create(:planned_workout)
-    duplicate = build(:planned_workout, :ftp_test, training_plan: workout.training_plan, scheduled_on: workout.scheduled_on)
+    duplicate = build(:planned_workout, training_plan: workout.training_plan, scheduled_on: workout.scheduled_on)
     expect(duplicate).not_to be_valid
     expect_database_rejection(ActiveRecord::RecordNotUnique) { duplicate.save!(validate: false) }
     expect(create(:planned_workout, training_plan: create(:training_plan, :archived), scheduled_on: workout.scheduled_on)).to be_persisted
@@ -35,11 +35,11 @@ RSpec.describe PlannedWorkout, type: :model do
     expect_database_rejection(ActiveRecord::NotNullViolation) { workout.update_columns(generation_context: nil) }
   end
 
-  it "FTP-001 stores FTP tests with no invented protocol or metrics" do
-    workout = create(:planned_workout, :ftp_test)
-    expect(workout.workout_steps).to be_empty
-    expect(workout.update(estimated_tss: 50)).to be(false)
-    expect_database_rejection { workout.update_columns(estimated_tss: 50) }
+  it "CYF-77 rejects FTP-test kinds through both model validation and database constraints" do
+    workout = build(:planned_workout, kind: "ftp_test")
+    expect(workout).not_to be_valid
+    expect(workout.errors[:kind]).to be_present
+    expect_database_rejection { workout.save!(validate: false) }
   end
 
   it "FBK-001 requires a snapshot and timestamp before completion" do

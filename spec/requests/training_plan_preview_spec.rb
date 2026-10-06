@@ -62,8 +62,9 @@ RSpec.describe "Training plan preview", type: :request do
     }.not_to change { [ TrainingPlan.count, PlannedWorkout.count, PlanPhase.count, TargetEvent.count, AvailabilityTemplate.count ] }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Plan preview", "Phase timeline", "Weekly template", "FTP assessments", "Projected weekly load", "Back to edit")
+    expect(response.body).to include("Plan preview", "Phase timeline", "Weekly template", "Projected weekly load", "Back to edit")
     expect(response.body).to include("Recovery week")
+    expect(response.body).not_to include("FTP assessments", "FTP Test")
   end
 
   it "PLN-010 returns useful validation errors without generating a preview" do
@@ -86,7 +87,7 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response).to redirect_to(root_path)
     follow_redirect!
     expect(response.body).to include("Training calendar", "Training plan created.", "November")
-    expect(response.body).to include("FTP Test")
+    expect(response.body).not_to include("FTP Test", "FTP assessments", "Test done")
     expect(response.body).to include("Workout power profile")
     expect(Nokogiri::HTML(response.body).css("svg polygon")).not_to be_empty
     expect(TrainingPlan.active.sole.planned_workouts.structured.count).to be < TrainingPlan.active.sole.planned_workouts.count

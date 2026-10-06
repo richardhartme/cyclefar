@@ -13,7 +13,7 @@ module Planning
 
       def comparable_week?(week_start, workouts)
         return false if week_start < @plan.starts_on || week_start + 6 > @plan.ends_on
-        return false if recovery_week?(week_start) || workouts.any?(&:ftp_test?)
+        return false if recovery_week?(week_start)
         return false if @plan.plan_phases.any? { |phase| phase.kind_taper? && phase.starts_on <= week_start + 6 && phase.ends_on >= week_start }
 
         @periods.none? do |period|

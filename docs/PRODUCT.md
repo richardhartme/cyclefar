@@ -105,7 +105,6 @@ This describes intended V1 scope, including later additions. Known implementatio
 - Schedule changes for one week or from a date onward
 - Time off: holiday, illness, recovery, event, other
 - Return-to-training ramp after illness/recovery
-- FTP assessment recommendations
 - Intervals.icu sync for next two workouts
 
 ### Explicitly out of scope

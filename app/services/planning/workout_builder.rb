@@ -23,7 +23,7 @@ module Planning
     def build_for_completion!(workout)
       @plan.with_lock do
         workout.reload
-        unless workout.training_plan_id == @plan.id && workout.planned? && !workout.ftp_test? && workout.scheduled_on <= @date
+        unless workout.training_plan_id == @plan.id && workout.planned? && workout.scheduled_on <= @date
           raise ArgumentError, "Only a planned executable workout due today or earlier can be built for completion"
         end
         return if workout.structured?
@@ -38,7 +38,7 @@ module Planning
     def build!(workout_id: nil)
       @ftp = @plan.ftp_watts_for_planning
       @load_context = V1::LoadContext.new(@plan)
-      eligible = @plan.planned_workouts.planned.outline.where.not(kind: :ftp_test)
+      eligible = @plan.planned_workouts.planned.outline
       eligible = workout_id ? eligible.where(id: workout_id) : eligible.where(scheduled_on: @date..(@date + 13))
       @selected_ids = eligible.pluck(:id)
       candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + 13).end_of_week)
@@ -50,7 +50,7 @@ module Planning
 
     def candidate_for(workout)
       selected = @selected_ids.include?(workout.id)
-      if selected || (!workout.ftp_test? && workout.outline? && workout.estimated_tss.nil?)
+      if selected || (workout.outline? && workout.estimated_tss.nil?)
         definition = definition_for(workout)
         metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call
       elsif workout.structured? && workout.estimated_tss.nil?

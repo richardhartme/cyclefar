@@ -31,7 +31,6 @@ RSpec.describe "USR-004 owner-scoped training routes", type: :request do
       "move" => [ :post, :move_planned_workout_path, { scheduled_on: (Date.current + 2).iso8601 } ],
       "copy" => [ :post, :copy_planned_workout_path, { scheduled_on: (Date.current + 2).iso8601 } ],
       "complete" => [ :post, :complete_planned_workout_path, { rpe: 8, completion_quality: "as_planned" } ],
-      "FTP test completion" => [ :post, :complete_test_planned_workout_path, {} ],
       "missed resolution" => [ :post, :miss_planned_workout_path, { resolution: "leave_unchanged" } ]
     }.each do |action, (method, route, params)|
       it "returns the same not-found response for another rider's and a missing workout on #{action}" do

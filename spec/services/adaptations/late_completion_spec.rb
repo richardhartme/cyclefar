@@ -134,13 +134,6 @@ RSpec.describe Adaptations::CompletionRecorder, generated_workouts: true do
     expect(snapshot(completed)).to eq(frozen)
   end
 
-  it "FBK-001 keeps FTP tests on their protocol-free completion path" do
-    workout = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: today - 1)
-    before = snapshot(workout)
-    expect { complete(workout) }.to raise_error(ArgumentError)
-    expect(snapshot(workout)).to eq(before)
-  end
-
   it "FBK-001 rejects future outlines and missed workouts without materialising them" do
     [ outline(date: today + 14), outline(status: :missed) ].each do |workout|
       before = snapshot(workout)

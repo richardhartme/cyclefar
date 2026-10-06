@@ -95,7 +95,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
     expect(Planning::WeeklyLoadReview.new(plan).warnings).to eq(warnings)
   end
 
-  %w[holiday illness assessment].each do |exclusion|
+  %w[holiday illness].each do |exclusion|
     it "uses the last comparable hard week across a #{exclusion} week" do
       reference = generated_workout(plan: plan, phase: phase, date: today - 21, level: 3, duration: 90)
       generated_workout(plan: plan, phase: phase, date: today - 14, subtype: :recovery, duration: 30)
@@ -105,8 +105,6 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
         create(:time_off_period, training_plan: plan, starts_on: today - 13, ends_on: today - 4, reason: :holiday)
       when "illness"
         create(:time_off_period, training_plan: plan, starts_on: today - 8, ends_on: today - 8, reason: :illness, return_ramp_days: 7)
-      when "assessment"
-        [ 12, 5 ].each { |offset| create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: today - offset) }
       end
       workout = create(
         :planned_workout,

@@ -21,7 +21,7 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def show
-    if @workout.planned? && @workout.outline? && !@workout.ftp_test? && @workout.scheduled_on <= Date.current
+    if @workout.planned? && @workout.outline? && @workout.scheduled_on <= Date.current
       Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout)
     end
     @material_change_proposal = material_change_proposal
@@ -65,18 +65,6 @@ class PlannedWorkoutsController < ApplicationController
   def complete
     proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality)).call
     redirect_to root_path, notice: proposal ? "Workout completed. An adaptation proposal is ready for review." : "Workout completed."
-  rescue ArgumentError, ActiveRecord::RecordInvalid => error
-    redirect_to planned_workout_path(@workout), alert: error.message
-  end
-
-  def complete_test
-    @workout.training_plan.with_lock do
-      @workout.reload
-      raise ArgumentError, "Only a planned FTP test can be marked done" unless @workout.planned? && @workout.ftp_test?
-
-      @workout.update!(status: :completed, completed_at: Time.current)
-    end
-    redirect_to settings_path, notice: "FTP test recorded. Update your current FTP from the result."
   rescue ArgumentError, ActiveRecord::RecordInvalid => error
     redirect_to planned_workout_path(@workout), alert: error.message
   end

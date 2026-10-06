@@ -48,7 +48,6 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
   it "versions an ongoing change while preserving past workouts and event items" do
     event = create(:target_event, training_plan: plan, event_on: plan.ends_on)
     past_workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current - 1)
-    ftp_test = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: next_week + 2)
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: next_week + 4)
 
     template = described_class.new(plan: plan, slots: slots, effective_from: next_week, scope: :from_date).apply!
@@ -58,7 +57,6 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
     expect(template.effective_until).to be_nil
     expect(past_workout.reload).to be_planned
     expect(completed.reload).to be_completed
-    expect(ftp_test.reload).to be_ftp_test
     expect(plan.target_event).to eq(event)
     expect(plan.plan_phases).to contain_exactly(phase)
   end

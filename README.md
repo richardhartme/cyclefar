@@ -22,7 +22,7 @@ snapshots.
 - A continuous calendar with canonical main-set summaries, watt ranges,
   TSS/IF/work, event details, editable future workouts and inline power-profile
   graphs. Later outlines show their purpose; weekly totals feed a TSS chart.
-- Generated weekly load limits, aligned recovery weeks, ranked FTP assessments
+- Generated weekly load limits, aligned recovery weeks
   and staged taper budgets that retain the target event and opener.
 - Completion feedback, overdue and missed-workout resolution, and explicit
   adaptation proposals with owner-scoped before/after comparisons and a
@@ -126,7 +126,7 @@ has an active plan, and it does not create an account or run in production.
 Save an Intervals.icu API key in **Settings**, then use the calendar's manual
 sync action. Sync exports only the next two structured workouts that can be
 performed, including openers, and uses stable `cyclefar-workout-<id>` external
-IDs. It excludes FTP tests and exports fewer than two when fewer are eligible.
+IDs. It exports fewer than two when fewer are eligible.
 It neither imports rides nor changes unrelated Intervals.icu events.
 
 Sync removes every tracked event owned by the rider outside the next-two set,
