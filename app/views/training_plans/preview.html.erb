@@ -83,31 +83,14 @@
         </section>
 
         <% opener = @preview.prescriptions.find { |item| item.kind == "opener" } %>
-        <div class="grid gap-6 <%= opener ? 'lg:grid-cols-2' : '' %>">
-            <section aria-labelledby="assessment-dates" class="card bg-base-100 border-base-300 border shadow-sm">
+        <% if opener %>
+        <section aria-labelledby="taper-details" class="card bg-base-100 border-base-300 border shadow-sm">
             <div class="card-body">
-                <h2 id="assessment-dates" class="card-title">FTP assessments</h2>
-                <% if @preview.ftp_test_dates.any? %>
-                <p class="text-base-content/60 text-sm">Proposed dates to reassess your training power.</p>
-                <ul class="mt-2 flex flex-wrap gap-2">
-                    <% @preview.ftp_test_dates.each do |date| %>
-                    <li class="badge badge-outline badge-lg"><%= date.to_fs(:long) %></li>
-                    <% end %>
-                </ul>
-                <% else %>
-                <p class="text-base-content/70">No routine FTP test is proposed for this plan length.</p>
-                <% end %>
+            <h2 id="taper-details" class="card-title">Taper and opener</h2>
+            <p class="text-base-content/70">Your taper reduces training load before the event. <strong class="text-base-content"><%= opener.name %></strong> is scheduled for <%= opener.scheduled_on.to_fs(:long) %> (<%= opener.duration_minutes %> min).</p>
             </div>
-            </section>
-            <% if opener %>
-            <section aria-labelledby="taper-details" class="card bg-base-100 border-base-300 border shadow-sm">
-                <div class="card-body">
-                <h2 id="taper-details" class="card-title">Taper and opener</h2>
-                <p class="text-base-content/70">Your taper reduces training load before the event. <strong class="text-base-content"><%= opener.name %></strong> is scheduled for <%= opener.scheduled_on.to_fs(:long) %> (<%= opener.duration_minutes %> min).</p>
-                </div>
-            </section>
-            <% end %>
-        </div>
+        </section>
+        <% end %>
 
         <section aria-labelledby="weekly-load" class="card bg-base-100 border-base-300 border shadow-sm">
             <div class="card-body">

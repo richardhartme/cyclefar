@@ -9,7 +9,7 @@ boundary "TrainingPlansController" as Controller
 collections "Owner-bound\nRails session draft" as Draft
 control "PlanConfiguration" as Configuration
 control "PlanBuilder" as Builder
-control "RecoverySchedule +\nAssessmentSchedule" as ScheduleRules
+control "RecoverySchedule" as ScheduleRules
 control "Workout engine" as Engine
 control "WeeklyLoadCap +\nLoadReduction" as LoadRules
 control "PreviewPresenter" as Presenter
@@ -41,8 +41,6 @@ else valid configuration
       Builder -> ScheduleRules: align recovery before transitions
       ScheduleRules --> Builder: recovery flags excluding taper
       Builder -> Builder: build prescriptions, event and opener
-      Builder -> ScheduleRules: rank eligible FTP-test dates within 4-6 weeks
-      ScheduleRules --> Builder: replacement dates excluding recovery, taper and pre-event window
       Builder -> Engine: forecast workouts with explicit variations and metrics
       Builder -> LoadRules: enforce ordered reductions on comparable hard weeks
       LoadRules --> Builder: adjusted definitions, metrics and infeasible warnings
@@ -87,7 +85,7 @@ note over Builder, Database
   Taper budgets adjust duration separately: minimum 30 minutes; event/opener fixed.
   Final stage ends on the event date, including non-Sunday events; no added dates.
   Saved taper work factors and ceilings survive materialisation and positive bias.
-  Partial, recovery, taper and assessment weeks are not hard-week baselines.
+  Partial, recovery and taper weeks are not hard-week baselines.
   HomeController later rolls the horizon and reviews load without regenerating fixed detail.
 end note
 @enduml

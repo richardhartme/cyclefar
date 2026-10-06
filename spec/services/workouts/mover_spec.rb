@@ -146,15 +146,11 @@ RSpec.describe Workouts::Mover, type: :service, generated_workouts: true do
     expect(other.reload.attributes).to eq(original)
   end
 
-  it "keeps an opener executable and FTP tests protocol-free across phases" do
+  it "keeps an opener executable across phases" do
     opener = Workouts::Creator.new(plan).create!(scheduled_on: today - 1, subtype: :opener, duration_minutes: 45)
     described_class.new(opener).move_to!(destination: today + 1)
     expect(opener.reload).to have_attributes(kind: "opener", duration_minutes: 45, name: "Event Opener", detail_status: "structured")
     expect(opener.workout_steps.sum(:duration_seconds)).to eq(2700)
-    test = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: base, scheduled_on: today - 1)
-    described_class.new(test).move_to!(destination: today + 3)
-    expect(test.reload).to have_attributes(kind: "ftp_test", detail_status: "outline", plan_phase: build, estimated_tss: nil, duration_minutes: nil)
-    expect(test.workout_steps).to be_empty
   end
 
   it "rejects dates outside the plan, time off, the event date and missing phases" do

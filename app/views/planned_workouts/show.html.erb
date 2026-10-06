@@ -6,20 +6,11 @@
       <div class="mt-3 flex flex-wrap gap-2">
         <span class="badge badge-primary badge-outline"><%= @workout.scheduled_on.to_fs(:long) %></span>
         <span class="badge badge-secondary badge-outline"><%= @workout.plan_phase.kind.humanize %></span>
-        <% unless @workout.ftp_test? %>
-          <span class="badge badge-ghost"><%= @workout.duration_minutes %> min</span>
-        <% end %>
+        <span class="badge badge-ghost"><%= @workout.duration_minutes %> min</span>
       </div>
     </header>
 
-    <% if @workout.ftp_test? %>
-      <div role="note" class="alert alert-info alert-soft">Use your preferred FTP assessment protocol. CycleFar does not prescribe a test workout.</div>
-      <% if @workout.planned? %>
-        <%= button_to "Test done — update FTP", complete_test_planned_workout_path(@workout), class: "btn btn-primary" %>
-      <% else %>
-        <p class="badge badge-success">FTP test recorded</p>
-      <% end %>
-    <% elsif @workout.structured? %>
+    <% if @workout.structured? %>
       <div>
         <p><%= @workout.purpose %></p>
         <p class="mt-3"><strong>Main set:</strong> <%= @workout.workout_steps.select { |step| step.group_key == "main" }.map(&:label).uniq.join(", ").presence || "Steady aerobic work" %></p>

@@ -131,7 +131,6 @@ Show:
 - phase timeline;
 - weekly template;
 - recovery pattern;
-- proposed FTP-test dates;
 - taper/opener details;
 - projected weekly duration and TSS, preferably as a compact bar/line visual plus numbers.
 
@@ -207,11 +206,6 @@ Event:
 
 - distinctive card;
 - name, discipline, optional distance/elevation/duration.
-
-FTP Test:
-
-- distinctive card labelled `FTP Test`;
-- no invented workout graph/metrics.
 
 Time off:
 

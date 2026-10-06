@@ -8,7 +8,7 @@ Rails authentication was generated after the original V1 requirements. The appli
 
 Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Ordinary and missed-workout moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load (CYF-7). Manual completion includes executable openers and individually materialised overdue outlines, with coherent current-FTP completion snapshots and the next-scheduled-workout late-feedback guard (CYF-9). Per-family progression bias remains a gap.
 
-Ordered weekly load reductions, shared recovery scheduling, ranked FTP assessments and staged taper budgets are implemented (CYF-10/11). Return ramps save stage power limits and resume from the latest comparable pre-break session (CYF-12, OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration (CYF-13). Manual sync reconciles all of the rider's tracked events outside the next-two set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (CYF-14, ICU-001). These notes do not replace the acceptance criteria below.
+Ordered weekly load reductions, shared recovery scheduling and staged taper budgets are implemented (CYF-10/11). Return ramps save stage power limits and resume from the latest comparable pre-break session (CYF-12, OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration (CYF-13). Manual sync reconciles all of the rider's tracked events outside the next-two set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (CYF-14, ICU-001). These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -127,7 +127,6 @@ Preview shows:
 - phase names and date ranges;
 - weekly availability;
 - recovery-week pattern;
-- FTP assessment dates;
 - target event + taper where applicable;
 - projected weekly duration/TSS progression.
 
@@ -418,15 +417,15 @@ For Illness or Recovery, the rider additionally chooses the duration of an easie
 
 ## 12. FTP assessments
 
-### FTP-001 Automatic placement
+### FTP-001 Scheduled assessments (retired by CYF-77)
 
-The engine automatically places `FTP Test` calendar items/workout replacements at sensible points in sufficiently long plans.
+CycleFar does not schedule FTP tests or replace training sessions with assessments.
 
-- The rider does not configure the testing frequency.
-- An FTP test replaces that day's normal workout.
-- The app does not prescribe a particular FTP testing protocol.
-- FTP-test items have no planned TSS/IF/work because the protocol is unknown.
-- After testing, the rider manually changes FTP in Settings.
+- Preview, creation and replanning retain normal training prescriptions on configured workout dates.
+- Preview and calendar do not show FTP-test items or assessment actions.
+- Existing FTP-test records, including completed tests, are deleted by the CYF-77 cleanup migration. Existing plans are not rebuilt and freed dates remain empty until an explicit replan.
+- Ordinary completed workouts, their steps, feedback and snapshots remain immutable.
+- Riders continue to update FTP manually in Settings; SET-001 remains unchanged.
 
 ## 13. Training load control
 

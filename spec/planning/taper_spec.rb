@@ -22,7 +22,7 @@ RSpec.describe "PLN-022 staged taper" do
   end
 
   def peak(preview)
-    preview.weeks.reject { |week| week.partial || week.recovery_week || week.prescriptions.any? { |item| %w[ftp_test event opener].include?(item.kind) || item.phase == "taper" } }.map(&:estimated_tss).max
+    preview.weeks.reject { |week| week.partial || week.recovery_week || week.prescriptions.any? { |item| %w[event opener].include?(item.kind) || item.phase == "taper" } }.map(&:estimated_tss).max
   end
 
   it "uses 70–80% peak load in the first long-taper stage and 40–60% in event week, including the opener" do

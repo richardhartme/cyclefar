@@ -17,7 +17,7 @@ Controller -> Database: resolve signed-in rider's active plan
 Controller -> Sync: SyncNextTwo.new(plan: owned active plan).call
 Sync -> Database: resolve plan owner's profile (default service input)
 Sync -> Sync: validate profile owner and API key
-Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude FTP tests and time off
+Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude time off
 Database --> Sync: eligible set (zero, one or two workouts)
 loop each selected workout
   Sync -> Serializer: payload(canonical steps, current FTP, stable external ID)

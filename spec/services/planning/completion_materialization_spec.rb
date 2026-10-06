@@ -76,12 +76,11 @@ RSpec.describe Planning::WorkoutBuilder, generated_workouts: true do
     expect(snapshot(workout)).to eq(before)
   end
 
-  it "FBK-001 rejects missed, completed, FTP-test and future outline sources without changes" do
+  it "FBK-001 rejects missed, completed and future outline sources without changes" do
     missed = outline(status: :missed)
     completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: today - 6)
-    test = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: today - 5)
     future = outline(date: today + 1)
-    [ missed, completed, test, future ].each do |workout|
+    [ missed, completed, future ].each do |workout|
       before = snapshot(workout)
       expect { described_class.new(plan).build_for_completion!(workout) }.to raise_error(ArgumentError)
       expect(snapshot(workout)).to eq(before)

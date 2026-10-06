@@ -61,7 +61,6 @@ Select the first two by `scheduled_on` where:
 - kind is an executable workout/opener;
 - exclude target event;
 - exclude time off;
-- exclude FTP Test because V1 does not define an executable FTP-test protocol.
 
 If fewer than two are available, sync what exists and explain the count.
 

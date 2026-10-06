@@ -15,7 +15,6 @@ Rails.application.routes.draw do
       post :move
       post :copy
       post :complete
-      post :complete_test
       post :miss
     end
   end

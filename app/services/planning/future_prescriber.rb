@@ -60,7 +60,7 @@ module Planning
 
     def prepared_prescription(item, dates)
       return unless dates.include?(item.scheduled_on)
-      return unless %w[workout ftp_test opener].include?(item.kind)
+      return unless %w[workout opener].include?(item.kind)
       return if time_off_period_for(item.scheduled_on)
       return if return_ramp_period_for(item.scheduled_on) && item.kind != "workout"
       return item unless item.kind == "workout"

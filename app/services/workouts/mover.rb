@@ -26,13 +26,13 @@ module Workouts
           reduced_context(@workout.scheduled_on) != reduced_context(destination)
         @workout.update!(scheduled_on: destination, plan_phase: phase)
         materialize = @workout.outline? && destination.between?(Date.current, Date.current + 13)
-        if !@workout.ftp_test? && (regenerate || materialize)
+        if regenerate || materialize
           regenerate!(fresh_context: regenerate, materialize: materialize)
         elsif @workout.structured?
           refresh_metrics!
         end
         week = Planning::WeeklyLoadReview.new(@plan).call.find { |item| item.starts_on == destination.beginning_of_week }
-        Result.new(workout: @workout, regenerated: regenerate && !@workout.ftp_test?, warnings: [ week&.warning ].compact)
+        Result.new(workout: @workout, regenerated: regenerate, warnings: [ week&.warning ].compact)
       end
     end
 

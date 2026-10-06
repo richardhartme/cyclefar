@@ -70,7 +70,7 @@ RSpec.describe Metrics::WorkoutCalculator do
     end
   end
 
-  it "rejects empty structures such as unprescribed FTP tests" do
+  it "rejects empty structures" do
     expect { described_class.new(steps: [], ftp_watts: 260).call }.to raise_error(ArgumentError)
   end
 end

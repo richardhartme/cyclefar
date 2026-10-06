@@ -7,8 +7,7 @@ module CalendarHelper
     threshold: "bg-amber-50 border-amber-300",
     vo2_max: "bg-orange-50 border-orange-300",
     over_under: "bg-rose-50 border-rose-300",
-    opener: "bg-violet-50 border-violet-300",
-    ftp_test: "bg-indigo-50 border-indigo-300"
+    opener: "bg-violet-50 border-violet-300"
   }.freeze
 
   def workout_card_colors(workout)

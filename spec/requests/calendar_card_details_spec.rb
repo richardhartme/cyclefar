@@ -112,17 +112,6 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
     expect(completed.workout_steps.map(&:attributes)).to eq(steps)
   end
 
-  it "FTP-001 keeps protocol-free assessment cards free of invented metrics and targets" do
-    workout = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase)
-
-    get root_path
-
-    card = workout_card(workout)
-    expect(card.text).to include("FTP Test", "Use your preferred assessment")
-    expect(card.css('svg, dl[aria-label="Main set"]')).to be_empty
-    expect(card.text).not_to include("TSS", "IF", "kJ", " W")
-  end
-
   it "PLN-022 shows supplied event fields in kilometres, metres and minutes" do
     event_plan = create(:training_plan, :event, user: user)
     create(:target_event, training_plan: event_plan, distance_km: 123.45, elevation_m: 2450, expected_duration_minutes: 315)

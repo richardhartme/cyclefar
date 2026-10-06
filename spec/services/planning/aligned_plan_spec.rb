@@ -60,22 +60,22 @@ RSpec.describe "CYF-11 persisted phase treatment", generated_workouts: true do
     expect([ completed.reload.attributes, completed.workout_steps.reload.map(&:attributes), completed.workout_feedback.reload.attributes ]).to eq(snapshot)
   end
 
-  it "excludes time off and return ramps before ranking FTP slots, preserving a normal re-entry prescription" do
+  it "CYF-77 replans illness return and taper with executable training prescriptions instead of FTP tests" do
     plan = Planning::PlanCreator.new(config, user: create(:user)).create!
-    assessment = plan.planned_workouts.ftp_test.order(:scheduled_on).first!
+    break_date = start + 36
     period = Planning::TimeOffPlanner.new(plan: plan).add!(
-      starts_on: assessment.scheduled_on - 1,
-      ends_on: assessment.scheduled_on,
+      starts_on: break_date - 1,
+      ends_on: break_date,
       reason: :illness,
       return_ramp_days: 14)
     slots = plan.availability_templates.sole.availability_slots.map { |slot| Planning::Availability.new(weekday: slot.weekday, duration_minutes: slot.duration_minutes, intent: slot.intent) }
     existing = Planning::ExistingPlanConfiguration.new(plan: plan, availability: slots)
     preview = Planning::PlanBuilder.new(existing).preview
-    expect(preview.ftp_test_dates).not_to include(be_between(period.starts_on, period.ends_on + 14))
-    expect(plan.planned_workouts.ftp_test.pluck(:scheduled_on)).not_to include(be_between(period.starts_on, period.ends_on + 14))
-    expect(preview.prescriptions.find { |item| item.scheduled_on == assessment.scheduled_on + 7 }.kind).to eq("workout")
-    tapered = preview.prescriptions.select { |item| item.phase == "taper" && item.intensity? }
-    tapered.each do |item|
+    expect(preview.prescriptions.map(&:kind).uniq).to match_array(%w[workout opener event])
+    expect(plan.planned_workouts.pluck(:kind).uniq).to match_array(%w[workout opener])
+    expect(plan.planned_workouts.where(scheduled_on: period.starts_on..period.ends_on)).not_to exist
+    expect(plan.planned_workouts.find_by!(scheduled_on: break_date + 7)).to have_attributes(kind: "workout", generation_context: include("return_ramp_stage"))
+    preview.prescriptions.select { |item| item.phase == "taper" && item.intensity? }.each do |item|
       workout = plan.planned_workouts.find_by!(scheduled_on: item.scheduled_on)
       expect(workout.generation_context.fetch("load_adjustments")).to eq(item.definition.load_adjustments)
       expect(workout.progression_level).to be <= item.progression_level

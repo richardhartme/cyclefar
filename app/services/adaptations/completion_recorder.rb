@@ -12,7 +12,7 @@ module Adaptations
 
       @workout.training_plan.with_lock do
         @workout.reload
-        raise ArgumentError, "Only planned executable workouts can be completed" unless @workout.planned? && !@workout.ftp_test?
+        raise ArgumentError, "Only planned executable workouts can be completed" unless @workout.planned?
 
         Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout) if @workout.outline?
 

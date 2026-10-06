@@ -100,14 +100,6 @@ FactoryBot.define do
         )
       end
     end
-
-    trait :ftp_test do
-      kind { :ftp_test }
-      intent { nil }
-      subtype { nil }
-      duration_minutes { nil }
-      name { "FTP Test" }
-    end
   end
 
   factory :workout_step do

@@ -92,15 +92,13 @@ RSpec.describe Planning::WorkoutBuilder, generated_workouts: true do
     expect([ future.reload.detail_status, missed.reload.detail_status ]).to eq(%w[outline outline])
   end
 
-  it "does not assign intensity levels to endurance, recovery, opener or FTP Test" do
+  it "does not assign intensity levels to endurance, recovery or opener" do
     plan.update!(progression_state: { "intensity_bias" => 2 })
     easy = outline(subtype: :endurance, level: nil)
     recovery = outline(date: today + 1, subtype: :recovery, level: nil)
     opener = outline(date: today + 2, kind: :opener, subtype: :endurance, level: nil, duration: 30, variation_key: "activation")
-    test = create(:planned_workout, :ftp_test, training_plan: plan, plan_phase: phase, scheduled_on: today + 3)
     described_class.new(plan).call
     expect([ easy, recovery, opener ].map { |workout| workout.reload.progression_level }).to eq([ nil, nil, nil ])
-    expect(test.reload).to be_outline
   end
 
   it "preserves a load-limited outline ceiling and the generated effective level" do
