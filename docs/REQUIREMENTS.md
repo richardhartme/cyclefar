@@ -402,6 +402,8 @@ After plan creation, weekly availability can be changed:
 
 The app replans affected future prescriptions around the revised template. Past and completed workouts are not changed.
 
+The change form is prefilled with the configured schedule for the chosen week, and may be opened for a specific date within the plan (for example from a load warning).
+
 ## 11. Time off
 
 ### OFF-001 Planned time off
@@ -447,6 +449,8 @@ The calendar may omit NP, but the metrics service may retain it internally.
 The engine controls the rate of planned TSS increase between comparable hard weeks using a fixed V1 default; the rider does not choose conservative/standard/aggressive modes.
 
 Recovery and taper weeks are deliberate load reductions and should not be treated as the baseline for the subsequent hard-week increase cap.
+
+When a week still exceeds the cap after the ordered reductions, show a non-blocking warning that identifies the affected weeks and their projected and target TSS, and links to edit that week's availability or view it in the calendar. The rider may keep the schedule.
 
 ## 14. Intervals.icu
 

@@ -157,11 +157,11 @@ Include:
 - `Sync next 2 to Intervals.icu`;
 - `Change availability`;
 - `Add time off`;
-- destructive `Delete plan` in a secondary menu/action area.
+- destructive `Delete plan` in a secondary menu/action area; it is labelled `Archive plan` once the plan has completed workouts, which are retained.
 
 ### Weekly load chart
 
-A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. The calendar also displays a non-blocking warning when the ordered generated-load reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration.
+A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. When the ordered generated-load reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration, a non-blocking guidance panel appears above the calendar. It states how many weeks are above the target, explains that the warning is advisory, and suggests editing the week's availability or using Easier, Shorter or Change workout on an individual workout. A collapsed **Review affected weeks** table lists each week's projected and target TSS, with **Edit this week** (opens the availability form for that week) and **View in calendar** (jumps to the week) actions.
 
 ### Phase bands
 
@@ -311,7 +311,7 @@ Leave unchanged and Replan retain the source card as `Missed`; Move keeps it pla
 
 ## 11. Availability changes
 
-A form based on the same weekly grid as setup.
+A form based on the same weekly grid as setup. The grid is prefilled with the configured schedule for the week containing the chosen date (days with no slot are unchecked), so the rider adjusts minutes, intent or days rather than re-entering the week. The date defaults to today, clamped to the plan, and can be preselected from a load-guidance link; a date outside the plan returns to the form with an alert.
 
 Scope choice:
 

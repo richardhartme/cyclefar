@@ -23,7 +23,9 @@ snapshots.
   TSS/IF/work, event details, editable future workouts and inline power-profile
   graphs. Later outlines show their purpose; weekly totals feed a TSS chart.
 - Generated weekly load limits, aligned recovery weeks
-  and staged taper budgets that retain the target event and opener.
+  and staged taper budgets that retain the target event and opener. Weeks that
+  still exceed the growth target get an advisory panel linking to a prefilled
+  availability form for that week.
 - Completion feedback, overdue and missed-workout resolution, and explicit
   adaptation proposals with owner-scoped before/after comparisons and a
   14-day target window. Proposals enforce seven-day expiry and reject stale
@@ -215,8 +217,8 @@ worker; Kamal enables its supervisor inside Puma. See the
 Kamal supplies the running deployment version automatically. Pages display it
 in a small footer: Git commit SHAs are shortened to seven characters, with the
 full version available on hover. Custom versions and uncommitted-build markers
-are shown in full. The footer is hidden when `KAMAL_VERSION` is absent, including
-normal local development.
+are shown in full, beside a link to the GitHub project. The footer is hidden when
+`KAMAL_VERSION` is absent, including normal local development.
 
 ## Validation
 
