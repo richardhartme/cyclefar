@@ -17,6 +17,7 @@ System_Ext(smtp, "SMTP provider", "Delivers account setup and password-reset lin
 Rel(rider, cyclefar, "Registers or signs in; creates and manages plans; completes workouts; reviews adaptations", "Web browser")
 Rel(cyclefar, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 Rel(cyclefar, smtp, "Sends password setup and reset links", "SMTP / STARTTLS")
+Rel(smtp, rider, "Delivers account setup and password-reset links", "Email")
 
 note bottom of cyclefar
   Automated two-rider isolation coverage exists.

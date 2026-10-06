@@ -38,6 +38,8 @@ note bottom of sync
   Confirmed uploads remain saved if later cleanup fails.
   Completed local workouts, snapshots and feedback remain frozen.
   No remote listing, automatic sync or activity import.
+  The controller selects the active plan; the service does not check its status.
+  Sync selects existing detail; it does not materialise outlines.
   Remote calls and local persistence are separate transactions;
   failed cleanup retains stale identities for an idempotent retry.
 end note

@@ -20,6 +20,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(password_mailer, "PasswordsMailer", "Action Mailer", "Builds setup and reset emails using configured sender and delivery.")
   Component(views, "Views and CalendarHelper", "ERB, Turbo, Tailwind CSS / daisyUI", "Render canonical main-set summaries, current/frozen watt ranges, TSS/IF/work, outline purpose, event details, SVG profiles, weekly TSS chart and read-only comparisons.")
   Component(calendar, "Calendar presenter", "Planning::CalendarPresenter", "Builds the continuous calendar using persisted workouts and the same RecoverySchedule as previews and load checks.")
+  Component(load_review, "WeeklyLoadReview", "Planning service", "Reads fixed workouts and outline forecasts to report infeasible load growth, including weeks beyond the detail horizon.")
   Component(plan_management, "Plan management services", "Planning services", "Preview/create and re-prescribe plans with aligned recovery, ranked FTP assessments and staged taper budgets; materialise saved choices with accepted bias and load limits.")
   Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical workout steps with saved endurance-profile choices, calculate metrics, add/copy/edit/move workouts and build graph profiles.")
   Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record completion; validate, compare and apply proposals; save bias; resolve schedule/FTP changes and staged return limits from recent comparable training.")
@@ -39,17 +40,18 @@ Rel(account_access, password_mailer, "Sends setup link immediately")
 Rel(password_mailer, smtp, "Delivers mail", "SMTP / STARTTLS")
 Rel(auth_models, database, "Persists users and sessions", "SQL")
 Rel(controllers, calendar, "Builds calendar views")
+Rel(controllers, load_review, "Reviews load after horizon materialisation")
 Rel(controllers, plan_management, "Previews/creates plans; materializes horizon on home load")
 Rel(controllers, workouts, "Views and changes workouts")
-Rel(controllers, adaptations, "Records feedback and schedule changes")
-Rel(controllers, adaptations, "Builds owner-scoped feedback comparisons for calendar")
+Rel(controllers, adaptations, "Records feedback/schedule changes and builds owned proposal comparisons")
 Rel(controllers, settings, "Updates settings")
 Rel(controllers, sync, "Starts manual sync")
 Rel(controllers, views, "Renders pages with presenter data")
 Rel(views, workouts, "Builds graph data through ProfileBuilder")
-Rel(controllers, models, "Loads owner-scoped records; records FTP tests and archives/deletes plans")
+Rel_D(controllers, models, "Loads owned records; completes FTP tests and archives/deletes plans")
 Rel(controllers, auth_models, "Scopes profile, plan and record queries to Current.user")
 Rel(calendar, models, "Reads calendar data")
+Rel(load_review, models, "Reads prescriptions and saved automatic-load references without mutations")
 Rel(plan_management, workouts, "Generates workout structures and metrics")
 Rel(plan_management, models, "Creates and updates plans")
 Rel(workouts, models, "Reads and updates planned workouts")
@@ -62,6 +64,13 @@ Rel(sync, models, "Selects owner-scoped workouts and updates owner-scoped sync r
 Rel(sync, client, "Sends serialized events")
 Rel(client, intervals_icu, "Upserts and deletes CycleFar-owned events", "HTTPS / JSON")
 Rel(models, database, "Reads and writes", "SQL")
+
+note bottom of models
+  Required ownership and per-user profile/active-plan uniqueness
+  are enforced by database constraints as well as model validation.
+  PostgreSQL triggers protect completed workouts, steps and feedback
+  against updates/deletes, including direct SQL writes.
+end note
 
 SHOW_LEGEND()
 @enduml

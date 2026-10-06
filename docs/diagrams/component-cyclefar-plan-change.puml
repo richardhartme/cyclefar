@@ -14,7 +14,9 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Scope workout, proposal and time-off lookups to Current.user; handle edits, feedback, schedule and settings.")
   Component(home, "HomeController and comparison view", "Rails / ERB", "Render owner-scoped Current / Proposed workout metrics and clamped bias; unavailable proposals offer Reject only.")
   Component(editor, "ManualEditor", "Workouts service", "Regenerates manual edits; acceptance saves the exact load-limited definition shown in the comparison.")
-  Component(mover, "Mover and DestinationValidator", "Workouts services", "Validate shared destination exclusions; preserve short same-context moves or regenerate from destination progression; recheck weekly load and warnings.")
+  Component(mover, "Mover", "Workouts service", "Preserves short same-context moves or regenerates from destination progression; rechecks weekly load and warnings.")
+  Component(destination, "DestinationValidator", "Workouts service", "Shares Add/Copy/Move/missed Move exclusions: occupied, out-of-plan, unphased, time-off and target-event dates.")
+  Component(load_review, "WeeklyLoadReview", "Planning service", "Reads destination weekly load and calendar-wide load without mutations; includes weeks beyond the detail horizon.")
   Component(freshness, "ProposalCreator and ProposalFreshness", "Adaptations services", "Save seven-day expiry and a digest of relevant canonical inputs; reject expired, stale, archived or unverifiable proposals without writes.")
   Component(manual_creation, "Creator and Copier", "Workouts services", "Add a generated workout or copy canonical steps to an empty plan date using current FTP.")
   Component(completion, "CompletionRecorder", "Adaptations service", "Materialises a due outline if needed; records feedback and current-FTP snapshots, then evaluates adaptations under the plan lock.")
@@ -38,6 +40,7 @@ Container_Boundary(web_application, "CycleFar web application") {
 Rel(rider, controllers, "Changes training and records feedback", "HTTPS")
 Rel(rider, home, "Reviews feedback proposals", "HTTPS")
 Rel(home, comparison, "Requests read-only comparison")
+Rel(home, load_review, "Reviews plan load after horizon materialisation")
 Rel(controllers, editor, "Edits planned structured workouts")
 Rel(controllers, material_change, "Creates optional material-change proposal")
 Rel(material_change, prescriber, "Re-prescribes following block on acceptance")
@@ -45,10 +48,13 @@ Rel(material_change, models, "Reads proposal and preserves changed workout")
 Rel(controllers, models, "Records FTP-test completion")
 Rel(controllers, manual_creation, "Adds and copies workouts")
 Rel(manual_creation, engine, "Generates definitions or recalculates copied metrics")
+Rel(manual_creation, destination, "Validates Add/Copy dates under the plan lock")
 Rel(manual_creation, models, "Persists new workout and steps")
 Rel(controllers, mover, "Moves ordinary planned workouts")
 Rel(schedule_changes, mover, "Uses the same Move service for missed Move")
 Rel(mover, engine, "Regenerates across phase/context changes or moves over seven days")
+Rel(mover, destination, "Validates destination under the plan lock; excludes source from collisions")
+Rel(mover, load_review, "Returns destination load warnings")
 Rel(mover, load_rules, "Keeps subtype/duration and limits regenerated destination load")
 Rel(mover, models, "Saves destination, canonical steps and generation choices")
 Rel(controllers, materializer, "Structures a due/overdue outline when opened")
@@ -85,6 +91,8 @@ Rel(materializer, engine, "Generates canonical steps and metrics")
 Rel(materializer, progression, "Applies saved global intensity bias")
 Rel(materializer, load_rules, "Preserves ceilings and limits generated weekly load")
 Rel(load_rules, models, "Reads plan context and automatic load references")
+Rel(load_review, load_rules, "Uses comparable-week rules and automatic load references")
+Rel(load_review, models, "Reads fixed canonical workouts and outline forecasts")
 Rel(materializer, models, "Saves structures and profile choices")
 Rel(prescriber, models, "Replaces affected planned workouts")
 Rel(controllers, ftp, "Updates FTP")
@@ -113,6 +121,14 @@ end note
 
 note bottom of material_change
   Dismissal leaves the rest of the plan unchanged.
+  The block starts at max(today, source date), lasts at most 14 days,
+  and ends no later than plan end; the source remains fixed.
+end note
+
+note bottom of schedule_changes
+  AvailabilityChanger uses submitted slots for its affected range.
+  TimeOffPlanner selects the effective template for each future date.
+  Missed replan uses today's effective template for its whole block.
 end note
 
 note bottom of return_rules

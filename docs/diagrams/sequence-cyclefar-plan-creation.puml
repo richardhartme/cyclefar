@@ -62,7 +62,7 @@ Controller -> Configuration: validate restored inputs
 alt missing or invalid draft
   Controller --> Rider: redirect to plan form
 else valid draft
-  Controller -> Creator: create!(configuration, Current.user)
+  Controller -> Creator: PlanCreator.new(configuration, user: Current.user).create!
   Creator -> Builder: rebuild deterministic preview
   Builder -> LoadRules: enforce ordered forecast load cap
   Builder --> Creator: phases, outlines, forecasts and generation choices

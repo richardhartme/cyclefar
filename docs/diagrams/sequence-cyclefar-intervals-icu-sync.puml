@@ -13,8 +13,9 @@ database "PostgreSQL" as Database
 participant "Intervals.icu" as Remote
 
 Rider -> Controller: POST manual sync
-Controller -> Database: resolve signed-in rider's active plan and profile
-Controller -> Sync: call(plan, profile)
+Controller -> Database: resolve signed-in rider's active plan
+Controller -> Sync: SyncNextTwo.new(plan: owned active plan).call
+Sync -> Database: resolve plan owner's profile (default service input)
 Sync -> Sync: validate profile owner and API key
 Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude FTP tests and time off
 Database --> Sync: eligible set (zero, one or two workouts)
@@ -79,6 +80,8 @@ note over Sync, Remote
   Stable cyclefar-workout-<id> IDs make retries idempotent.
   Selected moved workouts are upserted with their original identity.
   Only this rider's tracked calendar events are reconciled.
+  The controller chooses the active plan; SyncNextTwo does not validate status.
+  Sync uses existing structured detail without materialising outlines.
   No remote listing, unrelated-event edits or activity/history API calls.
   Local completed workouts, steps, snapshots and feedback remain immutable.
 end note

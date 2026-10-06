@@ -97,22 +97,27 @@ else Accept
     Applier -> Database: lock owned plan and proposal
     Applier -> Freshness: revalidate expiry and canonical inputs
     Freshness -> Database: read current canonical context
-    alt unavailable or target validation fails
+    alt freshness unavailable
       Applier --> Controller: error; roll back edits and preserve proposal
-    else available
+    else fresh proposal
       Applier -> Comparison: revalidate freshness and calculate whole target set
-      Comparison -> Limiter: recheck current load limits
-      Limiter -> LoadRules: apply ordered reductions
-      Limiter --> Comparison: exact fitted definitions and current-FTP metrics
-      Comparison --> Applier: accepted comparison
-      loop each affected planned workout
-        Applier -> Editor: apply!(adapt, prepared_preview)
-        Editor -> Database: save exact shown steps, metrics and generation choices
+      alt target validation fails
+        Comparison --> Applier: unavailable comparison
+        Applier --> Controller: error; roll back edits and preserve proposal
+      else all targets valid
+        Comparison -> Limiter: recheck current load limits
+        Limiter -> LoadRules: apply ordered reductions
+        Limiter --> Comparison: exact fitted definitions and current-FTP metrics
+        Comparison --> Applier: accepted comparison
+        loop each affected planned workout
+          Applier -> Editor: apply!(adapt, prepared_preview)
+          Editor -> Database: save exact shown steps, metrics and generation choices
+        end
+        opt accepted global bias changes
+          Applier -> Database: save clamped intensity_bias
+        end
+        Applier -> Database: destroy proposal
       end
-      opt accepted global bias changes
-        Applier -> Database: save clamped intensity_bias
-      end
-      Applier -> Database: destroy proposal
     end
   end
 end

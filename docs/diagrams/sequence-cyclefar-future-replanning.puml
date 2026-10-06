@@ -28,7 +28,7 @@ group transaction under plan lock
   ChangeService -> Database: lock owned plan
   alt change availability
     ChangeService -> Database: version availability template and slots
-    ChangeService -> ChangeService: choose one-week or from-date range
+    ChangeService -> ChangeService: choose one-week or from-date range\nuse submitted slots throughout that range
   else add or remove time off
     ChangeService -> Database: save or remove time-off period
     ChangeService -> ChangeService: group future dates by effective template
@@ -46,7 +46,7 @@ group transaction under plan lock
     ReturnRules --> Prescriber: family baseline, default level 1
     Prescriber -> Database: remove replaceable planned regular workouts\nand blocked-date planned specials
     Prescriber -> ExistingConfiguration: build from saved plan and supplied slots
-    ExistingConfiguration --> Prescriber: saved plan and slots; assessment exclusions for time off/return ramps
+    ExistingConfiguration --> Prescriber: saved plan and slots; initial plan FTP for forecasts\nassessment exclusions for time off/return ramps
     Prescriber -> Builder: preview(configuration)
     Builder -> Builder: align recovery; rank unblocked FTP-test dates\nforecast prescriptions and metrics
     Builder -> LoadRules: apply ordered cap reductions to forecasts

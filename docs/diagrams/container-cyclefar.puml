@@ -18,9 +18,9 @@ System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service t
 System_Ext(smtp, "SMTP provider", "Configured outbound mail service for password setup and reset links; live delivery remains unverified.")
 
 Rel(rider, web_application, "Registers/signs in and uses training planner", "HTTPS")
-Rel(web_application, database, "Reads and writes sessions and training data", "SQL / Active Record")
+Rel(web_application, database, "Persists sessions and training data; stores cache entries, queued jobs and cable messages", "SQL / Active Record")
 Rel(web_application, intervals_icu, "Manually exports up to two upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
-Rel(web_application, smtp, "Sends password setup immediately and enqueues reset email", "SMTP / STARTTLS")
+Rel(web_application, smtp, "Delivers setup mail synchronously and reset mail through the supervised queue worker", "SMTP / STARTTLS")
 
 note bottom of web_application
   Horizon generation runs on creation, calendar requests and replanning.
