@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   root "home#index"
   resource :settings, only: [ :show, :update ]
+  resources :ftp_readings, only: [ :edit, :update, :destroy ]
   resource :training_plan, only: [ :new, :create, :destroy ] do
     get :preview
     post :preview, action: :prepare_preview

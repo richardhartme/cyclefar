@@ -50,5 +50,42 @@
         <%= form.submit "Save settings", class: "btn btn-primary" %>
       </div>
     <% end %>
+
+    <section aria-labelledby="ftp-history-heading" class="border-base-300 border-t pt-6">
+      <h2 id="ftp-history-heading" class="text-xl font-semibold">FTP history</h2>
+      <p class="mt-2 text-base-content/70">The most recent reading date sets your current FTP. For readings on the same date, the newest entry wins. Completed workouts keep their saved targets.</p>
+      <% if @ftp_readings.any? %>
+        <div class="mt-4 overflow-x-auto">
+          <table class="table">
+            <caption class="sr-only">Your FTP readings, newest first</caption>
+            <thead>
+              <tr><th scope="col">Date</th><th scope="col">FTP</th><th scope="col">Actions</th></tr>
+            </thead>
+            <tbody>
+              <% @ftp_readings.each_with_index do |reading, index| %>
+                <tr>
+                  <td class="whitespace-nowrap"><time datetime="<%= reading.effective_on.iso8601 %>"><%= reading.effective_on.strftime("%-d %b %Y") %></time></td>
+                  <td class="tabular-nums whitespace-nowrap">
+                    <%= reading.ftp_watts %> W
+                    <% if index.zero? %><span class="badge badge-primary badge-outline ml-2">Current</span><% end %>
+                  </td>
+                  <td>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <%= link_to "Edit", edit_ftp_reading_path(reading), aria: { label: "Edit FTP reading from #{reading.effective_on}" }, class: "btn btn-ghost btn-sm" %>
+                      <% if @ftp_readings.size > 1 %>
+                        <%= button_to "Delete", ftp_reading_path(reading), method: :delete, aria: { label: "Delete FTP reading from #{reading.effective_on}" }, data: { turbo_confirm: "Delete the #{reading.ftp_watts} W reading from #{reading.effective_on}? Your newest remaining reading will set future targets." }, class: "btn btn-ghost btn-sm text-error" %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-3 text-sm text-base-content/70">Keep at least one reading. Save a new FTP above to add a reading dated today.</p>
+      <% else %>
+        <p class="mt-4">Save your FTP above to start your history.</p>
+      <% end %>
+    </section>
   </div>
 </section>

@@ -8,13 +8,15 @@ module Planning
 
     def call
       @profile.user.training_plans.active.find_each do |plan|
-        plan.planned_workouts.planned.structured.where(kind: %w[workout opener]).where("scheduled_on >= ?", @effective_on).includes(:workout_steps).find_each do |workout|
-          metrics = Metrics::WorkoutCalculator.new(steps: workout.workout_steps, ftp_watts: @profile.ftp_watts).call
-          workout.update!(
-            estimated_np_watts: metrics.estimated_np_watts,
-            estimated_if: metrics.estimated_if,
-            estimated_tss: metrics.estimated_tss,
-            estimated_work_kj: metrics.estimated_work_kj)
+        plan.with_lock do
+          plan.planned_workouts.planned.structured.where(kind: %w[workout opener]).where("scheduled_on >= ?", @effective_on).includes(:workout_steps).find_each do |workout|
+            metrics = Metrics::WorkoutCalculator.new(steps: workout.workout_steps, ftp_watts: @profile.ftp_watts).call
+            workout.update!(
+              estimated_np_watts: metrics.estimated_np_watts,
+              estimated_if: metrics.estimated_if,
+              estimated_tss: metrics.estimated_tss,
+              estimated_work_kj: metrics.estimated_work_kj)
+          end
         end
       end
     end

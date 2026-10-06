@@ -67,11 +67,18 @@ RSpec.describe Settings::Update do
     expect(profile.reload.intervals_icu_api_key).to be_nil
   end
 
-  it "SET-001 keeps recorded FTP readings immutable through model operations" do
+  it "CYF-78 retains backdated readings without replacing the newest FTP" do
+    update_settings({ ftp_watts: 275 }, effective_on: Date.new(2026, 9, 8))
+    update_settings({ ftp_watts: 260 }, effective_on: Date.new(2026, 9, 7))
+    expect(profile.reload.ftp_watts).to eq(275)
+    expect(profile.ftp_readings.newest_first.pluck(:ftp_watts)).to eq([ 275, 260 ])
+  end
+
+  it "CYF-78 uses the last saved entry for same-day FTP changes" do
     update_settings({ ftp_watts: 260 })
-    reading = FtpReading.sole
-    expect { reading.update!(ftp_watts: 300) }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    expect { reading.destroy! }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    update_settings({ ftp_watts: 275 })
+    expect(profile.reload.ftp_watts).to eq(275)
+    expect(profile.ftp_readings.newest_first.pluck(:ftp_watts)).to eq([ 275, 260 ])
   end
 
   it "USR-002 serializes concurrent first Settings saves for two owners" do

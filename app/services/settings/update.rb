@@ -11,12 +11,13 @@ module Settings
       user = @profile.user
       user.with_lock do
         @profile = user.rider_profile || user.build_rider_profile
+        previous_ftp = @profile.ftp_watts
         @profile.assign_attributes(profile_attributes)
         ftp_changed = @profile.new_record? || @profile.will_save_change_to_ftp_watts?
         @profile.save!
         if ftp_changed
           @profile.ftp_readings.create!(ftp_watts: @profile.ftp_watts, effective_on: @effective_on)
-          Planning::FtpRecalculator.new(profile: @profile, effective_on: @effective_on).call
+          FtpHistory.new(profile: @profile).refresh_current!(previous_ftp: previous_ftp)
         end
       end
       @profile
