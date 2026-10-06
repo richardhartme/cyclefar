@@ -36,7 +36,9 @@ Acceptance criteria:
 - Plan setup defaults its FTP field from Settings.
 - Changing Settings FTP after a plan exists updates future planned workout wattage displays/exports.
 - Completed workouts retain the FTP and watt targets that applied when they were completed.
-- FTP changes are recorded in a lightweight FTP history table for future use, although V1 has no FTP-history UI.
+- FTP changes are recorded in a lightweight FTP history table and displayed newest first in Settings (CYF-78).
+- Riders may edit the watts/date or delete their own readings. The most recent `effective_on` date sets current FTP; the newest entry (highest ID) wins a same-date tie. Historical edits do not change current FTP unless they change which reading is newest.
+- Deleting the newest reading falls back to the newest remaining reading. Retain at least one reading because FTP is required. A current-FTP change refreshes future metrics/targets without changing canonical percentages or completed snapshots.
 
 ### SET-002 Intervals.icu API key
 

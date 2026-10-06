@@ -29,7 +29,7 @@ Public registration, controlled account provisioning and an automated two-rider 
 
 ## FtpReading
 
-Lightweight history; no V1 UI. `belongs_to :rider_profile` via required `rider_profile_id`.
+Editable history shown in Settings (CYF-78). `belongs_to :rider_profile` via required `rider_profile_id`.
 
 Fields:
 
@@ -37,7 +37,7 @@ Fields:
 - `effective_on: date, null: false`
 - timestamps
 
-Create one whenever Settings FTP changes to a new value.
+Create one whenever Settings FTP changes to a new value, dated today. Riders may edit watts/date and delete entries through `Settings::FtpHistory`, which retains the final reading. Current FTP is cached in `RiderProfile#ftp_watts` from the most recent `effective_on`, with highest ID breaking same-date ties. Settings and history mutations share the owning-user lock and refresh the cache/future structured metrics atomically. Completed snapshots remain immutable. A composite profile/date/ID index supports recency queries; the CYF-78 migration backfills missing history from existing profiles without replacing readings.
 
 ## TrainingPlan
 

@@ -1,0 +1,35 @@
+<% content_for :title, "Edit FTP reading · CycleFar" %>
+<section class="card bg-base-100 mx-auto max-w-3xl shadow-sm">
+  <div class="card-body gap-6">
+    <div>
+      <h1 class="card-title text-3xl">Edit FTP reading</h1>
+      <p class="mt-2 text-base-content/70">Changing the most recent reading updates future power targets. Completed workouts keep their saved targets.</p>
+    </div>
+    <% if @reading.errors.any? %>
+      <div role="alert" class="alert alert-error alert-soft items-start">
+        <div>
+          <h2 class="font-semibold">FTP reading could not be saved</h2>
+          <ul class="mt-2 list-inside list-disc">
+            <% @reading.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+    <%= form_with model: @reading, class: "space-y-6" do |form| %>
+      <div>
+        <%= form.label :effective_on, "Reading date", class: "label font-semibold" %>
+        <%= form.date_field :effective_on, required: true, class: "input w-full sm:w-56" %>
+      </div>
+      <div>
+        <%= form.label :ftp_watts, "FTP (watts)", class: "label font-semibold" %>
+        <%= form.number_field :ftp_watts, min: 1, step: 1, required: true, class: "input w-full sm:w-48" %>
+      </div>
+      <div class="card-actions justify-end">
+        <%= link_to "Cancel", settings_path, class: "btn btn-ghost" %>
+        <%= form.submit "Save reading", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</section>

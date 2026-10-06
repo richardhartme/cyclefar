@@ -51,6 +51,7 @@ Behaviour:
 
 - explain briefly that changing FTP updates future planned targets, not completed workouts;
 - API key is password-style/masked after save;
+- FTP history appears below the settings form, newest first, with the current reading labelled. Edit opens a form for watts/date; Delete asks for confirmation and is hidden for the final reading. The newest remaining dated reading sets future targets; same-date ties use the newest entry. Saving a changed FTP adds a reading dated today.
 - optional `Test connection` button is useful but not required for the first implementation milestone.
 
 ## 3. Create-plan configuration

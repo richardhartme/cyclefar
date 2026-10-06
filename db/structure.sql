@@ -945,6 +945,13 @@ CREATE INDEX index_availability_templates_on_training_plan_id ON public.availabi
 
 
 --
+-- Name: index_ftp_readings_on_profile_and_recency; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_ftp_readings_on_profile_and_recency ON public.ftp_readings USING btree (rider_profile_id, effective_on, id);
+
+
+--
 -- Name: index_ftp_readings_on_rider_profile_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1233,6 +1240,7 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261006130000'),
 ('20261006120000'),
 ('20261002110000'),
 ('20260927220000'),
