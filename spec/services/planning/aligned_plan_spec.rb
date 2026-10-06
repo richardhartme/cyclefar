@@ -28,7 +28,7 @@ RSpec.describe "CYF-11 persisted phase treatment", generated_workouts: true do
     plan = Planning::PlanCreator.new(config, user: create(:user)).create!
     calendar = Planning::CalendarPresenter.new(plan).weeks
     expect(calendar.select(&:recovery_week).map(&:starts_on)).to eq(preview.weeks.select(&:recovery_week).map(&:starts_on))
-    context = Planning::V1::LoadContext.new(plan)
+    context = Planning::LoadContext.new(plan)
     preview.weeks.select(&:recovery_week).each do |week|
       workouts = plan.planned_workouts.where(scheduled_on: week.starts_on..week.ends_on).to_a
       expect(context.comparable_week?(week.starts_on, workouts)).to be(false)

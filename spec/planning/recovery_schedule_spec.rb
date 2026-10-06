@@ -1,6 +1,6 @@
 require "engine_helper"
 
-RSpec.describe Planning::V1::RecoverySchedule do
+RSpec.describe Planning::RecoverySchedule do
   let(:start) { Date.new(2026, 9, 7) }
 
   def flags(boundaries:, hard_weeks: 3, taper_on: nil, starts_on: start)

@@ -19,7 +19,7 @@ module Workouts
     end
 
     def call
-      return fit_aerobic unless Training::V1::Rules::LADDERS.key?(@subtype)
+      return fit_aerobic unless Training::Rules::LADDERS.key?(@subtype)
       if @easy_filler
         main = MainSetBuilder.new(subtype: @subtype, progression_level: 1, variation_key: @variation_key, shortened: true, work_factor: @work_factor).call
         return fit_main(main) || raise(ArgumentError, "No valid main set fits the requested duration")
@@ -75,7 +75,7 @@ module Workouts
     end
 
     def easy_filler(seconds)
-      target = Training::V1::Rules::TARGETS[:easy]
+      target = Training::Rules::TARGETS[:easy]
       StepDefinition.new(
         kind: "steady",
         label: "Easy aerobic riding",
@@ -86,7 +86,7 @@ module Workouts
     end
 
     def aerobic_summary
-      rules = Training::V1::Rules
+      rules = Training::Rules
       if @subtype == :recovery
         band = rules::TARGETS[:recovery].join("–")
         @variation_key == "steady" ? "Easy steady riding at #{band}% FTP" : "Gentle recovery ramp within #{band}% FTP"

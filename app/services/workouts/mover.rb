@@ -22,7 +22,7 @@ module Workouts
 
         phase = DestinationValidator.new(@plan).validate!(destination, excluding_workout: @workout)
         regenerate = @workout.plan_phase_id != phase.id ||
-          (@workout.scheduled_on - destination).abs > Planning::V1::Rules::MOVE_STRUCTURE_WINDOW_DAYS ||
+          (@workout.scheduled_on - destination).abs > Planning::Rules::MOVE_STRUCTURE_WINDOW_DAYS ||
           reduced_context(@workout.scheduled_on) != reduced_context(destination)
         @workout.update!(scheduled_on: destination, plan_phase: phase)
         materialize = @workout.outline? && destination.between?(Date.current, Date.current + 13)
@@ -47,8 +47,8 @@ module Workouts
       @ftp = @plan.ftp_watts_for_planning
       context = fresh_context ? destination_context : @workout.generation_context.dup
       baseline = context["baseline_level"] || @workout.progression_level || 1
-      maximum = fresh_context ? context["maximum_level"] : Planning::V1::LoadContext.new(@plan).maximum_level(@workout)
-      level = Training::V1::Progression.level(baseline: baseline, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i, maximum: maximum)
+      maximum = fresh_context ? context["maximum_level"] : Planning::LoadContext.new(@plan).maximum_level(@workout)
+      level = Training::Progression.level(baseline: baseline, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i, maximum: maximum)
       candidate = limit_load(candidate_for(level, load_adjustments: context.fetch("load_adjustments", {})))
       definition, metrics = candidate.definition, candidate.metrics
       # Destination references replace source-week ceilings. The saved baseline
@@ -102,19 +102,19 @@ module Workouts
       return candidate unless week.limit
 
       fixed_tss = week.workouts.reject { |workout| workout.id == @workout.id }.sum { |workout| review.estimated_tss(workout) }
-      Planning::V1::WeeklyLoadCap.reduce([ candidate ], limit: week.limit - fixed_tss) do |item, stage|
+      Planning::WeeklyLoadCap.reduce([ candidate ], limit: week.limit - fixed_tss) do |item, stage|
         # Explicit Move promises to retain the rider's selected subtype.
-        Planning::V1::LoadReduction.options(item.definition, stage: stage, intent: @workout.subtype).map do |definition|
+        Planning::LoadReduction.options(item.definition, stage: stage, intent: @workout.subtype).map do |definition|
           item.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
         end
       end.sole
     end
 
     def destination_context
-      return {} unless @workout.workout? && Training::V1::Rules::LADDERS.key?(@workout.subtype.to_sym)
+      return {} unless @workout.workout? && Training::Rules::LADDERS.key?(@workout.subtype.to_sym)
 
       phase = @workout.plan_phase
-      baseline = Planning::V1::PhaseProgression.level(date: @workout.scheduled_on, kind: phase.kind, starts_on: phase.starts_on, ends_on: phase.ends_on)
+      baseline = Planning::PhaseProgression.level(date: @workout.scheduled_on, kind: phase.kind, starts_on: phase.starts_on, ends_on: phase.ends_on)
       maximum = destination_maximum
       { "baseline_level" => baseline }.tap { |context| context["maximum_level"] = maximum if maximum }
     end
@@ -122,8 +122,8 @@ module Workouts
     def destination_maximum
       date = @workout.scheduled_on
       ceilings = []
-      ceilings << Planning::V1::Rules::RECOVERY_MAXIMUM_LEVEL if recovery_week?(date)
-      ceilings << Planning::V1::Rules::PHASE_LEVELS[:taper].end if @workout.plan_phase.kind_taper?
+      ceilings << Planning::Rules::RECOVERY_MAXIMUM_LEVEL if recovery_week?(date)
+      ceilings << Planning::Rules::PHASE_LEVELS[:taper].end if @workout.plan_phase.kind_taper?
       if (period = periods.select { |item| item.ends_on < date }.max_by(&:ends_on))
         reached = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(id: @workout.id).map do |workout|
           workout.generation_context.fetch("generated_level", workout.progression_level)

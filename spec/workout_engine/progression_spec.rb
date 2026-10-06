@@ -1,7 +1,7 @@
 require "engine_helper"
-require_relative "../../app/services/training/v1/progression"
+require_relative "../../app/services/training/progression"
 
-RSpec.describe Training::V1::Progression do
+RSpec.describe Training::Progression do
   [ [ 3, 0, 3 ], [ 3, -1, 2 ], [ 3, 1, 4 ], [ 1, -2, 1 ], [ 7, 2, 7 ], [ 3, 9, 5 ], [ 3, -9, 1 ] ].each do |baseline, bias, expected|
     it "maps baseline #{baseline} and bias #{bias} to #{expected}" do
       expect(described_class.level(baseline: baseline, bias: bias)).to eq(expected)

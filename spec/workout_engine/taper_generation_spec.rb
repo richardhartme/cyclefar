@@ -1,7 +1,7 @@
 require "engine_helper"
 
 RSpec.describe "PLN-022 tapered canonical main sets" do
-  Training::V1::Rules::LADDERS.keys.product([ 0.60, 0.75 ]).each do |subtype, factor|
+  Training::Rules::LADDERS.keys.product([ 0.60, 0.75 ]).each do |subtype, factor|
     it "reduces #{subtype} hard time by #{factor} while retaining bands, positive steps and exact duration" do
       normal = Workouts::Generator.new(subtype: subtype, duration_minutes: 120, progression_level: 4).call
       tapered = Workouts::Generator.new(

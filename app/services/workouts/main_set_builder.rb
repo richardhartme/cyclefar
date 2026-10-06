@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "step_definition"
 
 module Workouts
@@ -15,7 +15,7 @@ module Workouts
     end
 
     def call
-      rules = Training::V1::Rules
+      rules = Training::Rules
       repetitions, minutes, recovery = @shortened ? rules::SHORT_MAIN_SETS.fetch(@subtype) : rules::LADDERS.fetch(@subtype).fetch(@level - 1)
       steps = []
       repetitions.times do |index|
@@ -66,7 +66,7 @@ module Workouts
     end
 
     def work_steps(minutes, iteration)
-      rules = Training::V1::Rules
+      rules = Training::Rules
       if @subtype == :over_under
         under, over = cycle
         Array.new(minutes / (under + over)) do
@@ -85,11 +85,11 @@ module Workouts
     end
 
     def cycle
-      Training::V1::Rules::OVER_UNDER_CYCLES.fetch(@shortened ? 0 : @level - 1)
+      Training::Rules::OVER_UNDER_CYCLES.fetch(@shortened ? 0 : @level - 1)
     end
 
     def recovery_step(seconds)
-      steady("Recovery between efforts", seconds, Training::V1::Rules::TARGETS[:easy], "recovery", nil)
+      steady("Recovery between efforts", seconds, Training::Rules::TARGETS[:easy], "recovery", nil)
     end
 
     def steady(label, seconds, target, group, iteration)

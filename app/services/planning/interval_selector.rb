@@ -1,4 +1,4 @@
-require_relative "v1/rules"
+require_relative "rules"
 
 module Planning
   # Selects interval workout subtype based on goal, discipline, phase and ordinal.
@@ -11,10 +11,10 @@ module Planning
     end
 
     def call
-      cycle = if @goal == :event && V1::Rules::EVENT_DISCIPLINE_CYCLES.dig(@phase, @discipline)
-        V1::Rules::EVENT_DISCIPLINE_CYCLES.dig(@phase, @discipline)
+      cycle = if @goal == :event && Rules::EVENT_DISCIPLINE_CYCLES.dig(@phase, @discipline)
+        Rules::EVENT_DISCIPLINE_CYCLES.dig(@phase, @discipline)
       else
-        V1::Rules::INTERVAL_CYCLES.fetch(@phase).fetch(@goal)
+        Rules::INTERVAL_CYCLES.fetch(@phase).fetch(@goal)
       end
       cycle.fetch(@ordinal % cycle.length)
     end

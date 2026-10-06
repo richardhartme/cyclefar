@@ -22,7 +22,7 @@ RSpec.describe Planning::PlanBuilder do
   end
 
   it "PLN-010 validates all supported goals, disciplines and a repeating availability template" do
-    Training::V1::Rules::GOALS.product(Training::V1::Rules::DISCIPLINES).each do |goal, discipline|
+    Training::Rules::GOALS.product(Training::Rules::DISCIPLINES).each do |goal, discipline|
       attributes = goal == "event" ? { event_name: "Test Event", event_on: Date.new(2026, 10, 12), event_discipline: discipline } : {}
       expect(configuration(goal: goal, discipline: discipline, **attributes)).to be_valid
     end

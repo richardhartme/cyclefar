@@ -1,7 +1,7 @@
 module Adaptations
   # Evaluate workout feedback against RPE bands and propose progression adjustments.
   class FeedbackEvaluator
-    RPE_BANDS = Training::V1::Rules::RPE_BANDS
+    RPE_BANDS = Training::Rules::RPE_BANDS
 
     def initialize(workout)
       @workout = workout
@@ -57,7 +57,7 @@ module Adaptations
 
     def candidates
       @candidates ||= @workout.training_plan.planned_workouts.planned.structured
-        .where(kind: :workout, scheduled_on: Date.current..(Date.current + Training::V1::Rules::FEEDBACK_HORIZON_DAYS - 1))
+        .where(kind: :workout, scheduled_on: Date.current..(Date.current + Training::Rules::FEEDBACK_HORIZON_DAYS - 1))
         .where.not(id: @workout.id).includes(:workout_steps, :plan_phase).order(:scheduled_on).to_a
     end
 
@@ -65,7 +65,7 @@ module Adaptations
       same = candidates.find { |item| item.subtype == @workout.subtype }
       return same if same || !intensity?
 
-      family = Training::V1::Rules::COMPARABLE_FAMILIES.find { |members| members.include?(@workout.subtype) }
+      family = Training::Rules::COMPARABLE_FAMILIES.find { |members| members.include?(@workout.subtype) }
       candidates.find { |item| family.include?(item.subtype) } ||
         (@workout.intent_intervals? && candidates.find { |item| item.intent_intervals? && intensity?(item) })
     end
@@ -77,7 +77,7 @@ module Adaptations
       if intensity? && (@feedback.struggled_completed? || @feedback.could_not_complete?)
         candidates.each do |item|
           next unless intensity?(item) && item.scheduled_on > @workout.scheduled_on &&
-            item.scheduled_on <= @workout.scheduled_on + Training::V1::Rules::NEARBY_HARD_SESSION_DAYS
+            item.scheduled_on <= @workout.scheduled_on + Training::Rules::NEARBY_HARD_SESSION_DAYS
           next unless @feedback.could_not_complete? || item.intent_intervals?
 
           # If the comparable session is also nearby, apply the stronger single
@@ -86,7 +86,7 @@ module Adaptations
         end
       end
       reductions.map do |item, adjustment|
-        change = { "planned_workout_id" => item.id, "progression_level" => Training::V1::Progression.level(baseline: (item.progression_level || 1) + adjustment) }
+        change = { "planned_workout_id" => item.id, "progression_level" => Training::Progression.level(baseline: (item.progression_level || 1) + adjustment) }
         change["lower_targets"] = true unless intensity?(item)
         change
       end
@@ -116,7 +116,7 @@ module Adaptations
     end
 
     def intensity?(workout = @workout)
-      Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
+      Training::Rules::LADDERS.key?(workout.subtype.to_sym)
     end
   end
 end

@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "step_definition"
 
 module Workouts
@@ -10,7 +10,7 @@ module Workouts
     end
 
     def call
-      rules = Training::V1::Rules
+      rules = Training::Rules
       config = rules::WARM_UPS.fetch(@subtype)
       compressed = @compact && config[:primers].positive?
       duration = compressed ? rules::COMPACT_WARM_UP_SECONDS : config[:ramp]

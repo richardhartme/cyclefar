@@ -20,7 +20,7 @@ module CalendarHelper
   def workout_type_label(workout)
     return "Opener" if workout.opener?
 
-    Training::V1::Rules::SUBTYPE_NAMES.fetch(workout.subtype.to_sym)
+    Training::Rules::SUBTYPE_NAMES.fetch(workout.subtype.to_sym)
   end
 
   def workout_main_set_entries(workout)

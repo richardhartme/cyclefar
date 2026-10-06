@@ -1,7 +1,7 @@
 require "engine_helper"
-require_relative "../../app/services/planning/v1/return_ramp"
+require_relative "../../app/services/planning/return_ramp"
 
-RSpec.describe Planning::V1::ReturnRamp do
+RSpec.describe Planning::ReturnRamp do
   let(:ends_on) { Date.new(2026, 10, 4) }
   let(:ramp) { described_class.new(ends_on: ends_on, days: 16) }
 

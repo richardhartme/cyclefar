@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "exact_duration_fitter"
 require_relative "workout_definition"
 require_relative "variations"
@@ -10,7 +10,7 @@ module Workouts
     def initialize(subtype:, duration_minutes:, progression_level: 1, variation_key: nil,
       phase: :base, goal: :general_fitness, discipline: :road, load_adjustments: {})
       @load_adjustments = load_adjustments.transform_keys(&:to_s)
-      rules = Training::V1::Rules
+      rules = Training::Rules
       @subtype = member!(subtype, rules::SUBTYPE_NAMES.keys.map(&:to_s), "subtype").to_sym
       @phase = member!(phase, rules::PHASES, "phase")
       @goal = member!(goal, rules::GOALS, "goal")
@@ -46,7 +46,7 @@ module Workouts
       if @load_adjustments["return_target_band"]
         steps = TargetBandLimiter.new(steps: steps, band: @load_adjustments["return_target_band"]).call
       end
-      rules = Training::V1::Rules
+      rules = Training::Rules
       reason_codes = [ "#{@subtype}_main_set" ]
       reason_codes << "duration_level_reduced" if fit.progression_level && fit.progression_level < @level
       reason_codes << "short_main_set" if fit.shortened

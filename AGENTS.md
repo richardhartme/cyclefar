@@ -73,7 +73,7 @@ The engine is a first-class domain component.
 
 - Training decisions must be deterministic.
 - No random or time-dependent workout choice beyond explicit calendar date inputs, except the user-requested initial endurance profile selection (WKO-009). Save that selection; previews and regeneration with an explicit variation remain deterministic.
-- Keep rule constants grouped/versioned under an engine namespace, e.g. `Training::V1` or `Planning::V1`.
+- Keep rule constants grouped under `Training::Rules` and `Planning::Rules`; engine classes use the `Training` and `Planning` namespaces without a version module.
 - Do not bury percentages or progression thresholds across controllers/models.
 - Pure calculations should be pure Ruby objects with fast unit specs.
 - Persist `engine_version` on plans.

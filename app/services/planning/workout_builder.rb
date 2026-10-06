@@ -37,7 +37,7 @@ module Planning
 
     def build!(workout_id: nil)
       @ftp = @plan.ftp_watts_for_planning
-      @load_context = V1::LoadContext.new(@plan)
+      @load_context = LoadContext.new(@plan)
       eligible = @plan.planned_workouts.planned.outline
       eligible = workout_id ? eligible.where(id: workout_id) : eligible.where(scheduled_on: @date..(@date + 13))
       @selected_ids = eligible.pluck(:id)
@@ -86,11 +86,11 @@ module Planning
     end
 
     def biased_level(workout)
-      return 1 unless Training::V1::Rules::LADDERS.key?(workout.subtype.to_sym)
+      return 1 unless Training::Rules::LADDERS.key?(workout.subtype.to_sym)
 
       context = workout.generation_context
       maximum = @load_context.maximum_level(workout)
-      Training::V1::Progression.level(
+      Training::Progression.level(
         baseline: context["baseline_level"] || workout.progression_level || 1,
         bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
         maximum: maximum)
@@ -104,15 +104,15 @@ module Planning
 
         in_horizon = week_start <= @date + 13 && week_start + 6 >= @date
         if reference && (in_horizon || items.any?(&:selected))
-          limit = V1::WeeklyLoadCap.limit(reference)
-          reduced = V1::WeeklyLoadCap.reduce(items, limit: limit) do |candidate, stage|
-            V1::LoadReduction.options(candidate.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
+          limit = WeeklyLoadCap.limit(reference)
+          reduced = WeeklyLoadCap.reduce(items, limit: limit) do |candidate, stage|
+            LoadReduction.options(candidate.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
               candidate.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
             end
           end
           items.each_with_index { |item, index| candidates[candidates.index(item)] = reduced[index] }
           items = reduced
-          warnings << V1::WeeklyLoadCap.warning(week_start) if items.sum(&:estimated_tss) > limit
+          warnings << WeeklyLoadCap.warning(week_start) if items.sum(&:estimated_tss) > limit
         end
         # Explicit one-off edits keep their actual load in this week's total,
         # but must not increase the generated baseline for a later hard week.

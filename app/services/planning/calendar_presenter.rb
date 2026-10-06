@@ -54,7 +54,7 @@ module Planning
     def recovery_week?(starts_on)
       return false unless @plan
 
-      @recovery_flags ||= V1::RecoverySchedule.new(
+      @recovery_flags ||= RecoverySchedule.new(
         starts_on: @plan.starts_on,
         ends_on: @plan.ends_on,
         phases: @plan.plan_phases.sort_by(&:position),

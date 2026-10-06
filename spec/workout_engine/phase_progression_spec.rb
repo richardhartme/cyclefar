@@ -1,7 +1,7 @@
 require "engine_helper"
-require_relative "../../app/services/planning/v1/phase_progression"
+require_relative "../../app/services/planning/phase_progression"
 
-RSpec.describe Planning::V1::PhaseProgression do
+RSpec.describe Planning::PhaseProgression do
   let(:starts_on) { Date.new(2026, 9, 7) }
 
   { base: [ 1, 4 ], build: [ 3, 6 ], speciality: [ 4, 7 ], taper: [ 1, 2 ] }.each do |kind, (first, last)|

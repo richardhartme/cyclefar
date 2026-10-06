@@ -20,7 +20,7 @@ module Planning
           hard_weeks_before_recovery: @configuration.hard_weeks_before_recovery,
           initial_ftp_watts: @configuration.ftp_watts,
           progression_state: {},
-          engine_version: Training::V1::Rules::ENGINE_VERSION)
+          engine_version: Training::Rules::ENGINE_VERSION)
         phases = preview.phases.to_h { |phase| [ phase.position, plan.plan_phases.create!(kind: phase.kind, starts_on: phase.starts_on, ends_on: phase.ends_on, position: phase.position) ] }
         template = plan.availability_templates.create!(effective_from: plan.starts_on, source: :initial)
         @configuration.availability.each { |slot| template.availability_slots.create!(weekday: slot.weekday, duration_minutes: slot.duration_minutes, intent: slot.intent) }

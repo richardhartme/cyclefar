@@ -55,10 +55,10 @@ RSpec.describe "V1 workout prescriptions" do
   end
 
   it "stores the five zones separately from the overlapping Sweet Spot band" do
-    expect(Training::V1::Rules::ZONES).to eq(recovery: 0..55, endurance: 56..75, tempo: 76..90, threshold: 91..105, vo2_max: 106..120)
-    expect(Training::V1::Rules::TARGETS[:sweet_spot]).to eq([ 88, 94 ])
-    expect { Training::V1::Rules::LADDERS[:threshold][0][0] = 99 }.to raise_error(FrozenError)
-    expect { Training::V1::Rules::WARM_UPS[:threshold][:start][0] = 100 }.to raise_error(FrozenError)
+    expect(Training::Rules::ZONES).to eq(recovery: 0..55, endurance: 56..75, tempo: 76..90, threshold: 91..105, vo2_max: 106..120)
+    expect(Training::Rules::TARGETS[:sweet_spot]).to eq([ 88, 94 ])
+    expect { Training::Rules::LADDERS[:threshold][0][0] = 99 }.to raise_error(FrozenError)
+    expect { Training::Rules::WARM_UPS[:threshold][:start][0] = 100 }.to raise_error(FrozenError)
   end
 
   it "keeps requested phase, goal and discipline as explicit context" do

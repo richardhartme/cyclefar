@@ -1,7 +1,7 @@
 require_relative "step_definition"
 require_relative "step_sequence"
 require_relative "workout_definition"
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 
 module Workouts
   # Generates pre-event opener workouts with threshold and VO2 activation efforts.
@@ -25,7 +25,7 @@ module Workouts
       steps << steady("Easy riding", remaining, [ 50, 65 ], "filler") if remaining.positive?
       steps << ramp("Cool down", 300, [ 55, 60 ], [ 40, 50 ], "cool_down")
       WorkoutDefinition.new(
-        engine_version: Training::V1::Rules::ENGINE_VERSION,
+        engine_version: Training::Rules::ENGINE_VERSION,
         subtype: "endurance",
         duration_minutes: @duration_minutes,
         requested_progression_level: nil,

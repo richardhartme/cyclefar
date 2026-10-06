@@ -13,7 +13,7 @@
         <legend class="fieldset-legend px-2 text-base">Workout details</legend>
 
         <%= label_tag :subtype, "Workout type", class: "fieldset-label font-semibold" %>
-        <% workout_types = Training::V1::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
+        <% workout_types = Training::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
         <%= select_tag :subtype, options_for_select(workout_types, "endurance"), class: "select w-full" %>
 
         <%= label_tag :duration_minutes, "Duration (minutes)", class: "fieldset-label mt-3 font-semibold" %>

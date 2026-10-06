@@ -1,4 +1,4 @@
-require_relative "v1/rules"
+require_relative "rules"
 
 module Planning
   # Allocates base, build, speciality and taper phases across the plan duration.
@@ -51,7 +51,7 @@ module Planning
     def allocate_lengths(kinds, total_days)
       raise ArgumentError, "Plan is too short to allocate each phase" if total_days < kinds.length * 7
 
-      proportions = @configuration.include_base ? V1::Rules::PHASE_PROPORTIONS[:with_base] : V1::Rules::PHASE_PROPORTIONS[:without_base]
+      proportions = @configuration.include_base ? Rules::PHASE_PROPORTIONS[:with_base] : Rules::PHASE_PROPORTIONS[:without_base]
       remaining = total_days - kinds.length * 7
       exact = kinds.to_h { |kind| [ kind, remaining * proportions.fetch(kind) ] }
       lengths = kinds.to_h { |kind| [ kind, 7 + exact.fetch(kind).floor ] }

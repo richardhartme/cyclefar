@@ -7,13 +7,13 @@ module Planning
       end
 
       def warning
-        V1::WeeklyLoadCap.warning(starts_on) if above_target?
+        WeeklyLoadCap.warning(starts_on) if above_target?
       end
     end
 
     def initialize(plan)
       @plan = plan
-      @context = V1::LoadContext.new(plan)
+      @context = LoadContext.new(plan)
     end
 
     def call
@@ -26,7 +26,7 @@ module Planning
           starts_on: starts_on,
           workouts: workouts,
           estimated_tss: loads.values.sum,
-          limit: comparable && reference ? V1::WeeklyLoadCap.limit(reference) : nil)
+          limit: comparable && reference ? WeeklyLoadCap.limit(reference) : nil)
         if comparable
           reference = workouts.sum { |workout| workout.generation_context.fetch("generated_tss", loads.fetch(workout.id)).to_f }
         end

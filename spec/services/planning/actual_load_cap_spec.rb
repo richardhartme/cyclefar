@@ -91,7 +91,7 @@ RSpec.describe "LOAD-002 actual generated load", generated_workouts: true do
     expect(workout.reload.duration_minutes).to eq(180)
     expect(workout.generation_context.fetch("load_adjustments")).to eq("lower_targets" => true, "easy_filler" => true)
     expect(workout.estimated_tss).to be > reference.estimated_tss * 1.08
-    expect(warnings).to eq([ Planning::V1::WeeklyLoadCap.warning(today) ])
+    expect(warnings).to eq([ Planning::WeeklyLoadCap.warning(today) ])
     expect(Planning::WeeklyLoadReview.new(plan).warnings).to eq(warnings)
   end
 

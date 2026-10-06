@@ -1,6 +1,6 @@
 require "active_model"
 require_relative "availability"
-require_relative "v1/rules"
+require_relative "rules"
 
 module Planning
   # ActiveModel form object for plan creation with user inputs, parsing and validation.
@@ -25,8 +25,8 @@ module Planning
       :event_expected_duration_minutes,
       :availability
 
-    validates :goal, inclusion: { in: Training::V1::Rules::GOALS }
-    validates :discipline, inclusion: { in: Training::V1::Rules::DISCIPLINES }
+    validates :goal, inclusion: { in: Training::Rules::GOALS }
+    validates :discipline, inclusion: { in: Training::Rules::DISCIPLINES }
     validates :starts_on, :ftp_watts, :progression_mode, presence: true
     validates :ftp_watts, numericality: { only_integer: true, greater_than: 0 }
     validates :progression_mode, inclusion: { in: %w[continuous hard_recovery_cycle] }
@@ -77,9 +77,9 @@ module Planning
 
     def duration_is_valid
       if duration_mode == "preset"
-        errors.add(:duration_months, "must be 1, 3 or 6 months") unless V1::Rules::PRESET_MONTHS.include?(duration_months)
-      elsif !custom_duration_weeks.is_a?(Integer) || custom_duration_weeks < V1::Rules::MINIMUM_CUSTOM_WEEKS
-        errors.add(:custom_duration_weeks, "must be at least #{V1::Rules::MINIMUM_CUSTOM_WEEKS} whole weeks")
+        errors.add(:duration_months, "must be 1, 3 or 6 months") unless Rules::PRESET_MONTHS.include?(duration_months)
+      elsif !custom_duration_weeks.is_a?(Integer) || custom_duration_weeks < Rules::MINIMUM_CUSTOM_WEEKS
+        errors.add(:custom_duration_weeks, "must be at least #{Rules::MINIMUM_CUSTOM_WEEKS} whole weeks")
       end
     end
 
@@ -88,8 +88,8 @@ module Planning
 
       errors.add(:event_name, "is required") if event_name.blank?
       errors.add(:event_on, "is required") unless event_on
-      errors.add(:event_discipline, "is invalid") unless Training::V1::Rules::DISCIPLINES.include?(event_discipline)
-      if starts_on && event_on && event_on < starts_on + V1::Rules::MINIMUM_EVENT_LEAD_DAYS
+      errors.add(:event_discipline, "is invalid") unless Training::Rules::DISCIPLINES.include?(event_discipline)
+      if starts_on && event_on && event_on < starts_on + Rules::MINIMUM_EVENT_LEAD_DAYS
         errors.add(:event_on, "must be at least four weeks after the plan start")
       end
       errors.add(:event_distance_km, "must be positive") if event_distance_km && event_distance_km <= 0

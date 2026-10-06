@@ -90,7 +90,7 @@ module Adaptations
 
     def load_weeks(dates)
       weeks = dates.map(&:beginning_of_week).uniq
-      context = Planning::V1::LoadContext.new(@plan)
+      context = Planning::LoadContext.new(@plan)
       comparable = @workouts.group_by { |workout| workout.scheduled_on.beginning_of_week }.filter_map do |week, workouts|
         week if context.comparable_week?(week, workouts)
       end
@@ -122,7 +122,7 @@ module Adaptations
     def pre_break_level(period)
       # Match re-prescription, including a new recent comparable baseline even
       # when an older, higher session is unchanged outside the affected weeks.
-      Planning::V1::PreBreakProgression.levels(@workouts, before: period.starts_on)
+      Planning::PreBreakProgression.levels(@workouts, before: period.starts_on)
     end
 
     def workout_context(workout)

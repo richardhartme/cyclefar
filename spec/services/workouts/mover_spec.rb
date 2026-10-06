@@ -201,7 +201,7 @@ RSpec.describe Workouts::Mover, type: :service, generated_workouts: true do
     reference_before = reference.attributes
     result = described_class.new(workout).move_to!(destination: today + 8)
     expect(result.regenerated).to be(false)
-    expect(result.warnings).to eq([ Planning::V1::WeeklyLoadCap.warning((today + 8).beginning_of_week) ])
+    expect(result.warnings).to eq([ Planning::WeeklyLoadCap.warning((today + 8).beginning_of_week) ])
     expect(steps(workout)).to eq(original)
     expect(reference.reload.attributes).to eq(reference_before)
   end
@@ -212,7 +212,7 @@ RSpec.describe Workouts::Mover, type: :service, generated_workouts: true do
     before = reference.attributes
     result = described_class.new(workout).move_to!(destination: today + 30)
     expect(workout.reload.progression_level).to be < 6
-    expect(workout.estimated_tss.to_f).to be <= Planning::V1::WeeklyLoadCap.limit(reference.estimated_tss.to_f)
+    expect(workout.estimated_tss.to_f).to be <= Planning::WeeklyLoadCap.limit(reference.estimated_tss.to_f)
     expect(result.warnings).to be_empty
     expect(reference.reload.attributes).to eq(before)
   end

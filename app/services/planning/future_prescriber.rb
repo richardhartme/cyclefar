@@ -97,7 +97,7 @@ module Planning
     end
 
     def illness_reentry(item, period)
-      ramp = V1::ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days)
+      ramp = ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days)
       stage = ramp.stage_on(item.scheduled_on)
       subtype, level = case stage
       when 0 then [ :recovery, nil ]
@@ -130,11 +130,11 @@ module Planning
     def resumed_level(item, period)
       baseline = @pre_break_levels.fetch(period.id).fetch(item.subtype, 1)
       ceiling = if period.return_ramp_days
-        V1::ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days).progression_level(item.scheduled_on, baseline: baseline)
+        ReturnRamp.new(ends_on: period.ends_on, days: period.return_ramp_days).progression_level(item.scheduled_on, baseline: baseline)
       else
         baseline + ((item.scheduled_on - period.ends_on - 1) / 7).floor
       end
-      biased_level = Training::V1::Progression.level(
+      biased_level = Training::Progression.level(
         baseline: item.progression_level,
         bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
         maximum: item.phase == "taper" ? item.generation_context["maximum_level"] : nil)
@@ -142,7 +142,7 @@ module Planning
     end
 
     def reduced_duration(duration, factor)
-      [ (duration * factor).round, Training::V1::Rules::MINIMUM_DURATION_MINUTES ].max
+      [ (duration * factor).round, Training::Rules::MINIMUM_DURATION_MINUTES ].max
     end
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:, load_adjustments: {}, return_ramp_stage: nil)
@@ -181,7 +181,7 @@ module Planning
     def pre_break_levels
       workouts = @plan.planned_workouts.workout.where.not(status: :missed).where.not(progression_level: nil).to_a
       time_off_periods.to_h do |period|
-        [ period.id, V1::PreBreakProgression.levels(workouts, before: period.starts_on) ]
+        [ period.id, PreBreakProgression.levels(workouts, before: period.starts_on) ]
       end
     end
 

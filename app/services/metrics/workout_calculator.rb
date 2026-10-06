@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "../workouts/step_sequence"
 
 module Metrics
@@ -13,7 +13,7 @@ module Metrics
     end
 
     def call
-      window_size = Training::V1::Rules::NP_WINDOW_SECONDS
+      window_size = Training::Rules::NP_WINDOW_SECONDS
       window = Array.new(window_size, 0.0)
       window_sum = power_sum = fourth_power_sum = 0.0
       count = 0

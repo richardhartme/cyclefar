@@ -26,7 +26,7 @@ module Adaptations
 
         workout = workouts.find(change.fetch("planned_workout_id"))
         raise ArgumentError unless workout.planned? && workout.structured? && workout.workout? &&
-          workout.scheduled_on.between?(Date.current, Date.current + Training::V1::Rules::FEEDBACK_HORIZON_DAYS - 1)
+          workout.scheduled_on.between?(Date.current, Date.current + Training::Rules::FEEDBACK_HORIZON_DAYS - 1)
 
         [ workout, Integer(change.fetch("progression_level")), change.fetch("lower_targets", false) == true ]
       end
@@ -44,7 +44,7 @@ module Adaptations
           preview: preview)
       end
       before = @plan.progression_state.fetch("intensity_bias", 0).to_i
-      after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(*Training::V1::Rules::PROGRESSION_BIAS_BOUNDS)
+      after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(*Training::Rules::PROGRESSION_BIAS_BOUNDS)
       Result.new(changes: changes, bias: Bias.new(before: before, after: after, delta: after - before), ftp_watts: ftp)
     rescue ProposalFreshness::Unavailable
       raise

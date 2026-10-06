@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "step_definition"
 
 module Workouts
@@ -11,7 +11,7 @@ module Workouts
     end
 
     def call
-      rules = Training::V1::Rules
+      rules = Training::Rules
       if @subtype == :recovery
         if @variation_key == "steady"
           [ steady(@duration, rules::TARGETS[:recovery]) ].freeze
@@ -54,7 +54,7 @@ module Workouts
     def steady(seconds, target, group = "main")
       StepDefinition.new(
         kind: "steady",
-        label: group == "main" ? Training::V1::Rules::SUBTYPE_NAMES.fetch(@subtype) : "Easy between blocks",
+        label: group == "main" ? Training::Rules::SUBTYPE_NAMES.fetch(@subtype) : "Easy between blocks",
         duration_seconds: seconds,
         target_low_pct_ftp: target[0],
         target_high_pct_ftp: target[1],

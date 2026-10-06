@@ -17,7 +17,7 @@ snapshots.
   climbing and event goals.
 - Email/password registration, sign-in, sign-out and password reset built on
   Rails-generated authentication, with independent rider accounts.
-- A deterministic, versioned workout engine for endurance, tempo, Sweet Spot,
+- A deterministic workout engine for endurance, tempo, Sweet Spot,
   threshold, VO2 max, over-under and recovery sessions.
 - A continuous calendar with canonical main-set summaries, watt ranges,
   TSS/IF/work, event details, editable future workouts and inline power-profile

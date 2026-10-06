@@ -13,7 +13,7 @@ module Adaptations
 
     def initialize(plan)
       @plan = plan
-      @context = Planning::V1::LoadContext.new(plan)
+      @context = Planning::LoadContext.new(plan)
     end
 
     def call(targets)
@@ -35,8 +35,8 @@ module Adaptations
         next unless @context.comparable_week?(week_start, items.map(&:workout))
 
         if reference && items.any?(&:selected)
-          items = Planning::V1::WeeklyLoadCap.reduce(items, limit: Planning::V1::WeeklyLoadCap.limit(reference)) do |candidate, stage|
-            Planning::V1::LoadReduction.options(candidate.preview.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
+          items = Planning::WeeklyLoadCap.reduce(items, limit: Planning::WeeklyLoadCap.limit(reference)) do |candidate, stage|
+            Planning::LoadReduction.options(candidate.preview.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
               metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
               after = Workouts::ManualEditor::Snapshot.new(
                 kind: "workout",
@@ -57,7 +57,7 @@ module Adaptations
     private
 
     def preview(workout, level, lower_targets)
-      level = Training::V1::Progression.level(baseline: level, maximum: @context.maximum_level(workout))
+      level = Training::Progression.level(baseline: level, maximum: @context.maximum_level(workout))
       editor = Workouts::ManualEditor.new(workout)
       proposed = editor.preview(action: :adapt, progression_level: level, lower_targets: lower_targets)
       if workout.progression_level && level < workout.progression_level

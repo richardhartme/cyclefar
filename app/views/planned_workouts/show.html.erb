@@ -48,7 +48,7 @@
         <%= form_with url: change_planned_workout_path(@workout), method: :post, class: "fieldset bg-base-200 border-base-300 rounded-box border p-5" do %>
           <h3 class="text-lg font-semibold">Change workout</h3>
           <%= label_tag :subtype, "Workout type", class: "fieldset-label font-semibold" %>
-          <% workout_types = Training::V1::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
+          <% workout_types = Training::Rules::SUBTYPE_NAMES.map { |key, label| [ label, key ] } + [["Opener", "opener"]] %>
           <% selected_workout_type = @workout.opener? ? "opener" : @workout.subtype %>
           <%= select_tag :subtype, options_for_select(workout_types, selected_workout_type), class: "select w-full" %>
           <%= label_tag :duration_minutes, "Duration (minutes)", class: "fieldset-label mt-2 font-semibold" %>

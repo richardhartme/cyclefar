@@ -110,8 +110,8 @@ module Workouts
       when "adapt" then [ Integer(progression_level).clamp(1, 7), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
       end
-      raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::V1::Rules::MINIMUM_DURATION_MINUTES
-      raise ArgumentError, "Unsupported workout subtype" unless Training::V1::Rules::SUBTYPE_NAMES.key?(chosen_subtype.to_sym)
+      raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::Rules::MINIMUM_DURATION_MINUTES
+      raise ArgumentError, "Unsupported workout subtype" unless Training::Rules::SUBTYPE_NAMES.key?(chosen_subtype.to_sym)
 
       { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || Variations.default_key(chosen_subtype),
         phase: @workout.plan_phase.kind, goal: @workout.training_plan.goal, discipline: @workout.training_plan.discipline,

@@ -1,4 +1,4 @@
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 require_relative "step_definition"
 
 module Workouts
@@ -11,7 +11,7 @@ module Workouts
     end
 
     def call
-      rules = Training::V1::Rules
+      rules = Training::Rules
       start = @subtype == :recovery ? rules::RECOVERY_COOL_DOWN_START : rules::COOL_DOWN_START
       finish = @subtype == :recovery ? rules::RECOVERY_COOL_DOWN_END : rules::COOL_DOWN_END
       seconds = !@compact && @duration_minutes >= rules::LONG_SESSION_MINUTES ? rules::LONG_COOL_DOWN_SECONDS : rules::COOL_DOWN_SECONDS

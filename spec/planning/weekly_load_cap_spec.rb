@@ -1,6 +1,6 @@
 require "engine_helper"
 
-RSpec.describe Planning::V1::WeeklyLoadCap do
+RSpec.describe Planning::WeeklyLoadCap do
   Candidate = Data.define(:scheduled_on, :definition, :intent, :estimated_tss, :adjustable) do
     def adjustable? = adjustable
   end
@@ -22,7 +22,7 @@ RSpec.describe Planning::V1::WeeklyLoadCap do
 
   def reduce(items, limit:)
     described_class.reduce(items, limit: limit) do |item, stage|
-      Planning::V1::LoadReduction.options(item.definition, stage: stage, intent: item.intent).map do |option|
+      Planning::LoadReduction.options(item.definition, stage: stage, intent: item.intent).map do |option|
         candidate(option, intent: item.intent, date: item.scheduled_on)
       end
     end
@@ -71,9 +71,9 @@ RSpec.describe Planning::V1::WeeklyLoadCap do
     expect(result.definition.duration_minutes).to eq(90)
     expect(result.definition.load_adjustments).not_to have_key("easy_filler")
     base_vo2 = definition(subtype: :vo2_max, phase: :base)
-    options = Planning::V1::LoadReduction.options(base_vo2, stage: :subtype, intent: "intervals")
+    options = Planning::LoadReduction.options(base_vo2, stage: :subtype, intent: "intervals")
     expect(options.map(&:subtype).uniq).to eq(%w[threshold sweet_spot])
-    expect(Planning::V1::LoadReduction.options(original, stage: :subtype, intent: "threshold")).to be_empty
+    expect(Planning::LoadReduction.options(original, stage: :subtype, intent: "threshold")).to be_empty
   end
 
   it "LOAD-002 retains specific subtype and normal duration by using a valid short main set plus easy filler" do

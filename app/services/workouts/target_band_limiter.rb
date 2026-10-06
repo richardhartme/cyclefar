@@ -1,5 +1,5 @@
 require_relative "step_definition"
-require_relative "../training/v1/rules"
+require_relative "../training/rules"
 
 module Workouts
   # Main work stays in its return band; easier preparation and recovery may
@@ -8,7 +8,7 @@ module Workouts
     def initialize(steps:, band:)
       unless band.is_a?(Array) && band.size == 2 &&
           band.all? { |value| value.is_a?(Numeric) && value.real? && value.finite? && value.positive? } &&
-          band.first <= band.last && band.last <= Training::V1::Rules::MAXIMUM_TARGET_PCT
+          band.first <= band.last && band.last <= Training::Rules::MAXIMUM_TARGET_PCT
         raise ArgumentError, "Target band must be a positive ordered FTP range within V1 limits"
       end
       @steps, @band = steps, band
