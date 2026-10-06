@@ -69,6 +69,8 @@
     <% if (version = ENV["KAMAL_VERSION"].presence) %>
       <footer aria-label="Deployed version" class="mx-auto w-full px-6 pb-6 text-right text-xs text-base-content/70" style="max-width: 1536px">
         Version <code class="break-all" title="<%= version %>"><%= version.match?(/\A[0-9a-f]{40}\z/i) ? version.first(7) : version %></code>
+        <span aria-hidden="true" class="mx-2">·</span>
+        <%= link_to "GitHub", "https://github.com/richardhartme/cyclefar", class: "link" %>
       </footer>
     <% end %>
   </body>
