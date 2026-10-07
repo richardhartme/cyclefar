@@ -14,9 +14,10 @@
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
@@ -30,7 +31,7 @@
       <nav aria-label="Main navigation" class="navbar mx-auto min-h-16 w-full px-4 sm:px-6" style="max-width: 1536px">
         <div class="navbar-start">
           <div class="flex items-center gap-3">
-            <%= link_to "CycleFar", root_path, class: "text-primary text-xl font-bold tracking-tight hover:opacity-80" %>
+            <%= link_to root_path, class: "text-primary flex items-center gap-2 text-xl font-bold tracking-tight hover:opacity-80" do %><%= image_tag "logo.png", alt: "", width: 32, height: 32, class: "size-8" %>CycleFar<% end %>
             <p class="text-base-content/55 border-base-300 hidden border-l pl-3 text-xs font-medium tracking-wide sm:block">Plan smart. Ride far.</p>
           </div>
         </div>
