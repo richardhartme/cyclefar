@@ -253,6 +253,8 @@ Options displayed as explicit choices:
 
 Shorter can be repeated down to a 30-minute minimum. Longer can be repeated without a hard maximum.
 
+Easier/Harder preserve workout type and duration and require both actual TSS and the displayed whole-number TSS to decrease/increase. They skip unsuitable ladder entries and select profiles by load, retaining existing training restrictions. When no suitable replacement remains, keep the workout unchanged and show `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder uses `higher-load` and `Longer`. Same continues to rotate valid profiles (CYF-81).
+
 A replacement preview is desirable before applying. Current buttons apply immediately and redirect to the updated detail page; there is no replacement preview.
 
 ## 8. Change-workout dialog

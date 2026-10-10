@@ -12,6 +12,12 @@ module Workouts
     end
 
     def preview(action:, subtype: nil, duration_minutes: nil, progression_level: nil, lower_targets: false)
+      if %w[easier harder].include?(action.to_s)
+        raise ArgumentError, "Only easy feedback targets can be lowered" if lower_targets
+
+        return directional_preview(action)
+      end
+
       before = snapshot_for(@workout)
       subtype = subtype&.to_sym
       kind, definition = definition_for(action, subtype, duration_minutes, progression_level)
@@ -47,6 +53,37 @@ module Workouts
     end
 
     private
+
+    def directional_preview(action)
+      raise ArgumentError, "Only a regular workout can be shuffled" unless @workout.workout?
+
+      selected = DirectionalAdjustment.new(
+        action: action,
+        steps: @workout.workout_steps,
+        ftp_watts: @workout.training_plan.ftp_watts_for_planning,
+        progression_level: @workout.progression_level,
+        maximum_level: Planning::LoadContext.new(@workout.training_plan).maximum_level(@workout),
+        tss_scale: @workout.class.columns_hash.fetch("estimated_tss").scale,
+        subtype: @workout.subtype,
+        duration_minutes: @workout.duration_minutes,
+        variation_key: @workout.variation_key,
+        phase: @workout.plan_phase.kind,
+        goal: @workout.training_plan.goal,
+        discipline: @workout.training_plan.discipline,
+        load_adjustments: @workout.generation_context.fetch("load_adjustments", {})).call
+      before = snapshot_for(@workout).with(
+        estimated_if: selected.current_metrics.estimated_if,
+        estimated_tss: selected.current_metrics.estimated_tss)
+      after = before.with(
+        estimated_if: selected.metrics.estimated_if,
+        estimated_tss: selected.metrics.estimated_tss)
+      Preview.new(
+        kind: :workout,
+        definition: selected.definition.with(purpose: @workout.purpose),
+        metrics: selected.metrics,
+        before: before,
+        after: after)
+    end
 
     def apply_under_lock!(prepared_preview: nil, **attributes)
       proposed = prepared_preview || preview(**attributes)
@@ -102,8 +139,6 @@ module Workouts
       current_level = @workout.progression_level || 1
       level, variation, duration, chosen_subtype = case action.to_s
       when "same" then [ current_level, Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
-      when "easier" then [ [ current_level - 1, 1 ].max, boundary_variation(current_level == 1), @workout.duration_minutes, @workout.subtype ]
-      when "harder" then [ [ current_level + 1, 7 ].min, boundary_variation(current_level == 7), @workout.duration_minutes, @workout.subtype ]
       when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
       when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
       when "change" then [ current_level, Variations.for_generation(subtype), Integer(duration_minutes), subtype.to_s ]
@@ -116,10 +151,6 @@ module Workouts
       { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || Variations.default_key(chosen_subtype),
         phase: @workout.plan_phase.kind, goal: @workout.training_plan.goal, discipline: @workout.training_plan.discipline,
         load_adjustments: action.to_s == "adapt" ? @workout.generation_context.fetch("load_adjustments", {}) : {} }
-    end
-
-    def boundary_variation(at_boundary)
-      at_boundary ? Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype) : @workout.variation_key
     end
 
     def material_change?(before, after)

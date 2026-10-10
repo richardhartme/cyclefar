@@ -577,15 +577,16 @@ If no alternate structure can satisfy tolerance, use the closest valid variation
 
 Affects this workout only.
 
-Preferred implementation:
+CYF-81 makes these actions directional in total planned load:
 
-- Harder: generate at progression level +1;
-- Easier: generate at level -1;
-- clamp 1..7;
-- keep subtype and duration;
-- use exact-duration fitter.
+- Calculate current load from the canonical steps and candidate load from generated steps, both at the owning rider's current FTP.
+- Easier requires strictly lower estimated TSS and a lower displayed whole-number TSS; Harder requires strictly higher values for both. Hidden rounding differences do not count.
+- For intensity sessions, search lower levels nearest first for Easier, or higher levels nearest first for Harder, within 1..7 and the applicable saved/reduced-period ceiling. Skip non-monotonic ladder entries and ineffective duration fits. A higher requested level that fits below the current effective level is not a Harder candidate.
+- At each candidate level, prefer the saved variation, then other valid variations in their declared rule order. Select the first qualifying replacement. If directional levels are exhausted, evaluate variations at the current level, subject to the ceiling. Endurance/Recovery have no intensity progression level and evaluate only their valid profiles using the same order.
+- Keep subtype and exact duration; use the existing fitter, ladders and normal target ranges. Retain saved target-lowering/easy-filler choices, tapered main-set factors and return-stage power limits. Preserve the workout's purpose and automatic generation references.
+- If no candidate qualifies, persist no changes and explain the limit: `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder substitutes `higher-load` and `Longer`. Repeated presses never wrap to an unsuitable profile.
 
-At a boundary level, use an alternate variation with modestly different time-in-zone/recovery rather than exceeding normal subtype power ranges.
+For example, 60-minute Over-Unders level 3 is approximately 64.2 TSS. Easier skips level 2 (68.2 TSS) and selects level 1 (59.4 TSS). Recovery profile differences may be too small to change displayed TSS, in which case the action reports the limit.
 
 Do not update plan progression bias from this action.
 

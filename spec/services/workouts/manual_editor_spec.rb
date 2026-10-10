@@ -22,11 +22,13 @@ RSpec.describe Workouts::ManualEditor, type: :service do
     expect(workout.workout_steps.sum(:duration_seconds)).to eq(3600)
   end
 
-  it "WKO-004 adjusts only the selected workout's level for easier and harder" do
+  it "WKO-004 adjusts only the selected workout's load for easier and harder" do
+    initial_tss = workout.estimated_tss
     described_class.new(workout).apply!(action: :harder)
-    expect(workout.reload.progression_level).to eq(4)
+    expect(workout.reload.estimated_tss.round).to be > initial_tss.round
+    harder_tss = workout.estimated_tss
     described_class.new(workout).apply!(action: :easier)
-    expect(workout.reload.progression_level).to eq(3)
+    expect(workout.reload.estimated_tss.round).to be < harder_tss.round
     expect(plan.reload.progression_state).to eq({})
   end
 
@@ -97,5 +99,102 @@ RSpec.describe Workouts::ManualEditor, type: :service do
         subtype: :opener,
         duration_minutes: 60)
     end.to raise_error(ArgumentError, "opener duration must be 30 to 45 minutes")
+  end
+end
+
+RSpec.describe Workouts::ManualEditor, type: :service, generated_workouts: true do
+  let(:plan) { create(:training_plan, progression_mode: :continuous, hard_weeks_before_recovery: nil) }
+  let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
+  let(:workout) { generated_workout(plan: plan, phase: phase, date: plan.starts_on + 1, subtype: :over_under, level: 3) }
+
+  def persisted_state(target)
+    [ target.reload.attributes, target.workout_steps.reload.map(&:attributes) ]
+  end
+
+  it "WKO-004 previews the canonical load reduction without persistence, then applies the same replacement" do
+    before = persisted_state(workout)
+    preview = described_class.new(workout).preview(action: :easier)
+    expect(persisted_state(workout)).to eq(before)
+    expect(preview.definition.progression_level).to eq(1)
+    expect(preview.before.estimated_tss).to be_within(0.001).of(64.186)
+    result = described_class.new(workout).apply!(action: :easier)
+    expect(result.after).to eq(preview.after)
+    expect(workout.reload.name).to eq("Over-Unders 2x9")
+    expect(workout.workout_steps.map { |step| Workouts::StepDefinition.from(step) }).to eq(preview.definition.steps)
+  end
+
+  it "WKO-004 uses canonical steps rather than stale stored metrics to choose direction" do
+    workout.update!(estimated_tss: 1, estimated_if: 0.1)
+    result = described_class.new(workout).apply!(action: :easier)
+    expect(result.before.estimated_tss).to be_within(0.001).of(64.186)
+    expect(result.after.estimated_tss).to be_within(0.001).of(59.377)
+  end
+
+  [ :easier, :harder ].each do |action|
+    it "WKO-004 persists no changes when #{action} reaches the limit" do
+      recovery = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 2, subtype: :recovery)
+      before = persisted_state(recovery)
+      expect { described_class.new(recovery).apply!(action: action) }.to raise_error(ArgumentError, /No .*load option/)
+      expect(persisted_state(recovery)).to eq(before)
+    end
+  end
+
+  it "WKO-004 repeatedly adjusts persisted endurance load without wrapping profiles" do
+    endurance = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 2, subtype: :endurance, variation: "alternating")
+    described_class.new(endurance).apply!(action: :easier)
+    expect(endurance.reload).to have_attributes(variation_key: "sustained", progression_level: nil)
+    expect(endurance.estimated_tss.round).to eq(44)
+    before = persisted_state(endurance)
+    expect { described_class.new(endurance).apply!(action: :easier) }.to raise_error(ArgumentError, /No lower-load option/)
+    expect(persisted_state(endurance)).to eq(before)
+    described_class.new(endurance).apply!(action: :harder)
+    expect(endurance.reload).to have_attributes(variation_key: "alternating", progression_level: nil)
+    expect(endurance.estimated_tss.round).to eq(45)
+    before = persisted_state(endurance)
+    expect { described_class.new(endurance).apply!(action: :harder) }.to raise_error(ArgumentError, /No higher-load option/)
+    expect(persisted_state(endurance)).to eq(before)
+  end
+
+  it "WKO-004 retains saved generation constraints and automatic references when increasing load" do
+    adjusted = generated_workout(
+      plan: plan,
+      phase: phase,
+      date: plan.starts_on + 2,
+      subtype: :sweet_spot,
+      level: 1,
+      duration: 90,
+      load_adjustments: { "main_set_factor" => 0.6, "lower_targets" => true, "return_target_band" => [ 55, 87 ] })
+    adjusted.update!(
+      generation_context: adjusted.generation_context.merge(
+        "maximum_level" => 2, "generated_level" => 1, "generated_tss" => adjusted.estimated_tss.to_f, "baseline_level" => 4))
+    original_context = adjusted.generation_context.deep_dup
+    described_class.new(adjusted).apply!(action: :harder)
+    expect(adjusted.reload.progression_level).to eq(2)
+    expect(adjusted.generation_context).to eq(original_context)
+    expect(adjusted.workout_steps.map(&:target_high_pct_ftp)).to all(be <= 87)
+    expect(adjusted.workout_steps.filter_map(&:end_target_high_pct_ftp)).to all(be <= 87)
+    expect(adjusted.workout_steps.sum(:duration_seconds)).to eq(5400)
+    before = persisted_state(adjusted)
+    expect { described_class.new(adjusted).apply!(action: :harder) }.to raise_error(ArgumentError, /No higher-load option/)
+    expect(persisted_state(adjusted)).to eq(before)
+  end
+
+  it "WKO-004 honours the reduced-period ceiling even without a saved maximum" do
+    create(:time_off_period, training_plan: plan, reason: :illness, starts_on: plan.starts_on, ends_on: plan.starts_on, return_ramp_days: 7)
+    before = persisted_state(workout)
+    expect { described_class.new(workout).apply!(action: :harder) }.to raise_error(ArgumentError, /No higher-load option/)
+    expect(persisted_state(workout)).to eq(before)
+  end
+
+  it "WKO-004 leaves other prescriptions, completed history and plan progression unchanged" do
+    other = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 2)
+    completed = create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 3)
+    before = [ persisted_state(other), persisted_state(completed), plan.reload.attributes ]
+    described_class.new(workout).apply!(action: :easier)
+    expect([ persisted_state(other), persisted_state(completed), plan.reload.attributes ]).to eq(before)
+    expect(plan.adaptation_proposals).to be_empty
+    [ :easier, :harder ].each do |action|
+      expect { described_class.new(completed).apply!(action: action) }.to raise_error(ArgumentError, /Only planned structured workouts/)
+    end
   end
 end
