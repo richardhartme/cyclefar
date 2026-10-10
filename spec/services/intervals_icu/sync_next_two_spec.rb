@@ -106,6 +106,15 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
     expect(client.upserts).to be_empty
   end
 
+  it "rejects a stale plan instance after archival without recreating remote events" do
+    create_upcoming_workouts(1)
+    TrainingPlan.find(plan.id).update!(status: :archived)
+
+    expect { described_class.new(plan: plan, profile: profile, client: client).call }.to raise_error(IntervalsIcu::Client::RequestError, /active plan/)
+    expect(client.upserts).to be_empty
+    expect(client.deletions).to be_empty
+  end
+
   it "reconciles only the current rider's linked and detached sync records" do
     workouts = create_upcoming_workouts(2)
     other_plan = create(:training_plan, starts_on: Date.current, ends_on: Date.current + 30)

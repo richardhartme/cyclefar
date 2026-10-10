@@ -23,7 +23,7 @@
             @has_completed_workouts ? "Archive plan" : "Delete plan",
             training_plan_path,
             method: :delete,
-            form: { data: { turbo_confirm: @has_completed_workouts ? "Archive this plan? Completed workouts will remain available in the archived plan." : "Delete this plan and all of its planned workouts?" } },
+            form: { data: { turbo_confirm: @has_completed_workouts ? "Archive this plan and remove its synced Intervals.icu calendar events? Completed workouts will remain available in the archived plan." : "Delete this plan and all of its planned workouts, including its synced Intervals.icu calendar events?" } },
             class: "btn btn-error btn-outline btn-sm") %>
         </div>
       </div>

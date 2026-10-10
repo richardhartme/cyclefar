@@ -95,6 +95,8 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the implemented request contract and reconciliation limits. Remote calls are stubbed in specs.
 
+`Planning::PlanRemover` removes tracked remote calendar events through `IntervalsIcu::RemovePlanEvents` before deleting or archiving the active plan (CYF-79). Cleanup includes this plan's linked events and the owner's detached identities; remote failure retains the active plan for retry. Local sync-record removal and plan mutation share the plan transaction, preserving completed history. `IntervalsIcu::Synchronization` uses an owner-scoped PostgreSQL session advisory lock across removal and manual sync, without holding sync's local transactions open across HTTP; uncertain-upload identities remain committed before remote calls.
+
 ## Routes and UI boundaries
 
 The authoritative route definitions are in [`config/routes.rb`](../config/routes.rb):
