@@ -337,6 +337,10 @@ Add, Copy, Move and missed Move share destination exclusions: reject dates outsi
 
 An empty calendar date inside the plan links to an add-workout form. The rider chooses a workout type and duration; CycleFar generates its canonical structured workout using the current FTP. The date must not be occupied, a target-event date or within time off.
 
+### WKO-010 Remove workout (CYF-80)
+
+The rider may remove a planned or missed workout from an active plan on a past, current or future date, including openers and outlines. Removal deletes its canonical steps, leaves the rest of the plan unchanged and updates calendar totals. Normal calendar refreshes do not recreate it; a later explicit replan may refill the date from availability. Completed workouts cannot be removed because their history is immutable. Retain any owned sync identity for cleanup on the next manual Intervals.icu sync.
+
 ## 8. Completion and feedback
 
 ### FBK-001 Manual completion

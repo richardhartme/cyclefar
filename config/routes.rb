@@ -9,7 +9,7 @@ Rails.application.routes.draw do
     get :preview
     post :preview, action: :prepare_preview
   end
-  resources :planned_workouts, only: [ :new, :create, :show ] do
+  resources :planned_workouts, only: [ :new, :create, :show, :destroy ] do
     member do
       post :shuffle
       post :change

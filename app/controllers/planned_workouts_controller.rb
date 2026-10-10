@@ -35,6 +35,13 @@ class PlannedWorkoutsController < ApplicationController
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 
+  def destroy
+    Workouts::Remover.new(@workout).call
+    redirect_to root_path, status: :see_other, notice: "Workout removed. The rest of your plan is unchanged. Sync to Intervals.icu to update its calendar."
+  rescue ArgumentError, ActiveRecord::RecordNotDestroyed => error
+    redirect_to planned_workout_path(@workout), status: :see_other, alert: error.message
+  end
+
   def change
     proposal = nil
     @workout.training_plan.with_lock do

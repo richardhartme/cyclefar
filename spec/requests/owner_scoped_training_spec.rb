@@ -26,6 +26,7 @@ RSpec.describe "USR-004 owner-scoped training routes", type: :request do
 
     {
       "detail" => [ :get, :planned_workout_path, {} ],
+      "removal" => [ :delete, :planned_workout_path, {} ],
       "shuffle" => [ :post, :shuffle_planned_workout_path, { action_kind: "easier" } ],
       "change" => [ :post, :change_planned_workout_path, { subtype: "recovery", duration_minutes: 60 } ],
       "move" => [ :post, :move_planned_workout_path, { scheduled_on: (Date.current + 2).iso8601 } ],

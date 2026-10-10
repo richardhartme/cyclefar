@@ -76,6 +76,8 @@ Forecast generation always passes an explicit variation. Initial endurance mater
 
 `Planning::WeeklyLoadReview` reads fixed canonical workouts and outline forecasts without mutating them, using `Planning::LoadContext` for comparable-week exclusions and saved automatic load references. Move reduces only its regenerated workout through `Planning::WeeklyLoadCap`, retaining subtype and duration, then returns a non-blocking destination warning if the cap remains infeasible. Short preserved moves are fixed rider choices and can exceed the cap with a warning. Calendar requests also review future weeks beyond the horizon, so distant move warnings survive a refresh. `weeks_above_target` returns the affected weeks (start date, projected TSS and limit) rather than text; `HomeController#index` passes them to the `home/_load_guidance` partial, a collapsible advisory panel. Each row links to the week's calendar anchor (`#calendar-week-<ISO date>`) and to the availability form for that week.
 
+`Workouts::Remover` deletes a planned/missed workout and its steps under the plan lock, rechecking active status and completed-history protection after reload. The owner-scoped DELETE action is available from structured and outline detail pages on any date. It neither replans nor calls the external API; existing nullable sync associations retain identities for the next manual sync. Proposal freshness rejects any affected proposal after removal. Ordinary horizon requests do not refill empty dates (CYF-80).
+
 ## Completion, adaptations and schedule changes
 
 - `Adaptations::CompletionRecorder` saves feedback and immutable FTP/target/metric snapshots in a transaction, then persists a proposal if `FeedbackEvaluator` returns one. This path accepts planned structured regular workouts and openers, and materialises a due/overdue executable outline in the same completion transaction. Metrics are recalculated from canonical steps at the snapshotted current owner FTP, including late structured workouts outside future FTP recalculation. Openers record RPE/quality but do not drive adaptations because V1 defines no opener RPE band.
@@ -112,7 +114,7 @@ resource :training_plan, only: [:new, :create, :destroy] do
   get :preview
   post :preview, action: :prepare_preview
 end
-resources :planned_workouts, only: [:new, :create, :show] do
+resources :planned_workouts, only: [:new, :create, :show, :destroy] do
   member do
     post :shuffle
     post :change
