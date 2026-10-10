@@ -1,5 +1,5 @@
 module GeneratedWorkouts
-  def generated_workout(plan:, phase:, date:, level: 4, duration: 60, subtype: :threshold, variation: nil)
+  def generated_workout(plan:, phase:, date:, level: 4, duration: 60, subtype: :threshold, variation: nil, load_adjustments: {})
     definition = Workouts::Generator.new(
       subtype: subtype,
       duration_minutes: duration,
@@ -7,19 +7,21 @@ module GeneratedWorkouts
       variation_key: variation,
       phase: phase.kind,
       goal: plan.goal,
-      discipline: plan.discipline).call
+      discipline: plan.discipline,
+      load_adjustments: load_adjustments).call
     metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: plan.ftp_watts_for_planning).call
     workout = plan.planned_workouts.build(
       plan_phase: phase,
       scheduled_on: date,
-      intent: subtype,
+      intent: subtype.to_sym == :over_under ? :intervals : subtype,
       subtype: subtype,
       duration_minutes: duration,
       detail_status: :structured,
       name: definition.name,
       purpose: definition.purpose,
       progression_level: definition.progression_level,
-      variation_key: definition.variation_key)
+      variation_key: definition.variation_key,
+      generation_context: load_adjustments.empty? ? {} : { "load_adjustments" => definition.load_adjustments })
     PlannedWorkout::METRICS.each { |key| workout.public_send("#{key}=", metrics.public_send(key)) }
     definition.steps.each { |step| workout.workout_steps.build(step.to_h) }
     workout.save!

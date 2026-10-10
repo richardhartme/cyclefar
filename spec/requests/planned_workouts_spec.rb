@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Planned workouts", type: :request do
+RSpec.describe "Planned workouts", type: :request, generated_workouts: true do
   let(:user) { create(:user) }
   before { sign_in_as(user) }
 
@@ -73,6 +73,34 @@ RSpec.describe "Planned workouts", type: :request do
     expect(response).to redirect_to(planned_workout_path(short))
     expect(flash[:alert]).to include("below 30")
     expect(short.reload.duration_minutes).to eq(30)
+  end
+
+  { easier: "No lower-load option is available at this duration. Try Shorter or Change workout.",
+    harder: "No higher-load option is available at this duration. Try Longer or Change workout." }.each do |action, message|
+    it "WKO-004 displays the #{action} limit and leaves the workout unchanged" do
+      recovery = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 2, subtype: :recovery)
+      before = [ recovery.attributes, recovery.workout_steps.map(&:attributes) ]
+      post shuffle_planned_workout_path(recovery), params: { action_kind: action }
+      expect(response).to redirect_to(planned_workout_path(recovery))
+      expect(flash[:alert]).to eq(message)
+      follow_redirect!
+      expect(response.body).to include(message)
+      expect([ recovery.reload.attributes, recovery.workout_steps.reload.map(&:attributes) ]).to eq(before)
+      expect(plan.adaptation_proposals).to be_empty
+    end
+  end
+
+  it "WKO-004 applies a directional load reduction without offering a material-change replan" do
+    source = generated_workout(plan: plan, phase: phase, date: plan.starts_on + 2, subtype: :over_under, level: 3)
+    before_tss = source.estimated_tss
+    post shuffle_planned_workout_path(source), params: { action_kind: "easier" }
+    expect(response).to redirect_to(planned_workout_path(source))
+    expect(source.reload.progression_level).to eq(1)
+    expect(source.estimated_tss.round).to be < before_tss.round
+    expect(plan.adaptation_proposals).to be_empty
+    follow_redirect!
+    expect(response.body).to include("Over-Unders 2x9")
+    expect(Nokogiri::HTML(response.body).css('form[action*="/adaptation_proposals/"]')).to be_empty
   end
 
   it "WKO-005 changes a workout to an opener through the detail page" do
