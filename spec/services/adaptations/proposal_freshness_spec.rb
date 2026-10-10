@@ -61,7 +61,7 @@ RSpec.describe "CYF-6 proposal freshness", type: :service, generated_workouts: t
         "a move outside the horizon" => ->(target) { target.update!(scheduled_on: target.scheduled_on + 20) },
         "a missed target" => ->(target) { Planning::MissedWorkoutResolver.new(target).resolve!(mode: :leave_unchanged) },
         "a completed target" => ->(target) { Adaptations::CompletionRecorder.new(workout: target, rpe: 8, completion_quality: :as_planned).call },
-        "a deleted target" => ->(target) { target.destroy! }
+        "a deleted target" => ->(target) { Workouts::Remover.new(target).call }
       }.each do |description, change|
         it "rejects #{description} without partially applying the proposal" do
           proposal

@@ -122,5 +122,12 @@
       <p><%= @workout.purpose %></p>
       <div role="note" class="alert alert-info alert-soft">The detailed structure for this workout will be generated when it enters the next 14 days.</div>
     <% end %>
+    <% if !@workout.completed? && @workout.training_plan.active? %>
+      <div class="divider my-0"></div>
+      <section aria-label="Remove workout">
+        <p class="mb-3">Remove this workout from the calendar and leave the rest of your plan unchanged.</p>
+        <%= button_to "Remove workout", planned_workout_path(@workout), method: :delete, class: "btn btn-outline btn-error", form: { data: { turbo_confirm: "Remove this workout? The rest of your plan will stay unchanged." } } %>
+      </section>
+    <% end %>
   </div>
 </section>

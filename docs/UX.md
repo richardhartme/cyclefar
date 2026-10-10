@@ -235,6 +235,9 @@ Actions:
 - Copy (planned structured regular workouts only)
 - Complete
 - Missed (when relevant)
+- Remove workout (planned/missed workouts in an active plan, including outlines; asks for confirmation)
+
+Removal returns to the calendar with the date empty and the rest of the plan unchanged. Completed workouts retain their immutable history and have no removal control. The success message explains that manual Intervals.icu sync updates the remote calendar.
 
 Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change, Move and manual completion with RPE/quality. Opening a planned executable outline due today or earlier generates its canonical detail for completion without rewriting other workouts. The completed structure, FTP, watt targets, metrics and feedback remain frozen; opener feedback does not propose progression changes. Ordinary Move and missed-workout Move share destination rules: preserve eligible same-phase structures for moves of at most seven days; regenerate across phases, longer distances or changed recovery/return context using destination progression while retaining subtype, duration and saved variation. Both reject occupied dates, dates outside the active plan or its phases, time off and the target event date. Moved outlines entering the horizon gain detail; distant outlines retain forecasts only. The confirmation and calendar show non-blocking destination load warnings, including future weeks outside the detail horizon.
 

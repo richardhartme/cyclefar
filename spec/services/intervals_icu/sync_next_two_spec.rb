@@ -82,7 +82,7 @@ RSpec.describe IntervalsIcu::SyncNextTwo do
     workouts = create_upcoming_workouts(3)
     described_class.new(plan: plan, profile: profile, client: client).call
     deleted_external_id = "cyclefar-workout-#{workouts.first.id}"
-    workouts.first.destroy!
+    Workouts::Remover.new(workouts.first).call
 
     result = described_class.new(plan: plan, profile: profile, client: client).call
 
