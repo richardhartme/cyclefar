@@ -50,18 +50,9 @@ class TrainingPlansController < ApplicationController
 
   def destroy
     plan = Current.user.training_plans.active.sole
-    archived = plan.with_lock do
-      if plan.planned_workouts.completed.exists?
-        plan.planned_workouts.planned.destroy_all
-        plan.update!(status: :archived)
-        true
-      else
-        plan.destroy!
-        false
-      end
-    end
+    archived = Planning::PlanRemover.new(plan).call
     redirect_to root_path, notice: archived ? "Training plan archived. Completed workouts are kept as history." : "Training plan deleted."
-  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordInvalid => error
+  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordInvalid, IntervalsIcu::Client::Error => error
     redirect_to root_path, alert: error.message
   end
 

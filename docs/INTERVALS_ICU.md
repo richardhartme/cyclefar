@@ -139,6 +139,14 @@ CycleFar's tracked remote calendar-event set matches the next-two set after a su
 
 The [manual sync sequence](diagrams/sequence-cyclefar-intervals-icu-sync.puml) shows the separate local transactions, remote calls and failure paths. With no eligible workouts, upload is skipped and all stale owned events are still reconciled.
 
+## Plan deletion and archival (CYF-79)
+
+Delete/Archive explicitly removes tracked events linked to the active plan, including completed/missed workouts, plus the rider's detached identities left by earlier workout deletion. It does not upload replacements or remove events linked to another plan. `Planning::PlanRemover` calls `IntervalsIcu::RemovePlanEvents` before local deletion/archival. Plans without matching sync identities need no profile or API key.
+
+Missing credentials or remote failure leave the plan active and retain identities, with Settings/retry guidance. Confirmed cleanup and local removal commit together; if local removal fails after remote success, retained external IDs can safely be deleted again. Completed local snapshots, steps and feedback remain unchanged. Manual sync and removal share an owner-scoped PostgreSQL session advisory lock so an in-flight sync cannot recreate events after cleanup; sync rechecks active status under that lock. Unlike a transaction lock, it allows sync to commit retry identities before HTTP and confirmed upload metadata before cleanup.
+
+The [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624), rechecked on 2026-10-10, continues to document bulk deletion by external ID and ignores already absent events. The existing HTTP adapter contract is unchanged; tests use stubbed HTTP.
+
 ## Partial failure
 
 Prefer one bulk request for the two upserts when possible.

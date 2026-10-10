@@ -152,6 +152,7 @@ Archiving/deleting an active plan:
 - removes all uncompleted future/planned workouts;
 - keeps completed workouts and their parent archived plan records as history;
 - does not expose a History screen in V1.
+- removes the plan's tracked Intervals.icu calendar events and the rider's detached sync identities before local removal (CYF-79). If remote cleanup fails or its API key is missing, keep the active plan and metadata for an explicit retry. Unsynced plans need no API key. Other riders' events and local completed history remain untouched.
 
 ## 4. Plan structure
 

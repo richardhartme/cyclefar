@@ -14,6 +14,17 @@ module IntervalsIcu
     end
 
     def call
+      Synchronization.with_owner_lock(@plan.user) do
+        @plan.reload
+        raise Client::RequestError, "Only an active plan can be synced" unless @plan.active?
+
+        sync
+      end
+    end
+
+    private
+
+    def sync
       raise ArgumentError, "Intervals.icu profile must belong to the plan owner" if @profile.user_id != @plan.user_id
       raise Client::RequestError, "Add an Intervals.icu API key in Settings before syncing" if @profile.intervals_icu_api_key.blank?
 
@@ -32,8 +43,6 @@ module IntervalsIcu
       IntervalsIcuSync.transaction { stale_syncs.each(&:destroy!) }
       Result.new(synced_count: workouts.size, removed_count: stale_syncs.size)
     end
-
-    private
 
     def eligible_workouts
       candidates = @plan.planned_workouts.planned.structured.where(kind: %w[workout opener]).where("scheduled_on >= ?", Date.current).order(:scheduled_on)
