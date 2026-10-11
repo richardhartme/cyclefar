@@ -97,8 +97,8 @@ RSpec.describe "USR-008 two-rider isolation", type: :request, generated_workouts
     create(:rider_profile, user: second, ftp_watts: 310, intervals_icu_api_key: "second-rider-key")
     first_plan, first_phase = plan_for(first)
     second_plan, second_phase = plan_for(second)
-    first_workouts = [ 1, 3 ].map { |days| create(:planned_workout, :structured, training_plan: first_plan, plan_phase: first_phase, scheduled_on: Date.current + days) }
-    second_workouts = [ 1, 3 ].map { |days| create(:planned_workout, :structured, training_plan: second_plan, plan_phase: second_phase, scheduled_on: Date.current + days) }
+    first_workouts = [ 1, 3, 7, 20 ].map { |days| create(:planned_workout, :structured, training_plan: first_plan, plan_phase: first_phase, scheduled_on: Date.current + days) }
+    second_workouts = [ 1, 3, 7, 20 ].map { |days| create(:planned_workout, :structured, training_plan: second_plan, plan_phase: second_phase, scheduled_on: Date.current + days) }
     first_detached = create(:intervals_icu_sync, planned_workout: nil, user: first, external_id: "cyclefar-first-deleted")
     second_detached = create(:intervals_icu_sync, planned_workout: nil, user: second, external_id: "cyclefar-second-deleted")
     calls = []

@@ -8,7 +8,7 @@ Rails authentication was generated after the original V1 requirements. The appli
 
 Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Ordinary and missed-workout moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load (CYF-7). Manual completion includes executable openers and individually materialised overdue outlines, with coherent current-FTP completion snapshots and the next-scheduled-workout late-feedback guard (CYF-9). Per-family progression bias remains a gap.
 
-Ordered weekly load reductions, shared recovery scheduling and staged taper budgets are implemented (CYF-10/11). Return ramps save stage power limits and resume from the latest comparable pre-break session (CYF-12, OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration (CYF-13). Manual sync reconciles all of the rider's tracked events outside the next-two set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (CYF-14, ICU-001). These notes do not replace the acceptance criteria below.
+Ordered weekly load reductions, shared recovery scheduling and staged taper budgets are implemented (CYF-10/11). Return ramps save stage power limits and resume from the latest comparable pre-break session (CYF-12, OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration (CYF-13). Manual sync reconciles all of the rider's tracked events outside the eligible calendar set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (CYF-14, ICU-001). These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -467,12 +467,14 @@ When a week still exceeds the cap after the ordered reductions, show a non-block
 
 ### ICU-001 Manual sync
 
-A `Sync to Intervals.icu` button syncs exactly the next two upcoming structured workouts.
+A `Sync to Intervals.icu` button syncs all upcoming planned structured workouts.
 
+- Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count (CYF-82).
+- Exclude past, completed, missed and outline workouts, target-event dates and inclusive time-off dates. Include regular workouts and openers.
 - No automatic background syncing in V1.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
-- If one of the previously synced next-two workouts is no longer in the next-two set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
+- If one of the previously synced workouts is no longer in the eligible calendar set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
 - Never delete unrelated Intervals.icu calendar events.
 
 See `INTERVALS_ICU.md`.
@@ -529,10 +531,10 @@ Automated coverage target: request specs for A sign-out/B sign-in in one browser
 
 ### USR-006 Owner-scoped Intervals.icu sync
 
-- Use the signed-in rider's own profile/API key, active plan and sync records for next-two selection and reconciliation. `IntervalsIcuSync` has a required `user_id` so a record remains attributable after its workout is deleted.
+- Use the signed-in rider's own profile/API key, active plan and sync records for full-calendar selection and reconciliation. `IntervalsIcuSync` has a required `user_id` so a record remains attributable after its workout is deleted.
 - Keep stable `cyclefar-workout-<planned_workout.id>` external IDs. A rider's sync may upsert or delete only that rider's CycleFar-owned remote events, including detached stale records; it must never inspect another rider's key or sync records. Preserve retry-safe partial-failure behavior.
 
-Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, next-two sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
+Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, eligible calendar sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
 
 ### USR-007 Explicit-owner legacy migration (retired)
 

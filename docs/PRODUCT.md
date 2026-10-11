@@ -32,7 +32,7 @@ The rider should be able to:
 7. Record simple post-workout feedback and receive optional adaptations.
 8. Plan holidays, illness and recovery into the schedule.
 9. Update FTP and have future wattage targets change automatically.
-10. Push the next two workouts to Intervals.icu on demand.
+10. Push all upcoming structured workouts to Intervals.icu on demand.
 
 ## Training goals
 
@@ -105,7 +105,7 @@ This describes intended V1 scope, including later additions. Known implementatio
 - Schedule changes for one week or from a date onward
 - Time off: holiday, illness, recovery, event, other
 - Return-to-training ramp after illness/recovery
-- Intervals.icu sync for next two workouts
+- Intervals.icu sync for all upcoming structured workouts
 
 ### Explicitly out of scope
 

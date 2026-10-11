@@ -18,7 +18,7 @@
         <div class="card-actions items-center lg:max-w-xl lg:justify-end">
           <%= link_to "Change availability", new_availability_change_path, class: "btn btn-outline btn-primary btn-sm" %>
           <%= link_to "Add time off", new_time_off_period_path, class: "btn btn-outline btn-secondary btn-sm" %>
-          <%= button_to "Sync next 2 to Intervals.icu", intervals_icu_sync_path, class: "btn btn-accent btn-sm" %>
+          <%= button_to "Sync all structured workouts to Intervals.icu", intervals_icu_sync_path, class: "btn btn-accent btn-sm" %>
           <%= button_to(
             @has_completed_workouts ? "Archive plan" : "Delete plan",
             training_plan_path,

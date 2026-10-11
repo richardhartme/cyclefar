@@ -35,7 +35,7 @@ snapshots.
   latest comparable pre-break session.
 - FTP history and recalculation of future workout watt targets without changing
   completed workouts.
-- Manual Intervals.icu sync for the next two executable structured workouts.
+- Manual Intervals.icu sync for all upcoming executable structured workouts.
   CycleFar only reconciles events that it owns.
 - Archive and delete controls for a plan, plus an idempotent development seed
   for visual testing.
@@ -134,12 +134,13 @@ has an active plan, and it does not create an account or run in production.
 ## Working with Intervals.icu
 
 Save an Intervals.icu API key in **Settings**, then use the calendar's manual
-sync action. Sync exports only the next two structured workouts that can be
+sync action. Sync exports all upcoming planned structured workouts that can be
 performed, including openers, and uses stable `cyclefar-workout-<id>` external
-IDs. It exports fewer than two when fewer are eligible.
+IDs. It includes persisted structures beyond the normal 14-day detail horizon
+without generating outlines. There is no count cap.
 It neither imports rides nor changes unrelated Intervals.icu events.
 
-Sync removes every tracked event owned by the rider outside the next-two set,
+Sync removes every tracked event owned by the rider outside the eligible calendar set,
 including missed/completed, past-moved, deleted and previous-plan workouts.
 It saves owned identities before upload and retains cleanup metadata on failure
 so another manual sync can retry safely. Completed local history stays frozen.
