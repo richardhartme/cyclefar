@@ -156,7 +156,7 @@ Fields:
 - `purpose: string`
 - `detail_status: enum` — `outline`, `structured`
 - `status: enum` — `planned`, `missed`, `completed`
-- `progression_level: integer, nullable` — outline prescription level before materialisation; fitted effective level once structured
+- `progression_level: integer, nullable` — outline prescription level before materialisation; fitted effective interval level once structured; structured Endurance/Recovery and openers have no level
 - `generation_context: jsonb, default: {}` — baseline level, effective generation ceiling and generated load/level reference
 - `variation_key: string, nullable` — persisted descriptive profile key; Same shuffle rotates deterministically, while initial endurance generation randomly selects a profile (TRAINING_ENGINE.md §15)
 - `estimated_np_watts: decimal, nullable`
@@ -181,6 +181,8 @@ Important:
 - Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them.
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
+
+Easier/Harder (CYF-81) replaces the selected workout's steps, effective level, variation and metrics only after a qualifying load change is found. Aerobic replacements retain a `nil` level. The selector uses canonical steps rather than stored estimates as its baseline, and matches the `estimated_tss` column's decimal scale before comparing whole-number displayed TSS. A limit writes nothing; successful one-off adjustments retain the existing `generation_context` and automatic references. No schema change is required.
 
 `load_adjustments` inside that context saves §27 target/filler generation choices (`lower_targets` and `easy_filler`). Preview persistence and later materialisation use those choices together with the saved subtype, level and variation. Canonical structured steps remain authoritative; comparison and adaptation acceptance apply the same load-limited definition atomically. No migration is required for these optional JSON keys.
 

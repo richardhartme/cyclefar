@@ -335,6 +335,8 @@ Positive bias increases progression level before changing subtype. Do not start 
 
 Each structured intensity subtype has levels 1–7. Level is primarily based on position inside the current phase, then adjusted by feedback/recovery/load-cap constraints.
 
+The ladders belong to Tempo, Sweet Spot, Threshold, VO2 Max and Over-under. Endurance and Recovery use aerobic profiles and have no progression level (`nil` on the generated definition and structured workout). A level identifies a subtype's interval structure, not a TSS ranking: changing repetitions, recovery and duration fitting can make adjacent levels non-monotonic in total load. Manual Easier/Harder therefore checks generated TSS as described in section 21.
+
 Base target levels by phase:
 
 - Base: 1 → 4 across the phase
@@ -580,13 +582,17 @@ Affects this workout only.
 CYF-81 makes these actions directional in total planned load:
 
 - Calculate current load from the canonical steps and candidate load from generated steps, both at the owning rider's current FTP.
-- Easier requires strictly lower estimated TSS and a lower displayed whole-number TSS; Harder requires strictly higher values for both. Hidden rounding differences do not count.
+- Easier requires strictly lower estimated TSS and a lower displayed whole-number TSS; Harder requires strictly higher values for both. For the displayed comparison, first round to the database column's decimal precision, then to a whole number, matching persistence and the UI. Hidden rounding differences do not count.
 - For intensity sessions, search lower levels nearest first for Easier, or higher levels nearest first for Harder, within 1..7 and the applicable saved/reduced-period ceiling. Skip non-monotonic ladder entries and ineffective duration fits. A higher requested level that fits below the current effective level is not a Harder candidate.
 - At each candidate level, prefer the saved variation, then other valid variations in their declared rule order. Select the first qualifying replacement. If directional levels are exhausted, evaluate variations at the current level, subject to the ceiling. Endurance/Recovery have no intensity progression level and evaluate only their valid profiles using the same order.
 - Keep subtype and exact duration; use the existing fitter, ladders and normal target ranges. Retain saved target-lowering/easy-filler choices, tapered main-set factors and return-stage power limits. Preserve the workout's purpose and automatic generation references.
 - If no candidate qualifies, persist no changes and explain the limit: `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder substitutes `higher-load` and `Longer`. Repeated presses never wrap to an unsuitable profile.
 
 For example, 60-minute Over-Unders level 3 is approximately 64.2 TSS. Easier skips level 2 (68.2 TSS) and selects level 1 (59.4 TSS). Recovery profile differences may be too small to change displayed TSS, in which case the action reports the limit.
+
+For a normal 60-minute Endurance workout, alternating is approximately 44.94 TSS (displayed as 45), undulating 44.81 (45) and sustained 44.16 (44). Easier from alternating selects sustained; another Easier press reports the limit. Harder from sustained selects alternating in the declared profile order. The selector takes the first qualifying profile, rather than sorting all profiles by TSS. It does not repeatedly lower aerobic power targets; further reductions require Shorter or Change workout.
+
+The implementation branches on subtype membership in `Training::Rules::LADDERS` in `Workouts::DirectionalAdjustment#candidate_levels`. Aerobic candidates use a single internal level-1 generator argument; `ExactDurationFitter#fit_aerobic` ignores the ladder and returns a `nil` progression level. See the [manual adjustment sequence](diagrams/sequence-cyclefar-directional-adjustment.puml) and its [rendered diagram](diagrams/png/sequence-cyclefar-directional-adjustment.png).
 
 Do not update plan progression bias from this action.
 
@@ -1092,6 +1098,16 @@ For each subtype, levels 1–7 and representative durations 30/45/60/75/90/120 m
 - recovery weeks excluded from reference;
 - next hard week after recovery compares to pre-recovery hard week;
 - manual Harder/Longer can exceed cap without mutating future progression.
+
+### Manual Easier/Harder
+
+- repeated actions across every regular subtype and representative durations either move calculated and displayed TSS strictly in the requested direction or reach a finite limit;
+- non-monotonic interval ladders and levels that fit down at short durations do not reverse the requested load change;
+- Endurance/Recovery evaluate profiles without acquiring an intensity progression level;
+- saved taper factors, target/filler adjustments, return bands and applicable progression ceilings survive every candidate;
+- preview and application select the same definition for unchanged inputs; a limit leaves all persistence unchanged;
+- current canonical metrics, database decimal precision and whole-number display rounding govern the comparison;
+- one-off edits preserve automatic generation references, plan bias, unrelated workouts and completed history.
 
 ### Feedback
 

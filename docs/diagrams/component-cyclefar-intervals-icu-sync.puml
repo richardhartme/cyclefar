@@ -7,13 +7,16 @@ title CycleFar — Intervals.icu Sync Components
 
 LAYOUT_LEFT_RIGHT()
 
-Person(rider, "Rider", "Starts an explicit manual sync from the CycleFar calendar.")
+Person(rider, "Rider", "Starts manual sync or removes a plan from the CycleFar calendar.")
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's plans, workouts, settings and sync records.")
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Uses the signed-in rider's active plan and profile; displays outcome without exposing the API key.")
-  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Checks plan/profile ownership; selects up to two eligible workouts and reconciles only this owner's tracked events.")
+  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Rechecks active plan under the owner lock, validates profile ownership; selects up to two eligible workouts and reconciles this owner's tracked events.")
+  Component(remover, "Planning::PlanRemover", "Planning service", "Under owner and plan locks, cleans remote events before archiving/deleting; failure keeps the plan active.")
+  Component(cleanup, "RemovePlanEvents", "IntervalsIcu service", "Deletes this plan's tracked events and the owner's detached identities; removes local identities only after confirmed remote cleanup.")
+  Component(synchronization, "Synchronization", "IntervalsIcu service", "Shares an owner-scoped PostgreSQL session advisory lock across sync and removal; releases in ensure.")
   Component(serializer, "WorkoutSerializer", "IntervalsIcu service", "Exports flat canonical percentage steps, ramp midpoints, current FTP and stored estimated metrics into event payloads.")
   Component(client, "Client", "IntervalsIcu HTTP client", "Uses API-key Basic auth, five-second connect/read timeouts and one transient retry; parses JSON and maps errors.")
   Component(models, "User, plan, profile, workout and sync models", "Active Record", "Provides canonical steps and encrypted rider key; sync records retain required user_id after workout deletion.")
@@ -21,6 +24,14 @@ Container_Boundary(web_application, "CycleFar web application") {
 
 Rel(rider, controller, "Starts manual sync", "HTTPS")
 Rel(controller, sync, "Synchronizes active plan")
+Rel(rider, remover, "Requests archive/delete through TrainingPlansController", "HTTPS")
+Rel(remover, synchronization, "Serializes cleanup against manual sync")
+Rel(sync, synchronization, "Serializes HTTP and persistence against removal")
+Rel(synchronization, database, "Acquires/releases owner session advisory lock", "SQL")
+Rel(remover, cleanup, "Cleans events before local plan mutation")
+Rel(cleanup, models, "Reads linked/detached identities and key; deletes identities after confirmed cleanup")
+Rel(cleanup, client, "Deletes tracked external IDs; failure retains plan and identities")
+Rel(remover, models, "Archives completed history or deletes plan in the same local transaction")
 Rel(sync, models, "Selects eligible workouts and this rider's linked/detached sync records")
 Rel(sync, serializer, "Builds event payloads")
 Rel(serializer, models, "Reads canonical steps and current FTP context")
@@ -38,10 +49,18 @@ note bottom of sync
   Confirmed uploads remain saved if later cleanup fails.
   Completed local workouts, snapshots and feedback remain frozen.
   No remote listing, automatic sync or activity import.
-  The controller selects the active plan; the service does not check its status.
+  The controller selects the active plan; sync rechecks it under the owner lock.
   Sync selects existing detail; it does not materialise outlines.
   Remote calls and local persistence are separate transactions;
   failed cleanup retains stale identities for an idempotent retry.
+end note
+
+note bottom of remover
+  Remote failure or missing credentials retains the active plan for retry.
+  If completed workouts exist, remove planned workouts and archive the plan;
+  otherwise delete the plan. Ordinary completed history stays immutable.
+  Remote deletion occurs while the plan transaction is held;
+  local failure rolls back identities and plan changes for safe retry.
 end note
 
 SHOW_LEGEND()

@@ -304,7 +304,8 @@ Easier/Harder:
 - modify structure/progression level, not arbitrary wattage hacks;
 - Easier strictly lowers both canonical estimated TSS and its displayed whole-number value; Harder strictly raises both (CYF-81);
 - calculate the current and candidate load from canonical steps at the owning rider's current FTP; do not use stale stored metrics to choose the direction;
-- try the next lower/higher progression levels in order, skipping entries that move load in the wrong direction or leave displayed TSS unchanged; evaluate valid profiles for easy rides and as a fallback when directional levels are exhausted;
+- for interval subtypes with a progression ladder, try the next lower/higher levels nearest first, skipping entries that move load in the wrong direction or leave displayed TSS unchanged; try variations at the current level after directional levels are exhausted;
+- Endurance/Recovery have no progression level: evaluate their valid profiles at the same duration and keep `progression_level` unset;
 - retain saved taper, reduced-load and return-to-training adjustments and progression ceilings; selection is deterministic and never cycles back to an unsuitable profile;
 - when no suitable replacement exists, keep the workout, steps, metrics and generation context unchanged and explain the limit: `No lower-load option is available at this duration. Try Shorter or Change workout.` (Harder uses `higher-load` and `Longer`);
 - do not offer replanning purely because of this manual harder/easier choice.

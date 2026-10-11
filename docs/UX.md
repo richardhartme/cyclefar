@@ -255,6 +255,8 @@ Shorter can be repeated down to a 30-minute minimum. Longer can be repeated with
 
 Easier/Harder preserve workout type and duration and require both actual TSS and the displayed whole-number TSS to decrease/increase. They skip unsuitable ladder entries and select profiles by load, retaining existing training restrictions. When no suitable replacement remains, keep the workout unchanged and show `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder uses `higher-load` and `Longer`. Same continues to rotate valid profiles (CYF-81).
 
+Interval sessions search their progression ladders; Endurance/Recovery switch among valid aerobic profiles and continue to have no progression level. Profile load differences can be small: for a normal 60-minute Endurance session, Easier can switch alternating (45 displayed TSS) to sustained (44), then reaches the limit. An available profile with the same displayed TSS does not qualify. These controls do not continuously lower aerobic power targets.
+
 A replacement preview is desirable before applying. Current buttons apply immediately and redirect to the updated detail page; there is no replacement preview.
 
 ## 8. Change-workout dialog
