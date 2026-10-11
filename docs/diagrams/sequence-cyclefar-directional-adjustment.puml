@@ -1,0 +1,84 @@
+@startuml
+title CycleFar — Make one workout Easier or Harder (CYF-81)
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "PlannedWorkoutsController" as Controller
+control "ManualEditor" as Editor
+control "DirectionalAdjustment" as Selector
+control "Generator, ExactDurationFitter\nand WorkoutCalculator" as Engine
+database "PostgreSQL" as Database
+
+Rider -> Controller: POST shuffle(action_kind: easier / harder)
+Controller -> Database: load rider-owned workout with canonical steps
+Controller -> Editor: apply!(action)
+group owning plan lock / transaction
+  Editor -> Database: lock plan; reload and validate planned structured regular workout
+  Editor -> Database: read owner FTP, saved load adjustments\nand shared LoadContext progression ceiling
+  Editor -> Editor: preview(action) in memory
+  Editor -> Selector: call(canonical steps, subtype, duration, saved profile,\neffective level, ceiling, adjustments, FTP, TSS column scale)
+  Selector -> Engine: calculate current metrics from canonical steps at current FTP
+  Engine --> Selector: current TSS (not the stored estimate)
+
+  alt subtype is in Training::Rules::LADDERS
+    Selector -> Selector: Easier: lower levels nearest first\nHarder: higher levels nearest first\nthen current level; all within applicable ceiling
+  else Endurance / Recovery: no ladder
+    Selector -> Selector: one internal generator level-1 argument\nsearch aerobic profiles only
+    note right of Selector
+      ExactDurationFitter takes fit_aerobic;
+      generated progression_level is nil.
+      Endurance: sustained / alternating / undulating.
+      Recovery: steady / gentle_ramp.
+    end note
+  end
+
+  loop candidate levels and profiles until first qualifying replacement
+    note over Selector, Engine
+      At each level: saved profile first, then other profiles in declared order.
+      Preserve subtype, exact duration, saved taper/target/filler/return limits.
+    end note
+    Selector -> Engine: generate candidate with explicit profile and saved adjustments
+    Engine --> Selector: exact-duration canonical definition and fitted level
+    alt Harder candidate fits below current effective interval level
+      Selector -> Selector: skip candidate
+    else candidate is eligible
+      Selector -> Engine: calculate candidate metrics at the same FTP
+      Engine --> Selector: candidate TSS
+      Selector -> Selector: require calculated TSS AND displayed whole TSS\nto decrease for Easier / increase for Harder
+      note right of Selector
+        Display comparison: round to database
+        decimal scale, then to a whole number.
+        Reject wrong-direction and rounding-only changes.
+      end note
+    end
+  end
+
+  alt qualifying candidate found
+    Selector --> Editor: selected definition and current/proposed metrics
+    Editor -> Editor: retain workout purpose and automatic generation references
+    group atomic workout replacement
+      Editor -> Database: replace steps; save effective level, profile and metrics
+    end
+    Editor --> Controller: result (rest of plan unchanged)
+  else all candidates exhausted
+    Selector --> Editor: raise LimitReached (ArgumentError)
+    Editor --> Controller: propagate limit; no persistence changes
+  end
+end
+
+alt replacement saved
+  Controller --> Rider: redirect to updated workout detail with success notice
+else limit reached
+  Controller --> Rider: redirect to unchanged workout detail with limit alert
+end
+
+note over Editor, Database
+  No adaptation proposal, progression-bias update or completed-history mutation.
+  The buttons apply immediately; there is no replacement-preview UI.
+  ManualEditor#preview can select the same definition without writing records.
+  Limit: No lower-load option is available at this duration.
+  Try Shorter or Change workout. Harder uses higher-load and Longer.
+end note
+@enduml

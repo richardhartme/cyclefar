@@ -14,6 +14,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Scope workout, proposal and time-off lookups to Current.user; handle edits, feedback, schedule and settings.")
   Component(home, "HomeController and comparison view", "Rails / ERB", "Render owner-scoped Current / Proposed workout metrics and clamped bias; unavailable proposals offer Reject only.")
   Component(editor, "ManualEditor", "Workouts service", "Regenerates manual edits; acceptance saves the exact load-limited definition shown in the comparison.")
+  Component(directional, "DirectionalAdjustment", "Workouts pure calculation", "Selects Easier/Harder candidates by subtype ladder or aerobic profile; requires calculated and displayed TSS to move in the requested direction, or raises a limit without writes.")
   Component(mover, "Mover", "Workouts service", "Preserves short same-context moves or regenerates from destination progression; rechecks weekly load and warnings.")
   Component(destination, "DestinationValidator", "Workouts service", "Shares Add/Copy/Move/missed Move exclusions: occupied, out-of-plan, unphased, time-off and target-event dates.")
   Component(load_review, "WeeklyLoadReview", "Planning service", "Reads destination weekly load and calendar-wide load without mutations; includes weeks beyond the detail horizon.")
@@ -97,7 +98,10 @@ Rel(prescriber, models, "Replaces affected planned workouts")
 Rel(controllers, ftp, "Updates FTP")
 Rel(ftp, engine, "Recalculates metrics from stored percentage steps")
 Rel(ftp, models, "Stores FTP reading and updates future metrics")
-Rel(editor, engine, "Regenerates canonical workout structure")
+Rel(editor, directional, "Selects Easier/Harder from canonical steps, saved adjustments and current FTP")
+Rel(editor, load_rules, "Reads shared LoadContext ceiling for Easier/Harder")
+Rel(directional, engine, "Generates exact-duration candidates and calculates current/proposed metrics")
+Rel(editor, engine, "Regenerates other edits and accepted feedback definitions")
 Rel(editor, models, "Replaces planned steps and metrics")
 Rel(models, database, "Reads and writes", "SQL")
 
@@ -122,6 +126,16 @@ note bottom of material_change
   Dismissal leaves the rest of the plan unchanged.
   The block starts at max(today, source date), lasts at most 14 days,
   and ends no later than plan end; the source remains fixed.
+end note
+
+note bottom of directional
+  LADDERS membership selects the interval path; levels alone do not rank TSS.
+  Intervals: nearest lower/higher levels, then current-level variations.
+  Aerobic: profiles only; fitted progression_level remains nil.
+  Saved variation first, then declared rule order; first valid load change wins.
+  Display rounding matches database precision before whole-number TSS.
+  A limit leaves the workout unchanged. No wrap or replan proposal.
+  Successful one-off edits retain automatic generation references and bias.
 end note
 
 note bottom of schedule_changes

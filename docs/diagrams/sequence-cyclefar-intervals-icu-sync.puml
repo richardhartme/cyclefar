@@ -15,7 +15,9 @@ participant "Intervals.icu" as Remote
 Rider -> Controller: POST manual sync
 Controller -> Database: resolve signed-in rider's active plan
 Controller -> Sync: SyncNextTwo.new(plan: owned active plan).call
-Sync -> Database: resolve plan owner's profile (default service input)
+Sync -> Database: resolve plan owner's profile (default initializer input)
+group owner session advisory lock (Synchronization; released in ensure)
+Sync -> Database: acquire owner advisory lock; reload plan\nreject unless still active
 Sync -> Sync: validate profile owner and API key
 Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude time off
 Database --> Sync: eligible set (zero, one or two workouts)
@@ -34,8 +36,8 @@ alt eligible set is not empty
     Remote --> Client: error or timeout
     Client --> Sync: mapped error after transient retry where applicable
     break stop before cleanup
+      Sync -> Database: release owner advisory lock in ensure
       Sync --> Controller: error; retain identities and prior confirmed metadata
-      Controller --> Rider: show sync error
     end
   else upload confirmed
     Remote --> Client: returned events with external IDs and event IDs
@@ -57,30 +59,33 @@ group following successful upload or empty-set selection
     alt cleanup fails
       Remote --> Client: error or timeout
       Client --> Sync: mapped error after transient retry where applicable
+      Sync -> Database: release owner advisory lock in ensure
       Sync --> Controller: PartialSyncError; keep confirmed uploads and stale identities
-      Controller --> Rider: show partial-sync result and retry guidance
     else cleanup confirmed (missing events ignored upstream)
       Remote --> Client: delete response
       Client --> Sync: deletion confirmed
       group local transaction
         Sync -> Database: destroy stale sync records
       end
+      Sync -> Database: release owner advisory lock in ensure
       Sync --> Controller: synced and removed counts
-      Controller --> Rider: redirect to calendar with result
     end
   end
   opt no stale records
+    Sync -> Database: release owner advisory lock in ensure
     Sync --> Controller: synced count; zero removed
-    Controller --> Rider: redirect to calendar with result
   end
 end
+end
+Controller --> Rider: redirect to calendar with result or retry/error guidance
 
 note over Sync, Remote
   Remote requests and local transactions are separate.
   Stable cyclefar-workout-<id> IDs make retries idempotent.
   Selected moved workouts are upserted with their original identity.
   Only this rider's tracked calendar events are reconciled.
-  The controller chooses the active plan; SyncNextTwo does not validate status.
+  Sync rechecks active status under the owner lock shared with PlanRemover.
+  Removal cannot interleave cleanup with an in-flight sync.
   Sync uses existing structured detail without materialising outlines.
   No remote listing, unrelated-event edits or activity/history API calls.
   Local completed workouts, steps, snapshots and feedback remain immutable.

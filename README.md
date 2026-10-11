@@ -57,6 +57,14 @@ Initial endurance workouts select and save one of three profiles: sustained,
 alternating or undulating. This is the engine's deliberate randomness exception;
 previews and regeneration with an explicit variation remain deterministic.
 
+Easier/Harder adjusts one workout at the same duration and subtype, requiring
+both calculated and displayed TSS to move in the requested direction. Interval
+sessions search their progression ladders; endurance and recovery search
+profiles and have no progression level. At the limit, the workout stays unchanged
+and the app suggests changing duration or workout type. See the
+[selection rules](docs/TRAINING_ENGINE.md#21-harder--easier-manual-shuffle) and
+[manual adjustment diagram](docs/diagrams/png/sequence-cyclefar-directional-adjustment.png).
+
 ## Local setup
 
 The repository pins Ruby **4.0.6** and Rails **8.1.4**, and uses Tailwind CSS
