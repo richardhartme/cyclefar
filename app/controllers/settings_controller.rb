@@ -1,12 +1,15 @@
 class SettingsController < ApplicationController
+  include FtpRefreshMessage
+
   before_action :load_ftp_history, only: :show
   def show
     @profile = Current.user.rider_profile || Current.user.build_rider_profile
   end
 
   def update
-    @profile = Settings::Update.new(profile: Current.user.rider_profile || Current.user.build_rider_profile, attributes: settings_params).call
-    redirect_to settings_path, notice: "Settings saved.", status: :see_other
+    update = Settings::Update.new(profile: Current.user.rider_profile || Current.user.build_rider_profile, attributes: settings_params)
+    @profile = update.call
+    redirect_to settings_path, **ftp_save_flash("Settings saved.", update.refresh_result), status: :see_other
   rescue ActiveRecord::RecordInvalid => error
     @profile = error.record
     load_ftp_history

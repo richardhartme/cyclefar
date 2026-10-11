@@ -56,4 +56,13 @@ RSpec.describe IntervalsIcu::Client do
     expect { client.upsert_events([]) }.to raise_error(IntervalsIcu::Client::RequestError, "Intervals.icu could not complete the sync request")
     expect(connection.requests.size).to eq(2)
   end
+
+  it "CYF-83 retries a timeout only once without exposing the API key" do
+    connection = double("timed-out HTTP connection")
+    allow(connection).to receive(:request).and_raise(Net::ReadTimeout, "secret-key")
+    client = described_class.new(api_key: "secret-key", connection_factory: ->(_uri) { connection })
+    expect { client.upsert_events([ { external_id: "cyclefar-workout-1", icu_ftp: 300 } ]) }
+      .to raise_error(IntervalsIcu::Client::RequestError, "Intervals.icu could not complete the sync request")
+    expect(connection).to have_received(:request).twice
+  end
 end

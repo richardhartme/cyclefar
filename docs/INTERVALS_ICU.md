@@ -4,7 +4,7 @@
 
 On explicit rider action, sync all upcoming planned structured cycling workouts from the active plan to the rider's Intervals.icu calendar.
 
-No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
+Initial export and full-calendar reconciliation remain manual. Current-FTP changes refresh already-confirmed eligible exports in the foreground (CYF-83). No background sync, activity import, completion detection, OAuth or webhook handling in V1.
 
 The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-11, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete (CYF-82); event field names/types were checked on 2026-10-02. The bulk upload body and response remain arrays; neither source documents a count limit for this endpoint, so the service sends the complete eligible set in one request. This is not a live authenticated sync certification. Local specs stub HTTP.
 
@@ -122,6 +122,16 @@ Do not send cadence targets because V1 does not prescribe cadence.
 Use percentage-of-FTP targets in the Intervals.icu workout description rather than converting every step to absolute watts. This preserves the intended structure and matches the app's canonical model.
 
 Send `icu_ftp`/current FTP where supported so Intervals.icu has the correct context.
+
+### FTP-triggered refresh (CYF-83)
+
+Settings saves/new readings and history edits/deletion fallback share `Settings::FtpMutation`. Only a change in resulting current watts triggers `RefreshSyncedWorkouts`, after local FTP/history/future metrics commit. The owner advisory lock spans the local mutation and remote refresh, but no database row lock or FTP transaction spans HTTP. Queued manual sync reloads the profile under that lock.
+
+Refresh uses the normal calendar eligibility plus confirmed prior metadata (`intervals_event_id` and `last_synced_at`). It includes today, openers and distant persisted structures, but excludes never-exported/uncertain-only workouts and detached identities. It bulk-upserts saved external IDs with current FTP and derived metrics, without generating outlines, deleting stale events or changing the athlete's global FTP. Zero eligible confirmed exports or no active plan requires no request or credentials.
+
+Both upload paths validate complete responses and re-read owned linkage/eligibility under the plan lock before advancing confirmed metadata. Removal/status changes during HTTP result in retry guidance rather than reattaching records or falsely confirming ineligible exports. Missing credentials, rejected requests and incomplete confirmations keep the local save and previous confirmed metadata. Manual Sync remains the explicit recovery path.
+
+The official upload guide and public schema were rechecked on 2026-10-11. The schema still accepts integer `icu_ftp` on `EventEx`/`Event`; bulk upsert accepts native percentage descriptions. Live displayed/downloaded power interpretation remains unverified because no authenticated test-athlete validation was performed; this change preserves the existing serializer contract and does not certify downstream device behavior.
 
 ## Sync reconciliation
 

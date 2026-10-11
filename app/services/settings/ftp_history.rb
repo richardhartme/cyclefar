@@ -2,6 +2,8 @@ module Settings
   # Explicit history mutations keep the current FTP cache and future metrics
   # in the same transaction. Settings saves share the owning-user lock.
   class FtpHistory
+    attr_reader :refresh_result
+
     def initialize(profile:)
       @profile = profile
     end
@@ -35,12 +37,13 @@ module Settings
     private
 
     def mutate
-      @profile.user.with_lock do
-        @profile.reload
-        result = yield
-        refresh_current!
-        result
+      mutation = FtpMutation.new(profile: @profile)
+      result = mutation.call do |profile|
+        @profile = profile
+        yield
       end
+      @refresh_result = mutation.refresh_result
+      result
     end
   end
 end

@@ -25,7 +25,7 @@
         <legend class="fieldset-legend px-2 text-base">Training</legend>
         <%= form.label :ftp_watts, "Current FTP (watts)", class: "label font-semibold" %>
         <%= form.number_field :ftp_watts, min: 1, step: 1, required: true, aria: { describedby: "ftp-help" }, class: "input w-full sm:w-48" %>
-        <p id="ftp-help" class="label text-base-content/60 max-w-2xl leading-relaxed">FTP sets your planned power targets. Changes apply to future targets; completed workouts keep their original targets.</p>
+        <p id="ftp-help" class="label text-base-content/60 max-w-2xl leading-relaxed">FTP sets your planned power targets. Changes refresh future workouts already synced to Intervals.icu; completed workouts keep their original targets.</p>
       </fieldset>
 
       <fieldset class="fieldset border-base-300 rounded-box border p-5">

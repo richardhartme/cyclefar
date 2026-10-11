@@ -1,6 +1,8 @@
 module Settings
   # Updates rider profile settings and triggers FTP recalculation if FTP changed.
   class Update
+    attr_reader :refresh_result
+
     def initialize(profile:, attributes:, effective_on: Date.current)
       @profile = profile
       @attributes = attributes.to_h.symbolize_keys.slice(:ftp_watts, :intervals_icu_api_key, :clear_intervals_icu_api_key)
@@ -8,18 +10,17 @@ module Settings
     end
 
     def call
-      user = @profile.user
-      user.with_lock do
-        @profile = user.rider_profile || user.build_rider_profile
-        previous_ftp = @profile.ftp_watts
+      mutation = FtpMutation.new(profile: @profile)
+      mutation.call do |profile|
+        @profile = profile
         @profile.assign_attributes(profile_attributes)
         ftp_changed = @profile.new_record? || @profile.will_save_change_to_ftp_watts?
         @profile.save!
         if ftp_changed
           @profile.ftp_readings.create!(ftp_watts: @profile.ftp_watts, effective_on: @effective_on)
-          FtpHistory.new(profile: @profile).refresh_current!(previous_ftp: previous_ftp)
         end
       end
+      @refresh_result = mutation.refresh_result
       @profile
     end
 

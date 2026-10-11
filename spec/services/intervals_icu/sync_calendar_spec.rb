@@ -97,6 +97,7 @@ RSpec.describe IntervalsIcu::SyncCalendar do
   end
 
   it "exports edits and current FTP for every workout while retaining identities" do
+    allow(IntervalsIcu::Client).to receive(:new).and_return(client)
     workouts = create_upcoming_workouts(4)
     described_class.new(plan: plan, profile: profile, client: client).call
     identities = IntervalsIcuSync.where(planned_workout: workouts).order(:planned_workout_id).pluck(:id, :external_id)
@@ -197,7 +198,7 @@ RSpec.describe IntervalsIcu::SyncCalendar do
   end
 
   it "does not call the API when the Intervals.icu key is missing" do
-    profile.intervals_icu_api_key = nil
+    profile.update!(intervals_icu_api_key: nil)
 
     expect { described_class.new(plan: plan, profile: profile, client: client).call }.to raise_error(IntervalsIcu::Client::RequestError, /Add an Intervals.icu API key/)
     expect(client.upserts).to be_empty

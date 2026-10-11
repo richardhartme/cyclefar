@@ -34,6 +34,8 @@ The rider should be able to:
 9. Update FTP and have future wattage targets change automatically.
 10. Push all upcoming structured workouts to Intervals.icu on demand.
 
+Changing current FTP also refreshes eligible future workouts that were already successfully synced to Intervals.icu. The FTP save remains valid if remote refresh fails; the rider receives manual Sync retry guidance. Initial exports and stale-event cleanup remain on demand.
+
 ## Training goals
 
 V1 supports exactly these top-level goals:
