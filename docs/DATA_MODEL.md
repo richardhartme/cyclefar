@@ -282,6 +282,8 @@ Sync identities are saved before upload so uncertain remote results remain attri
 
 Unique indexes on `external_id` and `planned_workout_id`.
 
+FTP-triggered refresh (CYF-83) requires both a confirmed `intervals_event_id` and `last_synced_at`, excluding identities retained only for uncertain uploads. It advances existing metadata only after a complete confirmation, retains previous metadata on failure and creates no identities or schema fields. Detached records remain available for manual cleanup.
+
 ## Derived concepts (do not necessarily persist)
 
 Prefer service/query objects for:

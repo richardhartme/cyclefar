@@ -39,6 +39,7 @@ Acceptance criteria:
 - FTP changes are recorded in a lightweight FTP history table and displayed newest first in Settings (CYF-78).
 - Riders may edit the watts/date or delete their own readings. The most recent `effective_on` date sets current FTP; the newest entry (highest ID) wins a same-date tie. Historical edits do not change current FTP unless they change which reading is newest.
 - Deleting the newest reading falls back to the newest remaining reading. Retain at least one reading because FTP is required. A current-FTP change refreshes future metrics/targets without changing canonical percentages or completed snapshots.
+- After a committed current-FTP change, refresh previously confirmed, eligible Intervals.icu exports in the foreground (CYF-83). This applies to new readings, edits/date reordering and deletion fallback. Unchanged current watts and invalid mutations make no refresh request. Remote failure preserves the FTP/history/local metrics and confirmed sync metadata, with manual Sync retry guidance.
 
 ### SET-002 Intervals.icu API key
 
@@ -472,6 +473,7 @@ A `Sync to Intervals.icu` button syncs all upcoming planned structured workouts.
 - Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count (CYF-82).
 - Exclude past, completed, missed and outline workouts, target-event dates and inclusive time-off dates. Include regular workouts and openers.
 - No automatic background syncing in V1.
+- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above (CYF-83). Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
 - If one of the previously synced workouts is no longer in the eligible calendar set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
@@ -533,6 +535,7 @@ Automated coverage target: request specs for A sign-out/B sign-in in one browser
 
 - Use the signed-in rider's own profile/API key, active plan and sync records for full-calendar selection and reconciliation. `IntervalsIcuSync` has a required `user_id` so a record remains attributable after its workout is deleted.
 - Keep stable `cyclefar-workout-<planned_workout.id>` external IDs. A rider's sync may upsert or delete only that rider's CycleFar-owned remote events, including detached stale records; it must never inspect another rider's key or sync records. Preserve retry-safe partial-failure behavior.
+- FTP-triggered refresh uses the same owner boundary, confirmed upload handling and advisory lock as manual sync/removal. Commit FTP/history/future metrics before HTTP, release database row locks, and serialize uploads so queued manual sync/FTP changes use current committed FTP. Plan deletion cannot be followed by recreation of its events.
 
 Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, eligible calendar sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
 
