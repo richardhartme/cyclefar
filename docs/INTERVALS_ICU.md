@@ -2,11 +2,11 @@
 
 ## V1 objective
 
-On explicit rider action, sync the next two upcoming structured cycling workouts from the active plan to the rider's Intervals.icu calendar.
+On explicit rider action, sync all upcoming planned structured cycling workouts from the active plan to the rider's Intervals.icu calendar.
 
 No automatic sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-04, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete (CYF-14); event field names/types were checked on 2026-10-02. This is not a live authenticated sync certification. Local specs stub HTTP.
+The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-11, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete (CYF-82); event field names/types were checked on 2026-10-02. The bulk upload body and response remain arrays; neither source documents a count limit for this endpoint, so the service sends the complete eligible set in one request. This is not a live authenticated sync certification. Local specs stub HTTP.
 
 ## Authentication
 
@@ -50,11 +50,11 @@ Do not use date alone; workouts can move.
 
 If integer DB ids are used locally, prefix them clearly to avoid collisions with other clients.
 
-## Eligibility: “next two workouts”
+## Eligibility: all upcoming structured workouts
 
-Select the first two by `scheduled_on` where:
+Select every workout in `scheduled_on` order where:
 
-- plan is the signed-in rider's active plan (selected by the controller; the service itself does not validate plan status);
+- plan is the signed-in rider's active plan (the service rechecks active status under the owner lock);
 - status = planned;
 - detail_status = structured;
 - scheduled_on >= Date.current;
@@ -62,7 +62,7 @@ Select the first two by `scheduled_on` where:
 - exclude target event;
 - exclude time off;
 
-If fewer than two are available, sync what exists and explain the count.
+There is no count or export-horizon cap. Include persisted structures beyond day 13, but do not generate outlines or rewrite existing structures during sync. Past, missed and completed workouts remain excluded. Report the actual count, including zero.
 
 ## Event fields
 
@@ -127,15 +127,15 @@ Send `icu_ftp`/current FTP where supported so Intervals.icu has the correct cont
 
 Current call order:
 
-1. Resolve the active plan's next-two eligible set (or fewer when fewer exist).
+1. Resolve the active plan's full eligible calendar set.
 2. Build payloads with stable external IDs and transactionally retain their owned sync identities before HTTP. New records have no event ID, digest or successful-sync timestamp yet.
-3. Bulk-upsert the set, then transactionally save confirmed returned event IDs, digests and timestamps.
+3. Bulk-upsert the set, validate a complete response by external ID, then transactionally save confirmed returned event IDs, digests and timestamps. An incomplete or invalid confirmation retains retry identities and stops before stale cleanup.
 4. Find all stale sync records owned by this rider outside the selected set, including missed/completed, past-moved, deleted and previous-plan workouts.
 5. Bulk-delete those stale external IDs, then transactionally destroy their local sync records only after confirmed deletion.
 
-Digests are stored for reference; repeat sync still upserts both selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider. The serializer exports stored estimated metrics; current FTP is passed separately and percentage steps remain canonical.
+Digests are stored for reference; repeat sync still upserts all selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider. The serializer exports stored estimated metrics; current FTP is passed separately and percentage steps remain canonical.
 
-CycleFar's tracked remote calendar-event set matches the next-two set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged (CYF-14).
+CycleFar's tracked remote calendar-event set matches the eligible calendar set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged (CYF-14).
 
 The [manual sync sequence](diagrams/sequence-cyclefar-intervals-icu-sync.puml) shows the separate local transactions, remote calls and failure paths. With no eligible workouts, upload is skipped and all stale owned events are still reconciled.
 
@@ -149,7 +149,7 @@ The [official upload guide](https://forum.intervals.icu/t/uploading-planned-work
 
 ## Partial failure
 
-Prefer one bulk request for the two upserts when possible.
+Use one bulk request for all eligible upserts.
 
 If reconciliation requires delete + upsert calls and one part fails:
 
@@ -177,7 +177,7 @@ Test:
 
 - serializer output for every supported step shape;
 - API-key auth header construction;
-- next-two selection;
+- full-calendar selection;
 - stable external IDs;
 - upsert mapping;
 - deletion only of CycleFar-owned events;

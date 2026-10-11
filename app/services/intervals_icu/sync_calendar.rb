@@ -1,9 +1,10 @@
 require "digest"
 require "json"
+require "set"
 
 module IntervalsIcu
-  # Sync the next two eligible workouts to Intervals.icu and reconcile stale syncs.
-  class SyncNextTwo
+  # Sync all upcoming structured workouts and reconcile the rider's tracked events.
+  class SyncCalendar
     Result = Data.define(:synced_count, :removed_count)
     class PartialSyncError < Client::Error; end
 
@@ -34,7 +35,8 @@ module IntervalsIcu
       retain_identities!(workouts, payloads)
       responses = payloads.empty? ? [] : client.upsert_events(payloads)
       persist_upserts!(workouts, payloads, responses)
-      stale_syncs = reconciled_syncs.reject { |sync| workouts.include?(sync.planned_workout) }
+      eligible_ids = workouts.map(&:id).to_set
+      stale_syncs = reconciled_syncs.reject { |sync| eligible_ids.include?(sync.planned_workout_id) }
       begin
         client.delete_events(stale_syncs.map(&:external_id))
       rescue Client::Error
@@ -45,12 +47,15 @@ module IntervalsIcu
     end
 
     def eligible_workouts
-      candidates = @plan.planned_workouts.planned.structured.where(kind: %w[workout opener]).where("scheduled_on >= ?", Date.current).order(:scheduled_on)
-      candidates.reject { |workout| @plan.time_off_periods.any? { |time_off| workout.scheduled_on.between?(time_off.starts_on, time_off.ends_on) } }.first(2)
+      candidates = @plan.planned_workouts.planned.structured.where(kind: %w[workout opener])
+        .where("scheduled_on >= ?", Date.current).includes(:workout_steps, :intervals_icu_sync).order(:scheduled_on)
+      candidates = candidates.where.not(scheduled_on: @plan.target_event.event_on) if @plan.target_event
+      time_off_periods = @plan.time_off_periods.to_a
+      candidates.reject { |workout| time_off_periods.any? { |time_off| workout.scheduled_on.between?(time_off.starts_on, time_off.ends_on) } }
     end
 
     def reconciled_syncs
-      @plan.user.intervals_icu_syncs.includes(:planned_workout)
+      @plan.user.intervals_icu_syncs
     end
 
     def serializer_for(workout)
@@ -75,7 +80,7 @@ module IntervalsIcu
     end
 
     def persist_upserts!(workouts, payloads, responses)
-      response_by_external_id = responses.to_h { |response| [ response.fetch("external_id"), response ] }
+      response_by_external_id = confirmed_responses(payloads, responses)
       IntervalsIcuSync.transaction do
         workouts.zip(payloads).each do |workout, payload|
           response = response_by_external_id.fetch(payload.fetch(:external_id))
@@ -83,6 +88,20 @@ module IntervalsIcu
           sync.update!(intervals_event_id: response.fetch("id"), payload_digest: Digest::SHA256.hexdigest(JSON.generate(payload)), last_synced_at: Time.current)
         end
       end
+    end
+
+    def confirmed_responses(payloads, responses)
+      valid = responses.is_a?(Array) && responses.all? do |response|
+        response.is_a?(Hash) && response["external_id"].is_a?(String) && response["id"].is_a?(Integer)
+      end
+      if valid
+        by_external_id = responses.index_by { |response| response.fetch("external_id") }
+        valid = responses.size == by_external_id.size && by_external_id.keys.to_set == payloads.map { |payload| payload.fetch(:external_id) }.to_set
+      end
+      # An incomplete bulk response must not mark uploads successful or start cleanup.
+      raise Client::RequestError, "Intervals.icu did not confirm every workout. Sync again to retry." unless valid
+
+      by_external_id
     end
   end
 end

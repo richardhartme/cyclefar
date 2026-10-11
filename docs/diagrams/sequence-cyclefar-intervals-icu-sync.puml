@@ -6,7 +6,7 @@ hide footbox
 
 actor Rider
 boundary "IntervalsIcuSyncsController" as Controller
-control "SyncNextTwo" as Sync
+control "SyncCalendar" as Sync
 control "WorkoutSerializer" as Serializer
 control "IntervalsIcu::Client" as Client
 database "PostgreSQL" as Database
@@ -14,13 +14,13 @@ participant "Intervals.icu" as Remote
 
 Rider -> Controller: POST manual sync
 Controller -> Database: resolve signed-in rider's active plan
-Controller -> Sync: SyncNextTwo.new(plan: owned active plan).call
+Controller -> Sync: SyncCalendar.new(plan: owned active plan).call
 Sync -> Database: resolve plan owner's profile (default initializer input)
 group owner session advisory lock (Synchronization; released in ensure)
 Sync -> Database: acquire owner advisory lock; reload plan\nreject unless still active
 Sync -> Sync: validate profile owner and API key
-Sync -> Database: select next two planned structured workouts/openers\nfrom today; exclude time off
-Database --> Sync: eligible set (zero, one or two workouts)
+Sync -> Database: select all planned structured workouts/openers\nfrom today; exclude time off and target event date
+Database --> Sync: full eligible calendar set (any count)
 loop each selected workout
   Sync -> Serializer: payload(canonical steps, current FTP, stable external ID)
   Serializer --> Sync: event payload
@@ -42,6 +42,13 @@ alt eligible set is not empty
   else upload confirmed
     Remote --> Client: returned events with external IDs and event IDs
     Client --> Sync: events
+    Sync -> Sync: validate complete confirmation set by external ID
+    alt invalid or incomplete confirmation
+      break stop before cleanup
+        Sync --> Controller: retry error; retain owned identities and prior metadata
+        Sync -> Database: release owner advisory lock in ensure
+      end
+    end
   end
 else eligible set is empty
   Sync -> Sync: skip upload; continue stale cleanup

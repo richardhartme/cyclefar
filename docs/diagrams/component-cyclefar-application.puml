@@ -25,7 +25,7 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical steps, calculate metrics and select directional Easier/Harder replacements by ladder or aerobic profile; add/copy/edit/move workouts and build graph profiles.")
   Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record completion; validate, compare and apply proposals; save bias; resolve schedule/FTP changes and staged return limits from recent comparable training.")
   Component(settings, "Settings services", "Settings::Update and FtpHistory", "Update rider settings and edit FTP history atomically under the owner lock.")
-  Component(sync, "Intervals.icu reconciliation services", "SyncNextTwo, WorkoutSerializer, RemovePlanEvents and Synchronization", "Serializes manual sync and plan-removal cleanup with an owner advisory lock; retains retry identities and completed history; sync exports up to two workouts and cleans stale events.")
+  Component(sync, "Intervals.icu reconciliation services", "SyncCalendar, WorkoutSerializer, RemovePlanEvents and Synchronization", "Serializes manual sync and plan-removal cleanup with an owner advisory lock; retains retry identities and completed history; sync exports all eligible structured workouts and cleans stale events.")
   Component(client, "Intervals.icu API client", "IntervalsIcu::Client", "Performs authenticated HTTP requests, timeouts, JSON handling and API-error mapping.")
   Component(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, adaptations, settings and sync records.")
 }

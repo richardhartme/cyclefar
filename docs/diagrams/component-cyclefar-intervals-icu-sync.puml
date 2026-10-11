@@ -13,7 +13,7 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Uses the signed-in rider's active plan and profile; displays outcome without exposing the API key.")
-  Component(sync, "SyncNextTwo", "IntervalsIcu service", "Rechecks active plan under the owner lock, validates profile ownership; selects up to two eligible workouts and reconciles this owner's tracked events.")
+  Component(sync, "SyncCalendar", "IntervalsIcu service", "Rechecks active plan under the owner lock, validates profile ownership; selects all eligible structured workouts and reconciles this owner's tracked events.")
   Component(remover, "Planning::PlanRemover", "Planning service", "Under owner and plan locks, cleans remote events before archiving/deleting; failure keeps the plan active.")
   Component(cleanup, "RemovePlanEvents", "IntervalsIcu service", "Deletes this plan's tracked events and the owner's detached identities; removes local identities only after confirmed remote cleanup.")
   Component(synchronization, "Synchronization", "IntervalsIcu service", "Shares an owner-scoped PostgreSQL session advisory lock across sync and removal; releases in ensure.")

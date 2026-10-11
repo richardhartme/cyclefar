@@ -20,7 +20,7 @@ The first independent-rider release uses public registration and controlled prov
 
 The session-backed preview configuration is bound to its authenticated creator or cleared on account change. Confirmation verifies that owner before creating a plan. A sign-out followed by another sign-in in the same browser cannot carry the first rider's draft across accounts.
 
-`IntervalsIcu::SyncNextTwo` receives the signed-in rider's profile, plan and owner-scoped sync relation. A direct `IntervalsIcuSync.user_id` identifies detached records after a workout is deleted, so cleanup cannot consume another rider's stale record. The existing durable `cyclefar-workout-<id>` identity remains stable. API keys and remote operations never cross owner boundaries.
+`IntervalsIcu::SyncCalendar` receives the signed-in rider's profile, plan and owner-scoped sync relation. A direct `IntervalsIcuSync.user_id` identifies detached records after a workout is deleted, so cleanup cannot consume another rider's stale record. The existing durable `cyclefar-workout-<id>` identity remains stable. API keys and remote operations never cross owner boundaries.
 
 The ownership migrations enforce required profile/plan/sync foreign keys and per-user profile/active-plan indexes. Archived plans and immutable completed records stay attached to their owner. [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) lists the acceptance criteria.
 
@@ -35,7 +35,7 @@ app/services/
   adaptations/   # completion, feedback, comparisons, load limiting and acceptance/rejection
   accounts/      # controlled operator provisioning and password setup delivery
   settings/      # transactional profile and FTP changes
-  intervals_icu/ # serializer, HTTP client and next-two reconciliation
+  intervals_icu/ # serializer, HTTP client and calendar reconciliation
 ```
 
 Avoid repository layers, command buses, event sourcing, GraphQL and front-end SPAs.
@@ -97,7 +97,7 @@ The interval/aerobic distinction is `Training::Rules::LADDERS.key?(subtype)` in 
 
 ## Integration
 
-`IntervalsIcu::WorkoutSerializer` turns expanded canonical steps into a flat workout-builder description and current-FTP event metadata. `IntervalsIcu::Client` isolates Basic auth, JSON, timeouts and one transient retry. `IntervalsIcu::SyncNextTwo` retains owned identities before upload, saves confirmed upserts, then deletes all of the rider's tracked calendar events outside the next eligible set. This includes missed/completed, past-moved, deleted and previous-plan workouts; local completed history and remote activities remain untouched. Stale metadata survives cleanup failure for retry, with a partial-sync message. Nullable workout foreign keys retain sync records after local deletion for later remote cleanup (CYF-14).
+`IntervalsIcu::WorkoutSerializer` turns expanded canonical steps into a flat workout-builder description and current-FTP event metadata. `IntervalsIcu::Client` isolates Basic auth, JSON, timeouts and one transient retry. `IntervalsIcu::SyncCalendar` exports all upcoming planned structured workouts/openers, including persisted structures beyond day 13 without generating outlines. It retains owned identities before upload, validates complete bulk confirmations by external ID, saves confirmed upserts, then deletes all of the rider's tracked calendar events outside the full eligible calendar set. This includes missed/completed, past-moved, deleted and previous-plan workouts; local completed history and remote activities remain untouched. Stale metadata survives cleanup failure for retry, with a partial-sync message. Nullable workout foreign keys retain sync records after local deletion for later remote cleanup (CYF-14).
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the implemented request contract and reconciliation limits. Remote calls are stubbed in specs.
 

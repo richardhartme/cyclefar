@@ -23,7 +23,7 @@ RSpec.describe "CYF-79 sync and plan removal", type: :model do
     allow(client).to receive(:delete_events) { |ids| events.reject! { |id| ids.include?(id) } }
     syncing = Thread.new do
       ActiveRecord::Base.connection_pool.with_connection do
-        IntervalsIcu::SyncNextTwo.new(plan: TrainingPlan.find(plan.id)).call
+        IntervalsIcu::SyncCalendar.new(plan: TrainingPlan.find(plan.id)).call
       end
     end
     uploaded.pop

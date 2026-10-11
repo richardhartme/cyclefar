@@ -154,7 +154,7 @@ Include:
 
 - plan goal/discipline summary;
 - current FTP;
-- `Sync next 2 to Intervals.icu`;
+- `Sync all structured workouts to Intervals.icu`;
 - `Change availability`;
 - `Add time off`;
 - destructive `Delete plan` in a secondary menu/action area; it is labelled `Archive plan` once the plan has completed workouts, which are retained.
