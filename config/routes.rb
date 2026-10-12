@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   resources :ftp_readings, only: [ :edit, :update, :destroy ]
   resource :training_plan, only: [ :new, :create, :destroy ] do
     get :preview
+    get :end_date
     post :preview, action: :prepare_preview
   end
   resources :planned_workouts, only: [ :new, :create, :show, :destroy ] do

@@ -17,10 +17,12 @@
                 <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Goal</p>
                 <p class="mt-1 text-lg font-semibold"><%= @presenter.goal_label %></p>
                 </div>
-                <div>
-                <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Discipline</p>
-                <p class="mt-1 text-lg font-semibold"><%= @presenter.discipline_label %></p>
-                </div>
+                <% if @configuration.event? %>
+                  <div>
+                    <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Discipline</p>
+                    <p class="mt-1 text-lg font-semibold"><%= @presenter.discipline_label %></p>
+                  </div>
+                <% end %>
                 <div>
                 <p class="text-base-content/60 text-xs font-semibold uppercase tracking-wider">Plan dates</p>
                 <p class="mt-1 font-semibold"><%= @presenter.date_range %></p>

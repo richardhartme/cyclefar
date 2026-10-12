@@ -73,7 +73,8 @@ Required fields:
 
 For non-event goals:
 
-- plan duration can be selected from presets (1, 3, 6 months) or entered as a custom duration.
+- a single Plan length selector offers 1 month, 3 months, 6 months and Custom weeks. Custom whole weeks appears only when selected, with a visible four-week minimum; inactive duration values do not affect validation or dates.
+- show the calculated end date using server-side calendar-month advances or inclusive whole weeks.
 - do not request discipline; goal and phase determine automatic interval selection (CYF-86).
 - resolve and persist an internal `road` discipline for new plans; missing, blank, invalid or stale non-event discipline input is ignored and cannot block preview/confirmation. It is not a rider-selected training input.
 
@@ -84,11 +85,15 @@ For event goal:
 - event discipline required (fresh forms default to Road); event mode shows only this discipline selector, beside the event name/date;
 - distance km optional;
 - elevation metres optional;
-- expected duration optional.
+- expected riding time optional; it influences the existing seven/fourteen-day taper rule.
+- event date is at least 28 days after start; display this requirement beside the date. The plan runs from start through event date and ignores all inactive duration fields.
+- hide duration controls in event mode and Target event fields in non-event mode. Inactive event values cannot affect non-event generation or block submission.
+- group riding time, distance and elevation in a native “Additional event details (optional)” disclosure. Distance/elevation are calendar information.
+- preserve entered draft values across goal, length and disclosure toggles, validation errors and Back to edit. Inactive controls are disabled for native validation and keyboard interaction; they remain draft data. Use native controls, persistent labels and accessible field errors.
 
 For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning (CYF-85). Preserve Event discipline across goal changes, validation errors and preview editing; only active event mode validates/uses it. An explicit invalid event choice is rejected. Do not infer the active event choice from stale non-event input, including legacy drafts.
 
-CYF-86 records the product/specification decision; removal/defaulting/summary changes remain follow-on implementation. The current form still requires and retains non-event discipline, and CYF-85 currently falls back to it for missing Event discipline. Until the new contract is implemented, do not claim non-event discipline tailors training. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md) for persistence, legacy-draft handling, delivery boundaries and required coverage.
+CYF-87 implements CYF-86’s decision: non-event discipline is omitted and defaults internally to Road. Event discipline is required independently of stale non-event input, including legacy drafts. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md) for persistence, legacy-draft handling, delivery boundaries and required coverage.
 
 Existing non-event plans retain their stored discipline through materialisation/replanning, with no backfill or workout regeneration caused by this decision. Non-event setup summaries, previews and calendar headers must omit discipline, including the internal default and existing stored values.
 
@@ -144,7 +149,7 @@ Preview shows:
 
 The rider may go back and edit the configuration, then confirm to create the plan.
 
-Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice (CYF-86; presentation implementation pending).
+Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice (CYF-86/87). Preview and confirmation share the active timing rules; Back to edit restores entered duration/event fields and the optional disclosure state without persisting a plan.
 
 ### PLN-014 One active plan
 

@@ -61,7 +61,7 @@ Constraints:
 
 - partial unique index on `user_id` ensuring at most one `active` plan per user.
 
-CYF-86 keeps the required discipline enum/constraint. Its follow-on setup contract persists `road` internally for new non-event plans and omits the value from their summaries; this is not Road-specific training. Existing active/archived non-event values remain unchanged, with no backfill or workout rewrite. The current form still saves the selected value until that follow-on is implemented. Event plans retain the effective Event discipline and CYF-85's legacy policy. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
+CYF-86 keeps the required discipline enum/constraint. CYF-87 setup persists `road` internally for new non-event plans and omits the value from their summaries; this is not Road-specific training. Existing active/archived non-event values remain unchanged, with no backfill or workout rewrite. New non-event previews and confirmation ignore submitted discipline values; existing saved plan values remain authoritative for replanning. Event plans retain the effective Event discipline and CYF-85's legacy policy. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
 
 Do not destroy archived plans that have completed workouts. The current archive action removes planned records and retains completed and missed records; a plan without completed workouts is deleted.
 

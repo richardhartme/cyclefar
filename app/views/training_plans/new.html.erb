@@ -7,7 +7,7 @@
     </div>
 
     <% if @configuration.errors.any? %>
-      <section aria-labelledby="configuration-errors" class="alert alert-error alert-soft items-start">
+      <section aria-labelledby="configuration-errors" role="alert" tabindex="-1" class="alert alert-error alert-soft items-start">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="mt-0.5 size-5 shrink-0" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.8 2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
         </svg>
@@ -18,8 +18,8 @@
       </section>
     <% end %>
 
-    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false, controller: "plan-discipline" }, class: "space-y-6" do %>
-      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-action="change->plan-discipline#update">
+    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false, controller: "plan-configuration", plan_configuration_end_date_url_value: end_date_training_plan_path, action: "formdata->plan-configuration#preserveDraft submit->plan-configuration#prepareSubmit" }, class: "space-y-6" do %>
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-action="change->plan-configuration#update">
         <legend class="fieldset-legend px-2 text-lg">Goal</legend>
         <div class="grid gap-3 sm:grid-cols-2">
           <% Planning::PreviewPresenter::GOAL_LABELS.each do |value, label| %>
@@ -34,64 +34,88 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-plan-discipline-target="nonEvent" <%= "hidden" if @configuration.event? %>>
-        <legend class="fieldset-legend px-2 text-lg">Discipline</legend>
-        <div class="flex flex-wrap gap-3">
-          <% Planning::PreviewPresenter::DISCIPLINE_LABELS.each do |value, label| %>
-            <label class="bg-base-100 border-base-300 flex cursor-pointer items-center gap-2 rounded-box border px-4 py-3">
-              <%= radio_button_tag "plan_configuration[discipline]", value, @configuration.discipline == value, class: "radio radio-primary radio-sm" %>
-              <span class="font-medium"><%= label %></span>
-            </label>
-          <% end %>
-        </div>
-      </fieldset>
-
       <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
         <legend class="fieldset-legend px-2 text-lg">Timing</legend>
+        <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+          Start date
+          <%= date_field_tag "plan_configuration[starts_on]", @configuration.input_value(:starts_on), required: true, class: "input w-full", data: { plan_configuration_target: "startDate", action: "change->plan-configuration#refreshEndDate" }, aria: plan_field_aria(:starts_on) %>
+          <%= render "field_errors", attribute: :starts_on %>
+        </label>
+        <fieldset class="mt-4 space-y-3" data-plan-configuration-target="duration" <%= "hidden disabled" if @configuration.event? %>>
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">
-            Start date
-            <%= date_field_tag "plan_configuration[starts_on]", @configuration.starts_on, class: "input w-full" %>
+            Plan length
+            <%= select_tag "plan_configuration[plan_length]", plan_select_options([["1 month", "1"], ["3 months", "3"], ["6 months", "6"], ["Custom weeks", "custom"]], @configuration.plan_length), class: "select w-full", data: { plan_configuration_target: "length", action: "change->plan-configuration#update" }, aria: plan_field_aria(:duration_months, :duration_mode) %>
+            <%= render "field_errors", attribute: :duration_months %>
+            <%= render "field_errors", attribute: :duration_mode %>
           </label>
-
-          <div class="space-y-3">
-            <div class="bg-base-100 border-base-300 rounded-box border p-4">
-              <label class="flex cursor-pointer items-center gap-3 font-semibold">
-                <%= radio_button_tag "plan_configuration[duration_mode]", "preset", @configuration.duration_mode == "preset", class: "radio radio-primary radio-sm" %>
-                Calendar-month duration
-              </label>
-              <%= select_tag "plan_configuration[duration_months]", options_for_select([["1 month", 1], ["3 months", 3], ["6 months", 6]], @configuration.duration_months), class: "select mt-3 w-full" %>
-            </div>
-
-            <div class="bg-base-100 border-base-300 rounded-box border p-4">
-              <label class="flex cursor-pointer items-center gap-3 font-semibold">
-                <%= radio_button_tag "plan_configuration[duration_mode]", "custom", @configuration.duration_mode == "custom", class: "radio radio-primary radio-sm" %>
-                Custom whole weeks
-              </label>
-              <%= number_field_tag "plan_configuration[custom_duration_weeks]", @configuration.custom_duration_weeks, min: 4, class: "input mt-3 w-full", aria: { label: "Custom duration in whole weeks" }, placeholder: "Minimum 4 weeks" %>
-            </div>
-          </div>
+          <fieldset data-plan-configuration-target="custom" <%= "hidden disabled" unless @configuration.duration_mode == "custom" %>>
+            <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+              Custom whole weeks
+              <%= number_field_tag "plan_configuration[custom_duration_weeks]", @configuration.input_value(:custom_duration_weeks), min: Planning::Rules::MINIMUM_CUSTOM_WEEKS, step: 1, required: true, class: "input w-full", data: { plan_configuration_target: "weeks", action: "input->plan-configuration#refreshEndDate" }, aria: plan_field_aria(:custom_duration_weeks, help: "custom-weeks-help") %>
+              <span id="custom-weeks-help" class="text-base-content/70 text-sm font-normal">Minimum four whole weeks.</span>
+              <%= render "field_errors", attribute: :custom_duration_weeks %>
+            </label>
+          </fieldset>
+          <p class="text-sm" aria-live="polite" aria-atomic="true" data-plan-configuration-target="endDate">Plan ends on <%= @configuration.ends_on&.to_fs(:long) || "— choose a valid start date and plan length" unless @configuration.event? %></p>
+        </fieldset>
+        <p class="mt-3 text-sm" data-plan-configuration-target="eventTiming" <%= "hidden" unless @configuration.event? %>>Your plan runs from your start date to your event date.</p>
       </fieldset>
 
-      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-plan-configuration-target="event" <%= "hidden disabled" unless @configuration.event? %>>
         <legend class="fieldset-legend px-2 text-lg">Target event</legend>
-        <p class="text-base-content/70 mb-2 text-sm">Required only when your goal is Prepare for an Event.</p>
         <div class="grid gap-4 md:grid-cols-2">
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Event name <%= text_field_tag "plan_configuration[event_name]", @configuration.event_name, class: "input w-full" %></label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Event date <%= date_field_tag "plan_configuration[event_on]", @configuration.event_on, class: "input w-full" %></label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold" data-plan-discipline-target="event" <%= "hidden" unless @configuration.event? %>>
-            Event discipline
-            <%= select_tag "plan_configuration[event_discipline]", options_for_select(Planning::PreviewPresenter::DISCIPLINE_LABELS.map { |value, label| [label, value] }, @configuration.event_discipline), class: "select w-full", aria: { describedby: "event-discipline-help" } %>
-            <span id="event-discipline-help" class="text-base-content/70 text-sm font-normal">Shapes the workout mix as your event approaches.</span>
+          <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+            Event name
+            <%= text_field_tag "plan_configuration[event_name]", @configuration.input_value(:event_name), required: true, class: "input w-full", aria: plan_field_aria(:event_name) %>
+            <%= render "field_errors", attribute: :event_name %>
           </label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Distance (km) <%= number_field_tag "plan_configuration[event_distance_km]", @configuration.event_distance_km, min: 1, step: 0.1, class: "input w-full" %></label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Elevation (m) <%= number_field_tag "plan_configuration[event_elevation_m]", @configuration.event_elevation_m, min: 0, class: "input w-full" %></label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Expected duration (minutes) <%= number_field_tag "plan_configuration[event_expected_duration_minutes]", @configuration.event_expected_duration_minutes, min: 1, class: "input w-full" %></label>
+          <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+            Event date
+            <%= date_field_tag "plan_configuration[event_on]", @configuration.input_value(:event_on), required: true, class: "input w-full", aria: plan_field_aria(:event_on, help: "event-date-help") %>
+            <span id="event-date-help" class="text-base-content/70 text-sm font-normal">At least four weeks (28 days) after your start date.</span>
+            <%= render "field_errors", attribute: :event_on %>
+          </label>
+          <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+            Event discipline
+            <%= select_tag "plan_configuration[event_discipline]", plan_select_options(Planning::PreviewPresenter::DISCIPLINE_LABELS.map { |value, label| [label, value] }, @configuration.event_discipline), include_blank: @configuration.event_discipline.blank? ? "Choose event discipline" : false, required: true, class: "select w-full", aria: plan_field_aria(:event_discipline, help: "event-discipline-help") %>
+            <span id="event-discipline-help" class="text-base-content/70 text-sm font-normal">Shapes the workout mix as your event approaches.</span>
+            <%= render "field_errors", attribute: :event_discipline %>
+          </label>
         </div>
+        <% optional_errors = %i[event_distance_km event_elevation_m event_expected_duration_minutes].any? { |attribute| @configuration.errors[attribute].any? } %>
+        <%= hidden_field_tag "plan_configuration[event_details_open]", @configuration.event_details_open ? "1" : "0", data: { plan_configuration_target: "disclosureState" } %>
+        <details class="mt-4" data-plan-configuration-target="optionalDetails" data-action="toggle->plan-configuration#disclose invalid->plan-configuration#revealOptional:capture" <%= "open" if @configuration.event_details_open || optional_errors %>>
+          <summary class="cursor-pointer font-semibold">Additional event details (optional)</summary>
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+              Expected riding time (minutes)
+              <%= number_field_tag "plan_configuration[event_expected_duration_minutes]", @configuration.input_value(:event_expected_duration_minutes), min: 1, step: 1, class: "input w-full", aria: plan_field_aria(:event_expected_duration_minutes, help: "event-duration-help") %>
+              <span id="event-duration-help" class="text-base-content/70 text-sm font-normal">Influences taper length: normally seven days, or fourteen for rides over five hours when the plan allows.</span>
+              <%= render "field_errors", attribute: :event_expected_duration_minutes %>
+            </label>
+            <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+              Distance (km)
+              <%= number_field_tag "plan_configuration[event_distance_km]", @configuration.input_value(:event_distance_km), min: 0.1, step: 0.1, class: "input w-full", aria: plan_field_aria(:event_distance_km, help: "event-distance-help") %>
+              <span id="event-distance-help" class="text-base-content/70 text-sm font-normal">Shown on the calendar for reference.</span>
+              <%= render "field_errors", attribute: :event_distance_km %>
+            </label>
+            <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+              Elevation (m)
+              <%= number_field_tag "plan_configuration[event_elevation_m]", @configuration.input_value(:event_elevation_m), min: 0, step: 1, class: "input w-full", aria: plan_field_aria(:event_elevation_m, help: "event-elevation-help") %>
+              <span id="event-elevation-help" class="text-base-content/70 text-sm font-normal">Shown on the calendar for reference.</span>
+              <%= render "field_errors", attribute: :event_elevation_m %>
+            </label>
+          </div>
+        </details>
       </fieldset>
 
       <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
         <legend class="fieldset-legend px-2 text-lg">Fitness and progression</legend>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">FTP (watts) <%= number_field_tag "plan_configuration[ftp_watts]", @configuration.ftp_watts, min: 1, required: true, class: "input w-full" %></label>
+          <label class="fieldset-label flex-col items-start gap-2 font-semibold">
+            FTP (watts)
+            <%= number_field_tag "plan_configuration[ftp_watts]", @configuration.input_value(:ftp_watts), min: 1, required: true, class: "input w-full", aria: plan_field_aria(:ftp_watts) %>
+            <%= render "field_errors", attribute: :ftp_watts %>
+          </label>
           <label class="mt-5 bg-base-100 border-base-300 flex cursor-pointer items-center gap-3 self-end rounded-box border p-4">
             <%= hidden_field_tag "plan_configuration[include_base]", "0" %>
             <%= check_box_tag "plan_configuration[include_base]", "1", @configuration.include_base, class: "checkbox checkbox-primary" %>

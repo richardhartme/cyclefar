@@ -46,7 +46,7 @@ RSpec.describe "Training plan preview", type: :request do
     form = html.css("form").find { |element| element["action"] == preview_training_plan_path }
     expect(form).to be_present
     expect(form["data-turbo"]).to eq("false")
-    expect(response.body).to include("Goal", "Discipline", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
+    expect(response.body).to include("Goal", "Plan length", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
     expect(response.body).to include(
       "Balances aerobic endurance with varied intensity",
       "Prioritises threshold, VO2 Max and over-under progression",
@@ -173,8 +173,9 @@ RSpec.describe "Training plan preview", type: :request do
         submit_preview(inputs)
         back_to_edit
         2.times do
-          inputs.except(:availability, :include_base).each { |name, value| expect(field_value(name)).to eq(value) }
+          inputs.except(:availability, :include_base, :discipline, :duration_mode, :duration_months).each { |name, value| expect(field_value(name)).to eq(value) }
           expect(field_value(:include_base)).to be(false)
+          expect(field_value(:plan_length)).to eq("custom")
           (1..7).each do |weekday|
             slot = inputs[:availability][weekday.to_s]
             expect(field_value("availability][#{weekday}][enabled")).to eq(slot.present?)
@@ -202,8 +203,9 @@ RSpec.describe "Training plan preview", type: :request do
         submit_preview(inputs)
         back_to_edit
       }.not_to change { plan_record_counts }
-      inputs.except(:availability, :include_base).each { |name, value| expect(field_value(name)).to eq(value) }
+      inputs.except(:availability, :include_base, :discipline, :duration_mode, :duration_months).each { |name, value| expect(field_value(name)).to eq(value) }
       expect(field_value(:include_base)).to be(true)
+      expect(field_value(:plan_length)).to eq("6")
     end
 
     it "confirms revised settings, event and availability after editing and clears the draft" do
@@ -211,7 +213,7 @@ RSpec.describe "Training plan preview", type: :request do
       get new_training_plan_path
       expect(field_value(:ftp_watts)).to eq("240")
       expect(field_value(:goal)).to eq("general_fitness")
-      expect(field_value(:duration_months)).to eq("3")
+      expect(field_value(:plan_length)).to eq("3")
 
       revised = plan_configuration(
         goal: "event",
@@ -273,7 +275,7 @@ RSpec.describe "Training plan preview", type: :request do
       expect(field_value("availability][7][enabled")).to be(false)
     end
 
-    it "CYF-85 retains both discipline choices through validation, preview editing and goal switching" do
+    it "PLN-010 retains event discipline through validation, preview editing and goal switching" do
       inputs = plan_configuration(
         goal: "event",
         discipline: "gravel",
@@ -282,11 +284,11 @@ RSpec.describe "Training plan preview", type: :request do
         event_on: "2026-12-06")
       submit_preview(inputs.merge(ftp_watts: "0"))
       expect(response).to have_http_status(:unprocessable_content)
-      expect(field_value(:discipline)).to eq("gravel")
+      expect(Nokogiri::HTML(response.body).css('[name="plan_configuration[discipline]"]')).to be_empty
       expect(field_value(:event_discipline)).to eq("mtb")
       html = Nokogiri::HTML(response.body)
-      expect(html.at_css('[data-plan-discipline-target="nonEvent"]').key?("hidden")).to be(true)
-      expect(html.at_css('[data-plan-discipline-target="event"]').key?("hidden")).to be(false)
+      expect(html.at_css('[data-plan-configuration-target="duration"]').key?("hidden")).to be(true)
+      expect(html.at_css('[data-plan-configuration-target="event"]').key?("hidden")).to be(false)
       expect(html.at_css('select[name="plan_configuration[event_discipline]"]')["aria-describedby"]).to eq("event-discipline-help")
       expect(response.body).to include("Shapes the workout mix as your event approaches.")
 
@@ -295,16 +297,16 @@ RSpec.describe "Training plan preview", type: :request do
       expect(summary.text).to include("MTB")
       expect(summary.text).not_to include("Gravel")
       back_to_edit
-      expect(field_value(:discipline)).to eq("gravel")
+      expect(Nokogiri::HTML(response.body).css('[name="plan_configuration[discipline]"]')).to be_empty
       expect(field_value(:event_discipline)).to eq("mtb")
 
       submit_preview(inputs.merge(goal: "increase_ftp"))
       back_to_edit
-      expect(field_value(:discipline)).to eq("gravel")
+      expect(Nokogiri::HTML(response.body).css('[name="plan_configuration[discipline]"]')).to be_empty
       expect(field_value(:event_discipline)).to eq("mtb")
       html = Nokogiri::HTML(response.body)
-      expect(html.at_css('[data-plan-discipline-target="nonEvent"]').key?("hidden")).to be(false)
-      expect(html.at_css('[data-plan-discipline-target="event"]').key?("hidden")).to be(true)
+      expect(html.at_css('[data-plan-configuration-target="duration"]').key?("hidden")).to be(false)
+      expect(html.at_css('[data-plan-configuration-target="event"]').key?("hidden")).to be(true)
 
       submit_preview(inputs)
       post training_plan_path
@@ -334,13 +336,13 @@ RSpec.describe "Training plan preview", type: :request do
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("Please correct the plan configuration")
         expect(field_value(:ftp_watts)).to eq("0")
-        expect(field_value(:discipline)).to eq("gravel")
+        expect(Nokogiri::HTML(response.body).css('[name="plan_configuration[discipline]"]')).to be_empty
         get new_training_plan_path
         expect(field_value(:ftp_watts)).to eq("260")
         submit_preview(plan_configuration(ftp_watts: "290", discipline: "gravel"))
       }.not_to change { plan_record_counts }
       expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
-      expect(TrainingPlan.active.sole).to have_attributes(initial_ftp_watts: 290, discipline: "gravel")
+      expect(TrainingPlan.active.sole).to have_attributes(initial_ftp_watts: 290, discipline: "road")
     end
   end
 end
