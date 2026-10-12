@@ -47,13 +47,37 @@ RSpec.describe "Training plan preview", type: :request do
     expect(form).to be_present
     expect(form["data-turbo"]).to eq("false")
     expect(response.body).to include("Goal", "Plan length", "Timing", "Target event", "FTP (watts)", "Weekly availability", "Preview plan")
-    expect(response.body).to include(
-      "Balances aerobic endurance with varied intensity",
-      "Prioritises threshold, VO2 Max and over-under progression",
-      "Emphasises endurance volume",
-      "sustained climbing efforts",
-      "shape speciality sessions, taper and opener"
-    )
+    expect(response.body).to include("For Intervals days", "Tempo and Sweet Spot", "Threshold and VO2 Max", "over-under", "event discipline")
+    expect(response.body).not_to include("Emphasises endurance volume")
+  end
+
+  it "CYF-88 / PLN-011 explains the session choices with weekday-specific accessible names" do
+    get new_training_plan_path
+    html = Nokogiri::HTML(response.body)
+    availability = html.at_xpath("//fieldset[legend[normalize-space()='Weekly availability']]")
+
+    expect(availability).to be_present
+    expect(availability.text).to include("Choose your training days and session lengths. Select Intervals to let CycleFar choose the workout type, or select a specific type yourself.")
+    expect(availability.text).to include("Endurance and Recovery", "Unselected days are rest days", "does not add training days or available time")
+    expect(availability.text).to include("VO2 Max, Threshold, Sweet Spot and Tempo", "recovery weeks and taper")
+    expect(availability.css("thead th").map(&:text)).to eq([ "Day", "Train", "Duration", "Session type" ])
+
+    (1..7).each do |weekday|
+      day_name = Date::DAYNAMES.rotate.fetch(weekday - 1)
+      choice = availability.at_css("select[name='plan_configuration[availability][#{weekday}][intent]']")
+      expect(choice["aria-label"]).to eq("#{day_name} session type")
+      expect(choice.css("option").map { |option| [ option.text, option["value"] ] }).to include([ "Intervals — chosen for your goal", "intervals" ])
+    end
+  end
+
+  it "CYF-88 / PLN-011 ignores unchecked-day values but validates selected days" do
+    invalid_day = { weekday: "2", duration_minutes: "invalid", intent: "invalid" }
+    submit_preview(plan_configuration(availability: plan_configuration[:availability].merge("2" => invalid_day)))
+    expect(response).to have_http_status(:ok)
+
+    submit_preview(plan_configuration(availability: plan_configuration[:availability].merge("2" => invalid_day.merge(enabled: "1"))))
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("contains an invalid training day")
   end
 
   it "PLN-013 generates and renders an in-memory preview without persisting a plan" do
