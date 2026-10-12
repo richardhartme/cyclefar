@@ -75,7 +75,7 @@ For non-event goals, omit this section and any discipline summary. Explain that 
 
 Event mode shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Fresh forms default it to Road. Switching goals preserves the Event discipline; inactive event input does not affect non-event training. Validation errors and Back to edit restore its entered value.
 
-Current implementation: CYF-85 still shows/requires the non-event section, preserves both selections and can default a missing Event discipline from the non-event value. CYF-86 records the decision above; the control, defaulting and summary changes remain follow-on work described in [the delivery contract](NON_EVENT_DISCIPLINE_DECISION.md). Until then, do not imply the non-event selection tailors workouts.
+CYF-87 implements the [CYF-86 delivery contract](NON_EVENT_DISCIPLINE_DECISION.md). Non-event setup omits discipline and saves an internal Road default. Event discipline is required independently of retained legacy input.
 
 - Road
 - Gravel
@@ -85,17 +85,19 @@ Current implementation: CYF-85 still shows/requires the non-event section, prese
 ### Timing
 
 - Start date
-- Non-event: plan length presets 1 / 3 / 6 months + Custom
-- Event: event date determines end of plan
+- Non-event: one Plan length selector with 1 month / 3 months / 6 months / Custom weeks. Show Custom whole weeks only when selected, with a four-week minimum. Show the Rails-calculated end date as inputs change.
+- Event: hide duration inputs and explain “Your plan runs from your start date to your event date.” The event date determines the end, with at least 28 days after start.
+- Disable hidden inactive controls for validation/keyboard interaction, while retaining their draft values through toggles, validation errors and Back to edit.
 
 ### Event details (conditional)
 
 - Event name *
 - Date *
 - Discipline *
-- Distance km
-- Elevation m
-- Expected duration
+- Native “Additional event details (optional)” disclosure contains expected riding time, distance km and elevation m.
+- Riding time influences taper length (normally seven days, fourteen for over five hours if the plan allows); distance/elevation are calendar information.
+- Keep disclosure state and entered values when editing; open it automatically for active optional-field errors.
+- Non-event mode hides/disables all Target event controls.
 
 ### Fitness
 
@@ -133,7 +135,7 @@ This is a review screen, not an editable form.
 
 Show:
 
-- goal; Event discipline only for event plans (CYF-86 presentation change pending);
+- goal; Event discipline only for event plans (CYF-86/87);
 - date range;
 - event summary if applicable;
 - phase timeline;
@@ -159,7 +161,7 @@ Desktop-first layout can assume meaningful horizontal width. At narrower widths,
 
 Include:
 
-- plan goal summary; discipline only for event plans, including when displaying existing plans (CYF-86 presentation change pending);
+- plan goal summary; discipline only for event plans, including when displaying existing plans (CYF-86/87);
 - current FTP;
 - `Sync all structured workouts to Intervals.icu`;
 - `Change availability`;

@@ -18,7 +18,7 @@ The requirements and product wording now match those rules: non-event plans are 
 
 ## Persistence and compatibility policy
 
-These are requirements for the follow-on implementation, not changes delivered by CYF-86:
+These requirements were specified by CYF-86 and implemented in CYF-87:
 
 - New non-event configurations resolve `training_discipline` to `road` on the server and persist `TrainingPlan.discipline = road`. Keep the existing required enum, database constraint and generator contract. This is an internal compatibility value, not a rider-selected discipline or evidence of Road-specific training. Put the default in `Planning::Rules`.
 - Missing, blank, invalid or stale submitted non-event `discipline` values neither affect generation nor block preview/confirmation. Inactive event discipline does not affect non-event training. Apply the policy to session drafts created before the form change as well as new submissions.
@@ -29,20 +29,20 @@ These are requirements for the follow-on implementation, not changes delivered b
 
 ## Delivery boundary and follow-on work
 
-CYF-86 delivers this decision, consistent specifications and regression coverage of the retained training behaviour. It changes no runtime form, validation, presenter, schema or engine behaviour. The current form still requires non-event discipline until the following work is implemented together; it must not claim this input tailors training.
+CYF-86 delivers this decision, consistent specifications and regression coverage of the retained training behaviour. It changes no runtime form, validation, presenter, schema or engine behaviour. CYF-87 implements the runtime form/defaulting/summary contract below, with coverage for drafts, active validation, timing and preserved existing plan context. CYF-90’s configuration summary remains follow-on work.
 
-Follow-on implementation under CYF-84 must:
+CYF-87 delivery under CYF-84:
 
-1. Remove the non-event controls from `training_plans/new`, adapt the existing `plan-discipline` Stimulus controller to event-only visibility, and preserve the event selection through editing. Keep training/defaulting/validation on the server.
+1. Remove the non-event controls from `training_plans/new`, replace `plan-discipline` with `plan-configuration` for event/timing visibility, and preserve the event selection through editing. Keep training/defaulting/validation on the server.
 2. Update `PlanConfiguration` and its session-draft handling to implement the default/ignored-input policy above. Keep `PlanCreator` persisting the effective value and `ExistingPlanConfiguration` preserving confirmed values.
 3. Update preview and calendar summaries plus public setup copy. [CYF-90](https://richardhartme.atlassian.net/browse/CYF-90)'s configuration summary must follow this policy; that issue alone does not cover the form and server changes.
 4. Replace the superseded CYF-85 non-event-required validation expectations when implementing the new contract, retaining its event precedence and legacy preservation coverage. Update current-implementation notes in the specifications at delivery.
 
-Required follow-on coverage:
+Delivery coverage:
 
 - All four non-event goals accept absent/blank/invalid/stale discipline, preview identically, and confirm with the internal Road value; inactive event choices cannot influence training or block submission.
 - Setup/preview/calendar omit non-event discipline for new and existing plans. Event setup requires one selector; goal toggles, errors, preview refresh and Back to edit preserve it. Legacy drafts obey the same defaulting and active-validation policy.
 - Preview and confirmation agree on effective event discipline; existing event Build/Speciality cycles, generic Base and explicit-intent rules remain covered.
 - Existing non-Road non-event plans retain their value through availability/time-off replanning and horizon materialisation. Completed history remains byte-for-byte unchanged.
 
-CYF-86's preview regression matrix covers all four non-event goals and all four stored disciplines through Base/Build/Speciality, including broad Intervals, explicit intensity intents, Endurance/Recovery, forecasts, weekly totals and load warnings. Existing event and immutability specs remain part of the required full-suite gate.
+The preview regression matrix covers all four non-event goals and all four submitted disciplines through Base/Build/Speciality, including broad Intervals, explicit intensity intents, Endurance/Recovery, forecasts, weekly totals and load warnings. CYF-87 adds persisted legacy non-Road coverage through materialisation, availability and time-off changes, preserving completed history. Existing event and immutability specs remain part of the required full-suite gate.

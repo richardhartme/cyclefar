@@ -235,7 +235,7 @@ Base/Build are broadly developmental; Speciality is strongly discipline-specific
 
 Discipline emphasis applies to **event plans only**. Event Base uses the generic event cycle; Event discipline selects the Build/Speciality broad Intervals cycles in §11. The descriptions below explain those cycles, not additional power, progression, duration or volume rules.
 
-For General Fitness, Increase FTP, Improve Endurance and Improve Climbing, keep §11's goal/phase cycles independent of discipline. Explicit weekly subtypes bypass selection, subject to existing reduced-load and load-cap rules. CYF-86 specifies omission of non-event discipline from setup with an internal `road` compatibility default for new plans; existing plans retain their saved values. The form/defaulting changes are follow-on work. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
+For General Fitness, Increase FTP, Improve Endurance and Improve Climbing, keep §11's goal/phase cycles independent of discipline. Explicit weekly subtypes bypass selection, subject to existing reduced-load and load-cap rules. CYF-86 specifies omission of non-event discipline from setup with an internal `road` compatibility default for new plans; existing plans retain their saved values. CYF-87 implements the setup/defaulting policy without changing training rules. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
 
 ### Road
 

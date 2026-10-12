@@ -57,7 +57,7 @@ For Prepare for an Event, the rider chooses one Event discipline during plan set
 
 Event Base uses a generic cycle; Event discipline selects the broad Intervals mix in Build and Speciality. Explicit weekly subtypes retain their intent subject to the normal reduced-load overrides.
 
-Non-event goals use goal/phase rules without discipline customisation. The CYF-86 decision omits discipline from non-event setup and summaries, retains existing plans' stored values, and specifies an internal `road` compatibility default for new non-event plans. Form/defaulting/presentation changes are follow-on work; the current form still requires this input. See [the decision and delivery contract](NON_EVENT_DISCIPLINE_DECISION.md).
+Non-event goals use goal/phase rules without discipline customisation. The CYF-86 decision omits discipline from non-event setup and summaries, retains existing plans' stored values, and specifies an internal `road` compatibility default for new non-event plans. CYF-87 implements the form, draft defaulting and preview/calendar presentation policy. See [the decision and delivery contract](NON_EVENT_DISCIPLINE_DECISION.md).
 
 ## Product principles
 

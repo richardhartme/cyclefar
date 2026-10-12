@@ -1,0 +1,3 @@
+<% if @configuration.errors[attribute].any? %>
+  <span id="<%= attribute %>-errors" class="text-error text-sm font-normal"><%= @configuration.errors[attribute].to_sentence %></span>
+<% end %>

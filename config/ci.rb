@@ -4,6 +4,7 @@ CI.run do
   step "Setup", "bin/setup --skip-server"
   step "Tests", "bundle exec rspec"
   step "Autoloading", "bin/rails zeitwerk:check"
+  step "Tests: Plan form interactions", "node --test spec/javascript/plan_configuration_controller_test.mjs"
 
   step "Style: Ruby", "bin/rubocop"
 

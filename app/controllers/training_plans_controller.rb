@@ -21,6 +21,12 @@ class TrainingPlansController < ApplicationController
     @presenter = Planning::PreviewPresenter.new(@preview)
   end
 
+  def end_date
+    configuration = Planning::PlanConfiguration.new(params.permit(:starts_on, :plan_length, :custom_duration_weeks).to_h)
+    ends_on = configuration.ends_on
+    render json: { ends_on: ends_on&.iso8601, label: ends_on&.to_fs(:long) }
+  end
+
   def prepare_preview
     @configuration = Planning::PlanConfiguration.new(plan_configuration_params)
     if @configuration.valid?
@@ -74,6 +80,7 @@ class TrainingPlansController < ApplicationController
     {
       goal: "general_fitness",
       discipline: "road",
+      event_discipline: "road",
       starts_on: Date.current,
       duration_mode: "preset",
       duration_months: 3,
@@ -89,6 +96,7 @@ class TrainingPlansController < ApplicationController
       :goal,
       :discipline,
       :starts_on,
+      :plan_length,
       :duration_mode,
       :duration_months,
       :custom_duration_weeks,
@@ -102,6 +110,7 @@ class TrainingPlansController < ApplicationController
       :event_distance_km,
       :event_elevation_m,
       :event_expected_duration_minutes,
+      :event_details_open,
       availability: {}).to_h
   end
 end

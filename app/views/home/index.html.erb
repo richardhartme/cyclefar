@@ -7,7 +7,7 @@
           <h1 class="card-title text-3xl">Training calendar</h1>
           <div class="mt-3 flex flex-wrap gap-2">
             <span class="badge badge-primary"><%= @plan.goal.humanize %></span>
-            <span class="badge badge-secondary"><%= @plan.discipline.humanize %></span>
+            <% if @plan.event? %><span class="badge badge-secondary"><%= @plan.discipline.humanize %></span><% end %>
             <span class="badge badge-ghost"><%= @plan.starts_on.to_fs(:long) %> – <%= @plan.ends_on.to_fs(:long) %></span>
           </div>
           <% if last_intervals_sync %>
