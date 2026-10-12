@@ -37,7 +37,7 @@ RSpec.describe "Intervals.icu sync", type: :request do
     create(:plan_phase, training_plan: plan)
 
     get root_path
-    expect(response.body).to include("Sync all structured workouts to Intervals.icu")
+    expect(response.body).to include("Sync workouts to Intervals.icu")
 
     post intervals_icu_sync_path
     expect(response).to redirect_to(root_path)
