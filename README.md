@@ -149,6 +149,24 @@ API-contract limits.
 
 ## Deployment
 
+### Coolify health check
+
+Use the existing public Rails health endpoint at `/up`. It returns HTTP `200`
+when the application boots successfully and `500` for a Rails boot failure.
+It requires no sign-in and is exempt from Rails' HTTP-to-HTTPS redirect.
+This checks application liveness; it does not check database or external services.
+
+In Coolify's [Healthcheck settings](https://coolify.io/docs/applications/configuration/health-checks),
+enable an HTTP check with method `GET`, scheme `http`, host `localhost`,
+port `80` and path `/up` when using this repository's Dockerfile (Thruster
+listens on port `80`). If running Puma directly, use its configured `PORT`
+(default `3000`). Save and redeploy to apply the check.
+
+Test from inside the container with `curl --fail http://localhost:80/up`.
+The final Docker image already includes `curl`.
+
+### Kamal deployment
+
 The application uses Kamal **2.12.0**, Docker and an external PostgreSQL server.
 Production images are built and deployed from the developer's machine. GitHub
 Actions runs validation only; it does not build production images or deploy.
