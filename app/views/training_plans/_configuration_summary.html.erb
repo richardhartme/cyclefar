@@ -1,0 +1,23 @@
+<section id="configuration-summary" aria-labelledby="configuration-summary-title" class="card bg-base-100 border-base-300 border shadow-sm">
+  <div class="card-body gap-4">
+    <h2 id="configuration-summary-title" class="card-title">Your plan at a glance</h2>
+    <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div><dt class="text-base-content/60 text-sm">Goal</dt><dd class="font-semibold"><%= summary.goal %></dd></div>
+      <div><dt class="text-base-content/60 text-sm">Start date</dt><dd class="font-semibold"><%= summary.start_date %></dd></div>
+      <div><dt class="text-base-content/60 text-sm">End date</dt><dd class="font-semibold"><%= summary.end_date %></dd></div>
+      <% if @configuration.event? %>
+        <div><dt class="text-base-content/60 text-sm">Target event</dt><dd class="font-semibold"><%= summary.event_name %> · <%= summary.end_date %></dd></div>
+        <div><dt class="text-base-content/60 text-sm">Event discipline</dt><dd class="font-semibold"><%= summary.discipline %></dd></div>
+      <% else %>
+        <div><dt class="text-base-content/60 text-sm">Plan length</dt><dd class="font-semibold"><%= summary.plan_length %></dd></div>
+      <% end %>
+      <div><dt class="text-base-content/60 text-sm">Training days</dt><dd class="font-semibold"><%= summary.training_days %></dd></div>
+      <div><dt class="text-base-content/60 text-sm">Normal weekly availability</dt><dd class="font-semibold"><%= summary.normal_weekly_hours %></dd></div>
+      <div><dt class="text-base-content/60 text-sm">Recovery pattern</dt><dd class="font-semibold"><%= summary.recovery_pattern %></dd></div>
+    </dl>
+    <% if @configuration.event? %>
+      <p class="text-sm">This event plan includes taper and a day-before opener.</p>
+    <% end %>
+    <p class="text-base-content/70 text-sm">Normal session lengths may be reduced during recovery weeks and taper.</p>
+  </div>
+</section>

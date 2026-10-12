@@ -27,6 +27,11 @@ class TrainingPlansController < ApplicationController
     render json: { ends_on: ends_on&.iso8601, label: ends_on&.to_fs(:long) }
   end
 
+  def summary
+    @configuration = Planning::PlanConfiguration.new(plan_configuration_params)
+    render partial: "configuration_summary", locals: { summary: Planning::ConfigurationSummaryPresenter.new(@configuration) }
+  end
+
   def prepare_preview
     @configuration = Planning::PlanConfiguration.new(plan_configuration_params)
     if @configuration.valid?
