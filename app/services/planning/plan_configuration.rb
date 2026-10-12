@@ -54,7 +54,7 @@ module Planning
       @ftp_watts = integer(ftp_watts)
       @include_base = ActiveModel::Type::Boolean.new.cast(include_base)
       @progression_mode = progression_mode.presence || "continuous"
-      @hard_weeks_before_recovery = integer(hard_weeks_before_recovery)
+      @hard_weeks_before_recovery = @progression_mode == "hard_recovery_cycle" ? integer(hard_weeks_before_recovery) : nil
       @event_name = event_name.to_s.strip.presence
       @event_on = parse_date(event_on)
       @event_discipline = event_discipline.to_s.presence

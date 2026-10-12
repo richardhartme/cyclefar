@@ -136,6 +136,8 @@ The rider chooses either:
 1. Continuous progression; or
 2. Hard/recovery cycle, specifying the number of hard weeks before each recovery week.
 
+The setup form labels Continuous as `Continuous progression — no scheduled recovery weeks`. It does not promise that every workout or week increases. Hard weeks before recovery appears and is enabled only for the cycle choice; that choice requires a positive whole number. Continuous ignores any inactive cycle value, while a rider's entered count survives mode toggles, validation errors and Back to edit. Scheduled recovery weeks and event taper may shorten normal sessions or change session types. Continuous still permits event taper, feedback adjustments, manual recovery and time off.
+
 ### PLN-013 Preview
 
 Submitting configuration first creates a preview, not a persisted active plan.
@@ -185,6 +187,8 @@ Plans use named phases:
 - Taper (event plans only)
 
 The application calculates phase lengths automatically from total available duration. The rider does not configure phase lengths.
+
+Setup explains that Include Base adds an initial foundation phase before Build and Speciality, shows the resulting sequence with or without Base, and includes Taper in the displayed sequence for event plans.
 
 ### PLN-021 Discipline specificity
 
