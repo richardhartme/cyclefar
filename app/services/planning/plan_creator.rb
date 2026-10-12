@@ -12,7 +12,7 @@ module Planning
         plan = TrainingPlan.create!(
           user: @user,
           goal: @configuration.goal,
-          discipline: @configuration.discipline,
+          discipline: @configuration.training_discipline,
           starts_on: preview.starts_on,
           ends_on: preview.ends_on,
           include_base: @configuration.include_base,

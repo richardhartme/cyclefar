@@ -188,7 +188,7 @@ module Planning
       when "intervals"
         ordinal = interval_ordinals[phase.kind]
         interval_ordinals[phase.kind] += 1
-        IntervalSelector.new(goal: @configuration.goal, discipline: @configuration.discipline, phase: phase.kind, ordinal: ordinal).call
+        IntervalSelector.new(goal: @configuration.goal, discipline: @configuration.training_discipline, phase: phase.kind, ordinal: ordinal).call
       else
         slot.intent.to_sym
       end
@@ -270,7 +270,7 @@ module Planning
           duration_minutes: prescription.duration_minutes,
           phase: prescription.phase,
           goal: @configuration.goal,
-          discipline: @configuration.discipline).call
+          discipline: @configuration.training_discipline).call
       else
         Workouts::Generator.new(
           subtype: prescription.subtype,
@@ -279,7 +279,7 @@ module Planning
           variation_key: Workouts::Variations.default_key(prescription.subtype),
           phase: prescription.phase,
           goal: @configuration.goal,
-          discipline: @configuration.discipline,
+          discipline: @configuration.training_discipline,
           load_adjustments: prescription.reason_codes.include?("taper_reduced_intensity") ?
             { "main_set_factor" => early_long_taper?(prescription.scheduled_on) ? Rules::LONG_TAPER_WORK_FACTOR : Rules::TAPER_WORK_FACTOR } : {}).call
       end
