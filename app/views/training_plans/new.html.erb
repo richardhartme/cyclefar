@@ -18,8 +18,8 @@
       </section>
     <% end %>
 
-    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false }, class: "space-y-6" do %>
-      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
+    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false, controller: "plan-discipline" }, class: "space-y-6" do %>
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-action="change->plan-discipline#update">
         <legend class="fieldset-legend px-2 text-lg">Goal</legend>
         <div class="grid gap-3 sm:grid-cols-2">
           <% Planning::PreviewPresenter::GOAL_LABELS.each do |value, label| %>
@@ -34,7 +34,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
+      <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-plan-discipline-target="nonEvent" <%= "hidden" if @configuration.event? %>>
         <legend class="fieldset-legend px-2 text-lg">Discipline</legend>
         <div class="flex flex-wrap gap-3">
           <% Planning::PreviewPresenter::DISCIPLINE_LABELS.each do |value, label| %>
@@ -78,7 +78,11 @@
         <div class="grid gap-4 md:grid-cols-2">
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">Event name <%= text_field_tag "plan_configuration[event_name]", @configuration.event_name, class: "input w-full" %></label>
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">Event date <%= date_field_tag "plan_configuration[event_on]", @configuration.event_on, class: "input w-full" %></label>
-          <label class="fieldset-label flex-col items-start gap-2 font-semibold">Event discipline <%= select_tag "plan_configuration[event_discipline]", options_for_select(Planning::PreviewPresenter::DISCIPLINE_LABELS.map { |value, label| [label, value] }, @configuration.event_discipline), class: "select w-full" %></label>
+          <label class="fieldset-label flex-col items-start gap-2 font-semibold" data-plan-discipline-target="event" <%= "hidden" unless @configuration.event? %>>
+            Event discipline
+            <%= select_tag "plan_configuration[event_discipline]", options_for_select(Planning::PreviewPresenter::DISCIPLINE_LABELS.map { |value, label| [label, value] }, @configuration.event_discipline), class: "select w-full", aria: { describedby: "event-discipline-help" } %>
+            <span id="event-discipline-help" class="text-base-content/70 text-sm font-normal">Shapes the workout mix as your event approaches.</span>
+          </label>
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">Distance (km) <%= number_field_tag "plan_configuration[event_distance_km]", @configuration.event_distance_km, min: 1, step: 0.1, class: "input w-full" %></label>
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">Elevation (m) <%= number_field_tag "plan_configuration[event_elevation_m]", @configuration.event_elevation_m, min: 0, class: "input w-full" %></label>
           <label class="fieldset-label flex-col items-start gap-2 font-semibold">Expected duration (minutes) <%= number_field_tag "plan_configuration[event_expected_duration_minutes]", @configuration.event_expected_duration_minutes, min: 1, class: "input w-full" %></label>

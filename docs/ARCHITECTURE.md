@@ -4,7 +4,7 @@ This document maps the implemented application; [REQUIREMENTS.md](REQUIREMENTS.m
 
 ## Application identity and stack
 
-The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The repository pins Ruby 4.0.6 and Rails 8.1.4. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS with daisyUI and plain Ruby domain services. JavaScript uses import maps. Stimulus is installed, but only the generated example controller is present. Rails-generated authentication gates private application requests. Intervals.icu initial exports and reconciliation are manual; current-FTP mutations refresh confirmed upcoming exports in the foreground, without background syncing.
+The application module is `CycleFar`, the project is `cycle_far`, and domain classes remain brand-neutral. The repository pins Ruby 4.0.6 and Rails 8.1.4. The app uses Rails MVC, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS with daisyUI and plain Ruby domain services. JavaScript uses import maps. Stimulus handles presentation-only interactions, including goal-dependent discipline controls during plan setup. Rails-generated authentication gates private application requests. Intervals.icu initial exports and reconciliation are manual; current-FTP mutations refresh confirmed upcoming exports in the foreground, without background syncing.
 
 ## Authentication boundary
 
@@ -43,6 +43,7 @@ Avoid repository layers, command buses, event sourcing, GraphQL and front-end SP
 ## Plan creation and calendar
 
 - `TrainingPlansController` saves valid preview inputs in the Rails session, redirects to a refreshable GET preview, restores them on Back to edit, and consumes the draft on confirmation (CYF-1 and CYF-75). Preview does not persist a plan.
+- `PlanConfiguration#training_discipline` selects Event discipline for new event plans and the ordinary discipline for other goals. PlanBuilder, PreviewPresenter and PlanCreator share that value; new event plans persist matching plan/event disciplines. Both raw form selections survive editing. `ExistingPlanConfiguration#training_discipline` deliberately returns the saved plan discipline, preserving legacy mismatches without a migration or automatic regeneration (CYF-85).
 - `Planning::PlanConfiguration` validates setup inputs and `Planning::Availability` represents weekly slots using ISO weekdays (Monday=1).
 - `Planning::PlanBuilder#preview` builds in-memory phases, prescriptions, recovery/taper treatment, forecast metrics and load warnings. It delegates phase allocation and subtype selection to `PhaseAllocator` and `IntervalSelector`.
 - `Planning::RecoverySchedule` aligns nearby recoveries before phase transitions and supplies the same flags to previews, calendar and load context. Taper forecasts use separate early/final load budgets against a comparable peak week, preserving the event and opener; saved main-set factors and ceilings survive horizon generation (CYF-11).

@@ -245,7 +245,7 @@ RSpec.describe "Training plan preview", type: :request do
       plan = TrainingPlan.active.sole
       expect(plan).to have_attributes(
         goal: "event",
-        discipline: "gravel",
+        discipline: "road",
         initial_ftp_watts: 280,
         include_base: false,
         starts_on: Date.new(2026, 9, 7),
@@ -271,6 +271,59 @@ RSpec.describe "Training plan preview", type: :request do
       expect(field_value(:include_base)).to be(true)
       expect(field_value(:event_name)).to be_nil.or eq("")
       expect(field_value("availability][7][enabled")).to be(false)
+    end
+
+    it "CYF-85 retains both discipline choices through validation, preview editing and goal switching" do
+      inputs = plan_configuration(
+        goal: "event",
+        discipline: "gravel",
+        event_discipline: "mtb",
+        event_name: "Trail race",
+        event_on: "2026-12-06")
+      submit_preview(inputs.merge(ftp_watts: "0"))
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(field_value(:discipline)).to eq("gravel")
+      expect(field_value(:event_discipline)).to eq("mtb")
+      html = Nokogiri::HTML(response.body)
+      expect(html.at_css('[data-plan-discipline-target="nonEvent"]').key?("hidden")).to be(true)
+      expect(html.at_css('[data-plan-discipline-target="event"]').key?("hidden")).to be(false)
+      expect(html.at_css('select[name="plan_configuration[event_discipline]"]')["aria-describedby"]).to eq("event-discipline-help")
+      expect(response.body).to include("Shapes the workout mix as your event approaches.")
+
+      submit_preview(inputs)
+      summary = Nokogiri::HTML(response.body).at_css('[aria-label="Plan summary"]')
+      expect(summary.text).to include("MTB")
+      expect(summary.text).not_to include("Gravel")
+      back_to_edit
+      expect(field_value(:discipline)).to eq("gravel")
+      expect(field_value(:event_discipline)).to eq("mtb")
+
+      submit_preview(inputs.merge(goal: "increase_ftp"))
+      back_to_edit
+      expect(field_value(:discipline)).to eq("gravel")
+      expect(field_value(:event_discipline)).to eq("mtb")
+      html = Nokogiri::HTML(response.body)
+      expect(html.at_css('[data-plan-discipline-target="nonEvent"]').key?("hidden")).to be(false)
+      expect(html.at_css('[data-plan-discipline-target="event"]').key?("hidden")).to be(true)
+
+      submit_preview(inputs)
+      post training_plan_path
+      plan = TrainingPlan.active.sole
+      expect(plan.discipline).to eq("mtb")
+      expect(plan.target_event.discipline).to eq("mtb")
+    end
+
+    it "CYF-85 previews and confirms an event configuration without a separate plan discipline" do
+      submit_preview(
+        plan_configuration(
+          goal: "event",
+          event_discipline: "mtb",
+          event_name: "Trail race",
+          event_on: "2026-12-06").except(:discipline))
+      expect(response).to have_http_status(:ok)
+      expect { post training_plan_path }.to change(TrainingPlan, :count).by(1)
+      expect(TrainingPlan.active.sole.discipline).to eq("mtb")
+      expect(TrainingPlan.active.sole.target_event.discipline).to eq("mtb")
     end
 
     it "renders invalid edits and confirms a corrected preview" do
