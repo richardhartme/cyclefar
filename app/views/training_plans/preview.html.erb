@@ -79,7 +79,7 @@
             </div>
             <div class="bg-base-200 rounded-box mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span class="font-semibold">Recovery pattern: </span>
-                <span class="text-base-content/70"><%= @configuration.progression_mode == "continuous" ? "Continuous progression" : "#{@configuration.hard_weeks_before_recovery} hard weeks, then one recovery week" %></span>
+                <span class="text-base-content/70"><%= @configuration.progression_mode == "continuous" ? "Continuous progression — no scheduled recovery weeks" : "#{@configuration.hard_weeks_before_recovery} hard weeks, then one recovery week" %></span>
             </div>
             </div>
         </section>

@@ -63,6 +63,23 @@ RSpec.describe Planning::PlanBuilder do
     expect(recovery.flat_map(&:prescriptions).select(&:executable?).map(&:subtype).uniq).to all(be_in(%w[endurance recovery]))
   end
 
+  it "CYF-89 / PLN-020 keeps event taper with or without Base in Continuous mode" do
+    [ true, false ].each do |include_base|
+      plan = preview(
+        goal: "event",
+        event_name: "Autumn Classic",
+        event_on: Date.new(2026, 12, 6),
+        event_discipline: "road",
+        progression_mode: "continuous",
+        hard_weeks_before_recovery: "invalid",
+        include_base: include_base)
+      expected = include_base ? %w[base build speciality taper] : %w[build speciality taper]
+      expect(plan.phases.map(&:kind)).to eq(expected)
+      expect(plan.weeks).to all(have_attributes(recovery_week: false))
+      expect(plan.prescriptions.map(&:phase)).to include("taper")
+    end
+  end
+
   it "selects broad interval cycles deterministically and preserves specific intents" do
     broad = preview(
       goal: "improve_climbing",

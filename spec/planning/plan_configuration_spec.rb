@@ -94,4 +94,21 @@ RSpec.describe Planning::PlanConfiguration do
     expect(config.input_value(:custom_duration_weeks)).to eq("2.5")
     expect(config.event_details_open).to be(true)
   end
+
+  it "CYF-89 / PLN-012 ignores an inactive cycle count but validates the selected cycle" do
+    [ nil, "", "0", "2.5", "invalid", "3" ].each do |count|
+      continuous = configuration(progression_mode: "continuous", hard_weeks_before_recovery: count)
+      expect(continuous).to be_valid
+      expect(continuous.hard_weeks_before_recovery).to be_nil
+      expect(continuous.input_value(:hard_weeks_before_recovery)).to eq(count)
+    end
+
+    [ nil, "", "0", "2.5", "invalid" ].each do |count|
+      cycle = configuration(progression_mode: "hard_recovery_cycle", hard_weeks_before_recovery: count)
+      expect(cycle).not_to be_valid
+      expect(cycle.errors[:hard_weeks_before_recovery]).to include("must be a positive whole number")
+      expect(cycle.input_value(:hard_weeks_before_recovery)).to eq(count)
+    end
+    expect(configuration(progression_mode: "hard_recovery_cycle", hard_weeks_before_recovery: "3")).to be_valid
+  end
 end

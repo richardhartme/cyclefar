@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["duration", "event", "eventTiming", "custom", "length", "weeks", "startDate", "endDate", "optionalDetails", "disclosureState"]
+  static targets = ["duration", "event", "eventTiming", "custom", "length", "weeks", "startDate", "endDate", "optionalDetails", "disclosureState", "base", "phaseSequence", "progression", "cycle"]
   static values = { endDateUrl: String }
 
   connect() {
@@ -17,6 +17,8 @@ export default class extends Controller {
     this.setActive(this.durationTarget, !event)
     this.setActive(this.eventTarget, event)
     this.setActive(this.customTarget, !event && this.lengthTarget.value === "custom")
+    this.setActive(this.cycleTarget, this.progressionTargets.find(option => option.checked)?.value === "hard_recovery_cycle")
+    this.phaseSequenceTarget.textContent = `Phases: ${this.baseTarget.checked ? "Base → " : ""}Build → Speciality${event ? " → Taper" : ""}.`
     this.eventTimingTarget.hidden = !event
     this.refreshEndDate()
   }

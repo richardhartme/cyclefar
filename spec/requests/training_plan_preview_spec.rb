@@ -51,6 +51,49 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response.body).not_to include("Emphasises endurance volume")
   end
 
+  it "CYF-89 / PLN-012 / PLN-020 explains Base, recovery and taper with an accessible dependent cycle field" do
+    get new_training_plan_path
+    html = Nokogiri::HTML(response.body)
+    progression = html.at_xpath("//fieldset[legend[normalize-space()='Fitness and progression']]")
+    expect(progression.text).to include("Adds an initial foundation phase before Build and Speciality.")
+    expect(progression.text).to include("Continuous progression — no scheduled recovery weeks")
+    expect(progression.text).to include("Scheduled recovery weeks and event taper", "shorten normal sessions", "change session types")
+    expect(progression.text).to include("time off")
+    expect(progression.at_css('[data-plan-configuration-target="phaseSequence"]')["aria-live"]).to eq("polite")
+    cycle = progression.at_css('[data-plan-configuration-target="cycle"]')
+    expect(cycle.key?("hidden")).to be(true)
+    expect(cycle.key?("disabled")).to be(true)
+    weeks = cycle.at_css('input[name="plan_configuration[hard_weeks_before_recovery]"]')
+    expect(weeks["required"]).to eq("required")
+    expect(weeks["step"]).to eq("1")
+  end
+
+  it "CYF-89 / PLN-012 ignores a stale count for Continuous mode through confirmation" do
+    submit_preview(plan_configuration(progression_mode: "continuous", hard_weeks_before_recovery: "invalid"))
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Continuous progression — no scheduled recovery weeks")
+    link = Nokogiri::HTML(response.body).at_xpath("//a[text()='Back to edit']")
+    get link["href"]
+    expect(Nokogiri::HTML(response.body).at_css('input[name="plan_configuration[hard_weeks_before_recovery]"]')["value"]).to eq("invalid")
+    post training_plan_path
+    expect(response).to redirect_to(root_path)
+    expect(TrainingPlan.active.sole).to have_attributes(progression_mode: "continuous", hard_weeks_before_recovery: nil)
+  end
+
+  it "CYF-89 / PLN-012 retains cycle count after validation errors and Back to edit" do
+    submit_preview(plan_configuration(hard_weeks_before_recovery: "2.5"))
+    expect(response).to have_http_status(:unprocessable_content)
+    html = Nokogiri::HTML(response.body)
+    expect(html.at_css('input[name="plan_configuration[hard_weeks_before_recovery]"]')["value"]).to eq("2.5")
+    expect(html.at_css('[data-plan-configuration-target="cycle"]').key?("hidden")).to be(false)
+    expect(response.body).to include("Hard weeks before recovery must be a positive whole number")
+
+    submit_preview(plan_configuration(hard_weeks_before_recovery: "4"))
+    link = Nokogiri::HTML(response.body).at_xpath("//a[text()='Back to edit']")
+    get link["href"]
+    expect(Nokogiri::HTML(response.body).at_css('input[name="plan_configuration[hard_weeks_before_recovery]"]')["value"]).to eq("4")
+  end
+
   it "CYF-88 / PLN-011 explains the session choices with weekday-specific accessible names" do
     get new_training_plan_path
     html = Nokogiri::HTML(response.body)

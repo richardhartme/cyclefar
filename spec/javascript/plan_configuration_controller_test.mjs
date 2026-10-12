@@ -12,7 +12,10 @@ function fixture() {
   const goal = { value: "increase_ftp" }
   const controls = []
   controller.element = { querySelector: () => goal, querySelectorAll: () => controls }
-  for (const target of ["duration", "event", "custom", "eventTiming", "endDate", "optionalDetails", "disclosureState"]) controller[`${target}Target`] = {}
+  for (const target of ["duration", "event", "custom", "eventTiming", "endDate", "optionalDetails", "disclosureState", "cycle", "phaseSequence"]) controller[`${target}Target`] = {}
+  controller.baseTarget = { checked: true }
+  controller.progressionTargets = [{ value: "continuous", checked: true }, { value: "hard_recovery_cycle", checked: false }]
+  controller.cycleWeeksTarget = { value: "3" }
   controller.lengthTarget = { value: "3" }
   controller.weeksTarget = { value: "8" }
   controller.startDateTarget = { value: "2028-01-31" }
@@ -41,6 +44,39 @@ test("goal and length changes disable only inactive sections and preserve entere
   assert.equal(controller.customTarget.disabled, false)
   assert.equal(controller.weeksTarget.value, "8")
   assert.equal(controller.lengthTarget.value, "custom")
+})
+
+test("CYF-89 reveals the cycle field only in cycle mode and retains its value when toggled", () => {
+  const { controller } = fixture()
+  controller.refreshEndDate = () => {}
+  controller.update()
+  assert.equal(controller.cycleTarget.hidden, true)
+  assert.equal(controller.cycleTarget.disabled, true)
+  controller.progressionTargets[0].checked = false
+  controller.progressionTargets[1].checked = true
+  controller.update()
+  assert.equal(controller.cycleTarget.hidden, false)
+  assert.equal(controller.cycleTarget.disabled, false)
+  controller.cycleWeeksTarget.value = "4"
+  controller.progressionTargets[0].checked = true
+  controller.progressionTargets[1].checked = false
+  controller.update()
+  assert.equal(controller.cycleTarget.hidden, true)
+  assert.equal(controller.cycleWeeksTarget.value, "4")
+})
+
+test("CYF-89 announces the selected phase sequence including event taper", () => {
+  const { controller, goal } = fixture()
+  controller.refreshEndDate = () => {}
+  controller.update()
+  assert.match(controller.phaseSequenceTarget.textContent, /Base.*Build.*Speciality/)
+  controller.baseTarget.checked = false
+  controller.update()
+  assert.match(controller.phaseSequenceTarget.textContent, /Build.*Speciality/)
+  assert.doesNotMatch(controller.phaseSequenceTarget.textContent, /Base/)
+  goal.value = "event"
+  controller.update()
+  assert.match(controller.phaseSequenceTarget.textContent, /Build.*Speciality.*Taper/)
 })
 
 test("disabled values survive form submission as draft data without duplicate active fields", () => {
