@@ -57,6 +57,12 @@ CYF-77 removes the assessment scheduler, preview section, calendar items and com
 
 Forecast generation always passes an explicit variation. Initial endurance materialisation selects and saves a random profile under WKO-009. Manual Add/Copy can create structured workouts beyond the automatic 14-day horizon.
 
+### Non-event discipline decision (CYF-86)
+
+`Planning::Rules::INTERVAL_CYCLES` and `IntervalSelector` select all non-event broad Intervals by goal/phase only; `LoadReduction` follows those same cycles. `Workouts::Generator` carries discipline as context without changing steps. Event discipline affects event Build/Speciality selection; event Base is generic and specific weekly subtypes bypass selection.
+
+[CYF-86's decision](NON_EVENT_DISCIPLINE_DECISION.md) specifies removing non-event setup/summary controls and using a server-side `Planning::Rules` Road default for new non-event configurations, while preserving the existing required enum. `ExistingPlanConfiguration` must continue reading saved values for confirmed plans. No schema migration, engine training constants/cycles or completed-history changes are required. CYF-86 specifies that contract and tests retained training behaviour; it does not change runtime configuration/presentation. The form/draft validation, event-only Stimulus controls, preview/calendar/public copy and CYF-90 configuration summary need the documented follow-on implementation and coverage.
+
 ## Workout generation and editing
 
 `Workouts::Generator` takes subtype, duration, progression level, variation key and phase/goal/discipline context. It composes warm-up, main/aerobic set, cool-down and exact-duration fitting into a `WorkoutDefinition` with expanded `StepDefinition` values. `OpenerGenerator` builds the separate 30–45 minute activation structure.

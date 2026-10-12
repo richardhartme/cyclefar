@@ -48,14 +48,16 @@ V1 supports exactly these top-level goals:
 
 ## Cycling disciplines
 
-The rider chooses one discipline during plan setup:
+For Prepare for an Event, the rider chooses one Event discipline during plan setup:
 
 - Road
 - Gravel
 - MTB
 - Ultra / Endurance
 
-Discipline has limited impact in Base, more impact in Build, and the strongest impact in Speciality.
+Event Base uses a generic cycle; Event discipline selects the broad Intervals mix in Build and Speciality. Explicit weekly subtypes retain their intent subject to the normal reduced-load overrides.
+
+Non-event goals use goal/phase rules without discipline customisation. The CYF-86 decision omits discipline from non-event setup and summaries, retains existing plans' stored values, and specifies an internal `road` compatibility default for new non-event plans. Form/defaulting/presentation changes are follow-on work; the current form still requires this input. See [the decision and delivery contract](NON_EVENT_DISCIPLINE_DECISION.md).
 
 ## Product principles
 

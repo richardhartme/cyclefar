@@ -65,7 +65,6 @@ Plan configuration is one long form, not a multi-step wizard.
 Required fields:
 
 - goal;
-- discipline (one Event discipline choice for event plans);
 - start date;
 - FTP;
 - include Base phase?;
@@ -75,17 +74,23 @@ Required fields:
 For non-event goals:
 
 - plan duration can be selected from presets (1, 3, 6 months) or entered as a custom duration.
+- do not request discipline; goal and phase determine automatic interval selection (CYF-86).
+- resolve and persist an internal `road` discipline for new plans; missing, blank, invalid or stale non-event discipline input is ignored and cannot block preview/confirmation. It is not a rider-selected training input.
 
 For event goal:
 
 - event name required;
 - event date required;
-- event discipline required (defaults to the initial plan discipline); event mode shows only this discipline selector, beside the event name/date;
+- event discipline required (fresh forms default to Road); event mode shows only this discipline selector, beside the event name/date;
 - distance km optional;
 - elevation metres optional;
 - expected duration optional.
 
-For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning (CYF-85). Preserve both form selections across goal changes and preview editing; only the active choice is validated and used for training. An explicit invalid event choice is rejected, rather than falling back to the inactive selection.
+For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning (CYF-85). Preserve Event discipline across goal changes, validation errors and preview editing; only active event mode validates/uses it. An explicit invalid event choice is rejected. Do not infer the active event choice from stale non-event input, including legacy drafts.
+
+CYF-86 records the product/specification decision; removal/defaulting/summary changes remain follow-on implementation. The current form still requires and retains non-event discipline, and CYF-85 currently falls back to it for missing Event discipline. Until the new contract is implemented, do not claim non-event discipline tailors training. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md) for persistence, legacy-draft handling, delivery boundaries and required coverage.
+
+Existing non-event plans retain their stored discipline through materialisation/replanning, with no backfill or workout regeneration caused by this decision. Non-event setup summaries, previews and calendar headers must omit discipline, including the internal default and existing stored values.
 
 Existing event plans retain their saved `TrainingPlan.discipline` for training, including legacy records whose event label differs. Do not backfill either discipline or regenerate existing/completed workouts. Changing confirmed discipline still requires creating a new plan.
 
@@ -139,6 +144,8 @@ Preview shows:
 
 The rider may go back and edit the configuration, then confirm to create the plan.
 
+Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice (CYF-86; presentation implementation pending).
+
 ### PLN-014 One active plan
 
 Only one active plan may exist per rider.
@@ -174,7 +181,9 @@ The application calculates phase lengths automatically from total available dura
 
 ### PLN-021 Discipline specificity
 
-Speciality is goal/discipline specific. Build may also use discipline as a secondary input. Base remains mostly generic.
+Non-event Base, Build and Speciality broad Intervals use the deterministic goal/phase cycles in TRAINING_ENGINE.md §11, independently of stored discipline. Discipline does not change their power targets, progression, durations, phases or load rules (CYF-86).
+
+For event plans, Event discipline selects broad Intervals cycles in Build/Speciality; Base uses the generic event cycle. Explicit weekly subtypes bypass automatic selection, subject to existing recovery/taper/time-off and load rules. Discipline never adds days or volume to the rider's schedule.
 
 ### PLN-022 Taper/event
 
