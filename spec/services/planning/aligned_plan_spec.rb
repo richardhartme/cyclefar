@@ -7,6 +7,7 @@ RSpec.describe "CYF-11 persisted phase treatment", generated_workouts: true do
     Planning::PlanConfiguration.new(
       goal: "event",
       discipline: "road",
+      event_discipline: "road",
       starts_on: start,
       event_name: "Autumn Classic",
       event_on: event,

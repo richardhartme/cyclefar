@@ -8,6 +8,7 @@ RSpec.describe "PLN-022 staged taper" do
     Planning::PlanConfiguration.new(
       goal: "event",
       discipline: "road",
+      event_discipline: "road",
       starts_on: start,
       event_name: "Autumn Classic",
       event_on: event,

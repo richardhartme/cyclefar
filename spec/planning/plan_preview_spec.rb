@@ -75,7 +75,7 @@ RSpec.describe Planning::PlanBuilder do
   end
 
   %w[general_fitness increase_ftp improve_endurance improve_climbing].each do |goal|
-    it "CYF-86 / PLN-021 keeps #{goal} training independent of stored discipline in every phase" do
+    it "CYF-86 / PLN-021 keeps #{goal} training independent of submitted discipline in every phase" do
       schedule = availability(
         1 => [ 90, "intervals" ],
         2 => [ 90, "vo2_max" ],
@@ -103,6 +103,7 @@ RSpec.describe Planning::PlanBuilder do
 
       %w[gravel mtb ultra_endurance].each do |discipline|
         alternative = preview(goal: goal, discipline: discipline, availability: schedule)
+        expect(alternative.configuration.training_discipline).to eq("road")
         expect(alternative.phases).to eq(baseline.phases)
         expect(signature.call(alternative)).to eq(signature.call(baseline))
         expect(alternative.weeks.map { |week| week.to_h.except(:prescriptions) })

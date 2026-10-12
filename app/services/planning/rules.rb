@@ -4,6 +4,7 @@ module Planning
   module Rules
     ENGINE_VERSION = Training::Rules::ENGINE_VERSION
     PRESET_MONTHS = [ 1, 3, 6 ].freeze
+    NON_EVENT_DISCIPLINE = "road".freeze
     MINIMUM_CUSTOM_WEEKS = 4
     MINIMUM_EVENT_LEAD_DAYS = 28
     HARD_WEEK_GROWTH_CAP = 0.08

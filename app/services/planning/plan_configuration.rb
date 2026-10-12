@@ -10,6 +10,7 @@ module Planning
     attr_accessor :goal,
       :discipline,
       :starts_on,
+      :plan_length,
       :duration_mode,
       :duration_months,
       :custom_duration_weeks,
@@ -23,20 +24,21 @@ module Planning
       :event_distance_km,
       :event_elevation_m,
       :event_expected_duration_minutes,
+      :event_details_open,
       :availability
 
     validates :goal, inclusion: { in: Training::Rules::GOALS }
-    validates :discipline, inclusion: { in: Training::Rules::DISCIPLINES }, unless: :event?
     validates :starts_on, :ftp_watts, :progression_mode, presence: true
     validates :ftp_watts, numericality: { only_integer: true, greater_than: 0 }
     validates :progression_mode, inclusion: { in: %w[continuous hard_recovery_cycle] }
-    validates :duration_mode, inclusion: { in: %w[preset custom] }
-    validate :duration_is_valid
+    validates :duration_mode, inclusion: { in: %w[preset custom] }, unless: :event?
+    validate :duration_is_valid, unless: :event?
     validate :event_is_valid
     validate :cycle_is_valid
     validate :availability_is_valid
 
     def initialize(attributes = {})
+      @input_values = attributes.to_h.stringify_keys
       super
       @goal = goal.to_s.presence
       @discipline = discipline.to_s.presence
@@ -44,16 +46,22 @@ module Planning
       @duration_mode = duration_mode.presence || "preset"
       @duration_months = integer(duration_months || 3)
       @custom_duration_weeks = integer(custom_duration_weeks)
+      if plan_length.present?
+        @duration_mode = plan_length == "custom" ? "custom" : "preset"
+        @duration_months = integer(plan_length) unless plan_length == "custom"
+      end
+      @plan_length = plan_length.presence || (duration_mode == "custom" ? "custom" : duration_months.to_s)
       @ftp_watts = integer(ftp_watts)
       @include_base = ActiveModel::Type::Boolean.new.cast(include_base)
       @progression_mode = progression_mode.presence || "continuous"
       @hard_weeks_before_recovery = integer(hard_weeks_before_recovery)
       @event_name = event_name.to_s.strip.presence
       @event_on = parse_date(event_on)
-      @event_discipline = event_discipline.to_s.presence || @discipline
+      @event_discipline = event_discipline.to_s.presence
       @event_distance_km = decimal(event_distance_km)
       @event_elevation_m = integer(event_elevation_m)
       @event_expected_duration_minutes = integer(event_expected_duration_minutes)
+      @event_details_open = ActiveModel::Type::Boolean.new.cast(event_details_open)
       @invalid_availability = false
       @availability = normalize_availability(availability)
     end
@@ -62,16 +70,26 @@ module Planning
       goal == "event"
     end
 
-    # Keep both form selections for goal switching; only the active one drives training.
+    # Non-event discipline is a compatibility value, not a training choice (CYF-86).
     def training_discipline
-      event? ? event_discipline : discipline
+      event? ? event_discipline : Rules::NON_EVENT_DISCIPLINE
+    end
+
+    def input_value(attribute)
+      @input_values.fetch(attribute.to_s) { public_send(attribute) }
     end
 
     def ends_on
       return event_on if event?
       return unless starts_on
 
-      duration_mode == "custom" ? starts_on + custom_duration_weeks.to_i.weeks - 1 : starts_on.advance(months: duration_months.to_i) - 1
+      if duration_mode == "custom"
+        return unless custom_duration_weeks.is_a?(Integer) && custom_duration_weeks >= Rules::MINIMUM_CUSTOM_WEEKS
+
+        starts_on + custom_duration_weeks.weeks - 1
+      elsif duration_mode == "preset" && Rules::PRESET_MONTHS.include?(duration_months)
+        starts_on.advance(months: duration_months) - 1
+      end
     end
 
     def slot_for(weekday)
@@ -98,9 +116,17 @@ module Planning
         errors.add(:event_on, "must be at least four weeks after the plan start")
       end
       errors.add(:event_distance_km, "must be positive") if event_distance_km && event_distance_km <= 0
+      if input_value(:event_distance_km).present? && event_distance_km.nil?
+        errors.add(:event_distance_km, "must be a positive number")
+      end
       errors.add(:event_elevation_m, "must be zero or greater") if event_elevation_m && event_elevation_m.negative?
+      if input_value(:event_elevation_m).present? && event_elevation_m.nil?
+        errors.add(:event_elevation_m, "must be a whole number")
+      end
       if event_expected_duration_minutes && event_expected_duration_minutes <= 0
         errors.add(:event_expected_duration_minutes, "must be positive")
+      elsif input_value(:event_expected_duration_minutes).present? && event_expected_duration_minutes.nil?
+        errors.add(:event_expected_duration_minutes, "must be a positive whole number")
       end
     end
 
