@@ -71,6 +71,8 @@ Radio/cards:
 
 ### Discipline
 
+For non-event goals, show this section. Event mode instead shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Switching goals preserves both selections; the active goal chooses which discipline is used. Validation errors and Back to edit restore the same selections and visibility (CYF-85).
+
 - Road
 - Gravel
 - MTB
