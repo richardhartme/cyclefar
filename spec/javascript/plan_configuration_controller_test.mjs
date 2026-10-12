@@ -151,3 +151,25 @@ test("goal switching aborts an outstanding end-date request and event mode makes
     globalThis.fetch = originalFetch
   }
 })
+
+test("summary refresh posts active form choices and replaces only the summary", async () => {
+  const { controller } = fixture()
+  controller.summaryTarget = { innerHTML: "old summary" }
+  controller.summaryUrlValue = "/training_plan/summary"
+  const originalFetch = globalThis.fetch
+  const originalFormData = globalThis.FormData
+  try {
+    globalThis.FormData = class { constructor(form) { assert.equal(form, controller.element) } }
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, "/training_plan/summary")
+      assert.equal(options.method, "POST")
+      assert.equal(options.headers.Accept, "text/html")
+      return { ok: true, text: async () => "<section>Updated summary</section>" }
+    }
+    await controller.refreshSummary()
+    assert.equal(controller.summaryTarget.innerHTML, "<section>Updated summary</section>")
+  } finally {
+    globalThis.fetch = originalFetch
+    globalThis.FormData = originalFormData
+  }
+})

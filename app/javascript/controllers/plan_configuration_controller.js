@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["duration", "event", "eventTiming", "custom", "length", "weeks", "startDate", "endDate", "optionalDetails", "disclosureState", "base", "phaseSequence", "progression", "cycle"]
-  static values = { endDateUrl: String }
+  static targets = ["duration", "event", "eventTiming", "custom", "length", "weeks", "startDate", "endDate", "optionalDetails", "disclosureState", "base", "phaseSequence", "progression", "cycle", "summary"]
+  static values = { endDateUrl: String, summaryUrl: String }
 
   connect() {
     this.update()
@@ -10,6 +10,8 @@ export default class extends Controller {
 
   disconnect() {
     this.endDateRequest?.abort()
+    this.summaryRequest?.abort()
+    clearTimeout(this.summaryTimer)
   }
 
   update() {
@@ -48,6 +50,29 @@ export default class extends Controller {
 
   prepareSubmit() {
     this.disclose()
+  }
+
+  queueSummary() {
+    clearTimeout(this.summaryTimer)
+    this.summaryTimer = setTimeout(() => this.refreshSummary(), 300)
+  }
+
+  async refreshSummary() {
+    clearTimeout(this.summaryTimer)
+    this.summaryRequest?.abort()
+    this.summaryRequest = new AbortController()
+    try {
+      const response = await fetch(this.summaryUrlValue, {
+        method: "POST",
+        body: new FormData(this.element),
+        headers: { Accept: "text/html" },
+        signal: this.summaryRequest.signal
+      })
+      if (!response.ok) throw new Error("Summary unavailable")
+      this.summaryTarget.innerHTML = await response.text()
+    } catch (error) {
+      if (error.name !== "AbortError") this.summaryTarget.textContent = "Preview your plan to check these choices."
+    }
   }
 
   async refreshEndDate() {

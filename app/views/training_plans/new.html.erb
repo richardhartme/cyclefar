@@ -18,7 +18,7 @@
       </section>
     <% end %>
 
-    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false, controller: "plan-configuration", plan_configuration_end_date_url_value: end_date_training_plan_path, action: "formdata->plan-configuration#preserveDraft submit->plan-configuration#prepareSubmit" }, class: "space-y-6" do %>
+    <%= form_with url: preview_training_plan_path, scope: :plan_configuration, data: { turbo: false, controller: "plan-configuration", plan_configuration_end_date_url_value: end_date_training_plan_path, plan_configuration_summary_url_value: summary_training_plan_path, action: "formdata->plan-configuration#preserveDraft submit->plan-configuration#prepareSubmit change->plan-configuration#refreshSummary input->plan-configuration#queueSummary" }, class: "space-y-6" do %>
       <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5" data-action="change->plan-configuration#update">
         <legend class="fieldset-legend px-2 text-lg">Goal</legend>
         <div class="grid gap-3 sm:grid-cols-2">
@@ -182,6 +182,8 @@
           </table>
         </div>
       </fieldset>
+
+      <div data-plan-configuration-target="summary"><%= render "configuration_summary", summary: Planning::ConfigurationSummaryPresenter.new(@configuration) %></div>
 
       <div class="card-actions justify-end">
         <%= link_to "Cancel", root_path, class: "btn btn-ghost" %>

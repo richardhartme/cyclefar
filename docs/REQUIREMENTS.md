@@ -142,6 +142,8 @@ The setup form labels Continuous as `Continuous progression — no scheduled rec
 
 Submitting configuration first creates a preview, not a persisted active plan.
 
+Before submission, a compact live configuration summary above Preview plan shows the active goal, start/end dates, event discipline and target event when applicable, enabled training-day count, normal weekly availability and recovery pattern. Event summaries state that taper and a day-before opener are included. Invalid or incomplete inputs show meaningful placeholders. The summary uses the same server-side configuration rules as preview, excludes inactive choices and does not persist a plan.
+
 Preview shows:
 
 - plan start/end;
