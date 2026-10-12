@@ -89,6 +89,23 @@ RSpec.describe Planning::PlanBuilder do
     expect(long_taper.prescriptions.find { |item| item.kind == "event" }.scheduled_on).to eq(Date.new(2026, 12, 6))
   end
 
+  it "CYF-85 uses event discipline for Build/Speciality, preserving Base and explicit session types" do
+    attributes = { goal: "event", discipline: "road", event_name: "Trail race", event_on: Date.new(2026, 12, 6),
+      availability: availability(1 => [ 90, "intervals" ], 3 => [ 90, "threshold" ]) }
+    road = preview(**attributes, event_discipline: "road")
+    mtb = preview(**attributes, event_discipline: "mtb")
+    signature = ->(items) { items.map { |item| [ item.scheduled_on, item.subtype, item.duration_minutes, item.definition&.steps, item.metrics ] } }
+    expect(signature.call(mtb.prescriptions.select { |item| item.phase == "base" })).to eq(signature.call(road.prescriptions.select { |item| item.phase == "base" }))
+    %w[build speciality].each do |phase|
+      expect(mtb.prescriptions.select { |item| item.phase == phase && item.intent == "intervals" }.map(&:subtype))
+        .not_to eq(road.prescriptions.select { |item| item.phase == phase && item.intent == "intervals" }.map(&:subtype))
+    end
+    expect(mtb.prescriptions.select { |item| item.intent == "threshold" && item.phase != "taper" }.map(&:subtype).uniq).to eq([ "threshold" ])
+    descriptive = preview(**attributes, event_discipline: "mtb", event_name: "Renamed race", event_distance_km: 150, event_elevation_m: 3000)
+    expect(signature.call(descriptive.prescriptions)).to eq(signature.call(mtb.prescriptions))
+    expect(Planning::PreviewPresenter.new(mtb).discipline_label).to eq("MTB")
+  end
+
   it "CYF-77 keeps configured workout dates and loads in short and long plans without FTP-test replacements" do
     [ 4, 5, 12, 26 ].each do |weeks|
       result = preview(duration_mode: "custom", custom_duration_weeks: weeks)

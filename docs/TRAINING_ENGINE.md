@@ -313,6 +313,8 @@ For non-event goals:
 
 For event plans, discipline takes priority:
 
+New event configurations use the single Event discipline choice for the cycles below; preview and confirmation save the same discipline on the plan and target event (CYF-85). Base remains generic, and explicit weekly subtypes still bypass automatic subtype selection. Existing plans continue using their saved plan discipline, even where a legacy event label differs; this fix does not regenerate or reinterpret confirmed plans.
+
 - Road: Threshold → VO2 → Over-under → Threshold
 - Gravel: Sweet Spot → Threshold → Tempo → Over-under
 - MTB: VO2 → Over-under → VO2 → Threshold

@@ -3,6 +3,8 @@ module Planning
   ExistingPlanConfiguration = Data.define(:plan, :availability) do
     def goal = plan.goal
     def discipline = plan.discipline
+    # Legacy event plans retain their saved training discipline, even if the event label differs.
+    def training_discipline = plan.discipline
     def starts_on = plan.starts_on
     def ends_on = plan.ends_on
     def ftp_watts = plan.initial_ftp_watts

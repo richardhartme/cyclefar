@@ -26,7 +26,7 @@ module Planning
       :availability
 
     validates :goal, inclusion: { in: Training::Rules::GOALS }
-    validates :discipline, inclusion: { in: Training::Rules::DISCIPLINES }
+    validates :discipline, inclusion: { in: Training::Rules::DISCIPLINES }, unless: :event?
     validates :starts_on, :ftp_watts, :progression_mode, presence: true
     validates :ftp_watts, numericality: { only_integer: true, greater_than: 0 }
     validates :progression_mode, inclusion: { in: %w[continuous hard_recovery_cycle] }
@@ -60,6 +60,11 @@ module Planning
 
     def event?
       goal == "event"
+    end
+
+    # Keep both form selections for goal switching; only the active one drives training.
+    def training_discipline
+      event? ? event_discipline : discipline
     end
 
     def ends_on

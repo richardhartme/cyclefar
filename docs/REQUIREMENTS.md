@@ -65,7 +65,7 @@ Plan configuration is one long form, not a multi-step wizard.
 Required fields:
 
 - goal;
-- discipline;
+- discipline (one Event discipline choice for event plans);
 - start date;
 - FTP;
 - include Base phase?;
@@ -80,10 +80,14 @@ For event goal:
 
 - event name required;
 - event date required;
-- event discipline required (default to plan discipline);
+- event discipline required (defaults to the initial plan discipline); event mode shows only this discipline selector, beside the event name/date;
 - distance km optional;
 - elevation metres optional;
 - expected duration optional.
+
+For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning (CYF-85). Preserve both form selections across goal changes and preview editing; only the active choice is validated and used for training. An explicit invalid event choice is rejected, rather than falling back to the inactive selection.
+
+Existing event plans retain their saved `TrainingPlan.discipline` for training, including legacy records whose event label differs. Do not backfill either discipline or regenerate existing/completed workouts. Changing confirmed discipline still requires creating a new plan.
 
 ### PLN-011 Weekly availability
 

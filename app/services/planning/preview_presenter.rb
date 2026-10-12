@@ -19,7 +19,7 @@ module Planning
     end
 
     def goal_label = GOAL_LABELS.fetch(@preview.configuration.goal)
-    def discipline_label = DISCIPLINE_LABELS.fetch(@preview.configuration.discipline)
+    def discipline_label = DISCIPLINE_LABELS.fetch(@preview.configuration.training_discipline)
     def date_range = "#{@preview.starts_on.to_fs(:long)} – #{@preview.ends_on.to_fs(:long)}"
     def phase_label(phase) = phase.kind.humanize
     def week_duration(week) = "#{week.duration_minutes} min"
