@@ -106,7 +106,7 @@ The rider configures a repeating Monday–Sunday template.
 Each active day has:
 
 - exact duration in minutes;
-- workout intent.
+- session type (stored as workout intent).
 
 Workout intent may be broad:
 
@@ -124,6 +124,8 @@ or specific:
 - Recovery
 
 Days not configured are rest days and appear empty on the calendar.
+
+The setup grid labels its final column `Session type` and its broad option `Intervals — chosen for your goal`. It explains that the rider chooses training days and lengths: broad Intervals uses goal/phase selection, while explicit VO2 Max, Threshold, Sweet Spot and Tempo retain their chosen type in normal weeks. Endurance and Recovery remain those types. Recovery-week and taper rules may shorten or replace sessions. Goals do not create extra training days or available time. Unselected days do not validate their duration or type; selected days retain the normal constraints. Each control has an accessible weekday-specific name.
 
 The app trusts the rider's choices, including back-to-back intensity days, but may display non-blocking warnings for risky schedules.
 

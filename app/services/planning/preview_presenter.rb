@@ -6,11 +6,11 @@ module Planning
       "improve_climbing" => "Improve Climbing", "event" => "Prepare for an Event"
     }.freeze
     GOAL_DESCRIPTIONS = {
-      "general_fitness" => "Balances aerobic endurance with varied intensity across the plan.",
-      "increase_ftp" => "Prioritises threshold, VO2 Max and over-under progression to raise sustainable power.",
-      "improve_endurance" => "Emphasises endurance volume with aerobic tempo and Sweet Spot work.",
-      "improve_climbing" => "Prioritises threshold, VO2 Max and over-under sessions for sustained climbing efforts.",
-      "event" => "Uses your event date and discipline to shape speciality sessions, taper and opener."
+      "general_fitness" => "For Intervals days, mixes Tempo and Sweet Spot in Base, then Threshold and VO2 Max in Build and Speciality.",
+      "increase_ftp" => "For Intervals days, progresses from Sweet Spot and Threshold toward more Threshold, VO2 Max and over-under work.",
+      "improve_endurance" => "For Intervals days, favours Tempo and Sweet Spot, with some Threshold and VO2 Max in Build. Your weekly availability sets training time.",
+      "improve_climbing" => "For Intervals days, favours Threshold, VO2 Max and over-under work in Build and Speciality for sustained climbing efforts.",
+      "event" => "For Intervals days, your event discipline shapes Build and Speciality workouts; your event date sets the taper and opener."
     }.freeze
     DISCIPLINE_LABELS = { "road" => "Road", "gravel" => "Gravel", "mtb" => "MTB", "ultra_endurance" => "Ultra / Endurance" }.freeze
 

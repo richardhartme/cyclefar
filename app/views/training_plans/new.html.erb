@@ -148,10 +148,12 @@
 
       <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-5">
         <legend class="fieldset-legend px-2 text-lg">Weekly availability</legend>
-        <p class="text-base-content/70 text-sm">Unselected days are rest days. Duration is exact except during recovery weeks and taper.</p>
+        <p class="text-base-content/70 text-sm">Choose your training days and session lengths. Select Intervals to let CycleFar choose the workout type, or select a specific type yourself.</p>
+        <p class="text-base-content/70 mt-2 text-sm">Endurance and Recovery stay those session types. Unselected days are rest days. Your goal does not add training days or available time.</p>
+        <p class="text-base-content/70 mt-2 text-sm">VO2 Max, Threshold, Sweet Spot and Tempo keep your choice in normal weeks; recovery weeks and taper may shorten sessions or replace hard work with easier riding.</p>
         <div class="border-base-300 bg-base-100 mt-3 overflow-x-auto rounded-box border">
           <table class="table table-zebra">
-            <thead><tr><th>Day</th><th>Train</th><th>Duration</th><th>Intent</th></tr></thead>
+            <thead><tr><th>Day</th><th>Train</th><th>Duration</th><th>Session type</th></tr></thead>
             <tbody>
               <% Date::DAYNAMES.rotate.each_with_index do |day_name, index| %>
                 <% weekday = index + 1; slot = @configuration.slot_for(weekday) %>
@@ -167,7 +169,7 @@
                       <span class="text-base-content/60 text-sm">min</span>
                     </label>
                   </td>
-                  <td><%= select_tag "plan_configuration[availability][#{weekday}][intent]", options_for_select([["Intervals", "intervals"], ["Endurance", "endurance"], ["Recovery", "recovery"], ["VO2 Max", "vo2_max"], ["Threshold", "threshold"], ["Sweet Spot", "sweet_spot"], ["Tempo", "tempo"]], slot&.intent || "endurance"), class: "select select-sm min-w-40", aria: { label: "#{day_name} workout intent" } %></td>
+                  <td><%= select_tag "plan_configuration[availability][#{weekday}][intent]", options_for_select([["Intervals — chosen for your goal", "intervals"], ["Endurance", "endurance"], ["Recovery", "recovery"], ["VO2 Max", "vo2_max"], ["Threshold", "threshold"], ["Sweet Spot", "sweet_spot"], ["Tempo", "tempo"]], slot&.intent || "endurance"), class: "select select-sm min-w-40", aria: { label: "#{day_name} session type" } %></td>
                 </tr>
               <% end %>
             </tbody>

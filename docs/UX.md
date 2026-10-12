@@ -118,12 +118,14 @@ For each day:
 
 - enabled checkbox/toggle;
 - duration;
-- workout intent selector.
+- Session type selector, named with its weekday for assistive technology.
 
-Intent selector may group choices:
+Session type choices:
 
-- Broad: Intervals / Endurance / Recovery
+- Broad: Intervals — chosen for your goal / Endurance / Recovery
 - Specific: VO2 Max / Threshold / Sweet Spot / Tempo / Endurance / Recovery
+
+Explain at the grid that the rider chooses days and session lengths; the goal picks a subtype only for broad Intervals days. Endurance and Recovery stay those types, unselected days are rest, and a goal does not add training days or available time. Specific intensity choices retain their type in normal weeks, subject to recovery-week and taper overrides. Unselected days do not validate duration/type inputs.
 
 Show warnings inline for patterns such as several hard days in a row, but never block submission solely on training-quality warnings.
 
