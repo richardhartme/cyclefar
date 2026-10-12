@@ -71,7 +71,11 @@ Radio/cards:
 
 ### Discipline
 
-For non-event goals, show this section. Event mode instead shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Switching goals preserves both selections; the active goal chooses which discipline is used. Validation errors and Back to edit restore the same selections and visibility (CYF-85).
+For non-event goals, omit this section and any discipline summary. Explain that broad Intervals follow goal/phase rules; explicit weekly subtypes retain their intent. Never expose the internal Road compatibility default as a selected discipline (CYF-86).
+
+Event mode shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Fresh forms default it to Road. Switching goals preserves the Event discipline; inactive event input does not affect non-event training. Validation errors and Back to edit restore its entered value.
+
+Current implementation: CYF-85 still shows/requires the non-event section, preserves both selections and can default a missing Event discipline from the non-event value. CYF-86 records the decision above; the control, defaulting and summary changes remain follow-on work described in [the delivery contract](NON_EVENT_DISCIPLINE_DECISION.md). Until then, do not imply the non-event selection tailors workouts.
 
 - Road
 - Gravel
@@ -129,7 +133,7 @@ This is a review screen, not an editable form.
 
 Show:
 
-- goal + discipline;
+- goal; Event discipline only for event plans (CYF-86 presentation change pending);
 - date range;
 - event summary if applicable;
 - phase timeline;
@@ -155,7 +159,7 @@ Desktop-first layout can assume meaningful horizontal width. At narrower widths,
 
 Include:
 
-- plan goal/discipline summary;
+- plan goal summary; discipline only for event plans, including when displaying existing plans (CYF-86 presentation change pending);
 - current FTP;
 - `Sync all structured workouts to Intervals.icu`;
 - `Change availability`;

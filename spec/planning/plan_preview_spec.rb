@@ -74,6 +74,44 @@ RSpec.describe Planning::PlanBuilder do
     expect(specific.prescriptions.select { |item| item.intent == "threshold" }.map(&:subtype).uniq).to eq([ "threshold" ])
   end
 
+  %w[general_fitness increase_ftp improve_endurance improve_climbing].each do |goal|
+    it "CYF-86 / PLN-021 keeps #{goal} training independent of stored discipline in every phase" do
+      schedule = availability(
+        1 => [ 90, "intervals" ],
+        2 => [ 90, "vo2_max" ],
+        3 => [ 90, "threshold" ],
+        4 => [ 90, "sweet_spot" ],
+        5 => [ 90, "tempo" ],
+        6 => [ 90, "endurance" ],
+        7 => [ 45, "recovery" ])
+      baseline = preview(goal: goal, discipline: "road", availability: schedule)
+      signature = lambda do |plan|
+        plan.prescriptions.map do |item|
+          item.to_h.merge(definition: item.definition.to_h.except(:discipline))
+        end
+      end
+
+      expect(baseline.phases.map(&:kind)).to eq(%w[base build speciality])
+      %w[base build speciality].each do |phase|
+        items = baseline.prescriptions.select { |item| item.phase == phase }
+        expect(items.select { |item| item.intent == "intervals" }).not_to be_empty
+        %w[vo2_max threshold sweet_spot tempo endurance recovery].each do |intent|
+          expect(items.select { |item| item.intent == intent }).not_to be_empty
+          expect(items.select { |item| item.intent == intent }.map(&:subtype).uniq).to eq([ intent ])
+        end
+      end
+
+      %w[gravel mtb ultra_endurance].each do |discipline|
+        alternative = preview(goal: goal, discipline: discipline, availability: schedule)
+        expect(alternative.phases).to eq(baseline.phases)
+        expect(signature.call(alternative)).to eq(signature.call(baseline))
+        expect(alternative.weeks.map { |week| week.to_h.except(:prescriptions) })
+          .to eq(baseline.weeks.map { |week| week.to_h.except(:prescriptions) })
+        expect(alternative.warnings).to eq(baseline.warnings)
+      end
+    end
+  end
+
   it "PLN-022 adds a 7 or 14 day taper, keeps the target event fixed and places a low-load opener" do
     event_attributes = { goal: "event", event_name: "Autumn Classic", event_on: Date.new(2026, 12, 6), event_discipline: "road" }
     short_taper = preview(**event_attributes)
