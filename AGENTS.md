@@ -195,3 +195,17 @@ Rails-generated authentication, self-registration and independent rider accounts
 ## Working style
 
 Keep commits/changes small enough that the training rules can be reviewed independently from UI code.
+
+## Agent skills
+
+### Issue tracker
+
+CycleFar work items live in Jira project `CYF`; use the connected Atlassian tools. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context glossary and ADR layout. See `docs/agents/domain.md`.
