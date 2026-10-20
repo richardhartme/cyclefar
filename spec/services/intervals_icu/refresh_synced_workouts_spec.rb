@@ -1,6 +1,9 @@
 require "rails_helper"
 
 RSpec.describe IntervalsIcu::RefreshSyncedWorkouts do
+  # Freeze time before the let! records below so their Date.current offsets are relative to the frozen date.
+  before { travel_to Time.zone.local(2026, 10, 12, 12) }
+
   let(:user) { create(:user) }
   let!(:profile) { create(:rider_profile, user: user, ftp_watts: 260, intervals_icu_api_key: "own-key") }
   let!(:reading) { create(:ftp_reading, rider_profile: profile, ftp_watts: 260, effective_on: Date.current - 2) }
@@ -8,7 +11,6 @@ RSpec.describe IntervalsIcu::RefreshSyncedWorkouts do
   let(:client) { instance_double(IntervalsIcu::Client) }
 
   before do
-    travel_to Time.zone.local(2026, 10, 12, 12)
     allow(IntervalsIcu::Client).to receive(:new).with(api_key: "own-key").and_return(client)
     allow(client).to receive(:upsert_events) do |payloads|
       payloads.reverse.map.with_index { |payload, i| { "external_id" => payload.fetch(:external_id), "id" => i + 100 } }
