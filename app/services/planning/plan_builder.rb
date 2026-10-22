@@ -1,98 +1,6 @@
 module Planning
   # Builds a training plan preview with workouts, weeks and load enforcement.
   class PlanBuilder
-    Prescription = Data.define(
-      :scheduled_on,
-      :kind,
-      :intent,
-      :subtype,
-      :duration_minutes,
-      :progression_level,
-      :phase,
-      :recovery_week,
-      :name,
-      :purpose,
-      :main_set_summary,
-      :metrics,
-      :reason_codes,
-      :definition) do
-      def initialize(scheduled_on:, kind:, intent: nil, subtype: nil, duration_minutes: nil, progression_level: nil,
-        phase:, recovery_week: false, name: nil, purpose: nil, main_set_summary: nil, metrics: nil, reason_codes: [], definition: nil)
-        super(
-          scheduled_on: scheduled_on,
-          kind: -kind.to_s,
-          intent: intent && -intent.to_s,
-          subtype: subtype && -subtype.to_s,
-          duration_minutes: duration_minutes,
-          progression_level: progression_level,
-          phase: -phase.to_s,
-          recovery_week: recovery_week,
-          name: name && -name,
-          purpose: purpose && -purpose,
-          main_set_summary: main_set_summary && -main_set_summary,
-          metrics: metrics,
-          reason_codes: reason_codes.map { |code| -code.to_s }.freeze,
-          definition: definition)
-      end
-
-      def executable?
-        %w[workout opener].include?(kind)
-      end
-
-      def estimated_tss = metrics&.estimated_tss.to_f
-      def adjustable? = kind == "workout"
-
-      def generation_context
-        context = reason_codes.include?("weekly_load_cap") ? { "maximum_level" => progression_level } : {}
-        context["maximum_level"] = progression_level if reason_codes.include?("taper_reduced_intensity")
-        context["load_adjustments"] = definition.load_adjustments if definition && !definition.load_adjustments.empty?
-        context
-      end
-
-      def intensity?
-        Training::Rules::INTENSITY_SUBTYPES.include?(subtype)
-      end
-    end
-
-    Week = Data.define(
-      :starts_on,
-      :ends_on,
-      :phase,
-      :recovery_week,
-      :partial,
-      :prescriptions,
-      :duration_minutes,
-      :estimated_tss,
-      :estimated_work_kj,
-      :warning) do
-      def initialize(starts_on:, ends_on:, phase:, recovery_week:, partial:, prescriptions:, duration_minutes:, estimated_tss:, estimated_work_kj:, warning: nil)
-        super(
-          starts_on: starts_on,
-          ends_on: ends_on,
-          phase: phase.to_s.dup.freeze,
-          recovery_week: recovery_week,
-          partial: partial,
-          prescriptions: prescriptions.freeze,
-          duration_minutes: duration_minutes,
-          estimated_tss: estimated_tss,
-          estimated_work_kj: estimated_work_kj,
-          warning: warning&.dup&.freeze)
-      end
-    end
-
-    Preview = Data.define(:configuration, :starts_on, :ends_on, :phases, :prescriptions, :weeks, :warnings) do
-      def initialize(configuration:, starts_on:, ends_on:, phases:, prescriptions:, weeks:, warnings:)
-        super(
-          configuration: configuration,
-          starts_on: starts_on,
-          ends_on: ends_on,
-          phases: phases.freeze,
-          prescriptions: prescriptions.freeze,
-          weeks: weeks.freeze,
-          warnings: warnings.map { |warning| warning.dup.freeze }.freeze)
-      end
-    end
-
     def initialize(configuration)
       @configuration = configuration
     end
@@ -107,7 +15,7 @@ module Planning
       evaluated, warnings = enforce_load_cap(evaluated)
       evaluated = taper_load(evaluated)
       weeks = build_weeks(evaluated, warnings)
-      Preview.new(
+      PlanPreview.new(
         configuration: @configuration,
         starts_on: @configuration.starts_on,
         ends_on: @configuration.ends_on,
@@ -364,7 +272,7 @@ module Planning
       weekly_starts.map do |week_start|
         items = prescriptions.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }.sort_by(&:scheduled_on)
         phases = items.map(&:phase).uniq
-        Week.new(
+        PreviewWeek.new(
           starts_on: week_start,
           ends_on: week_start + 6,
           phase: phases.one? ? phases.first : "mixed",
