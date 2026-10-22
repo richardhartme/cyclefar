@@ -1,14 +1,6 @@
 module Planning
   # Builds structured workouts for the next 14 days and applies weekly load limits.
   class WorkoutBuilder
-    Candidate = Data.define(:workout, :definition, :metrics, :selected) do
-      def scheduled_on = workout.scheduled_on
-      def progression_level = definition ? definition.progression_level : workout.progression_level
-      def estimated_tss = metrics ? metrics.estimated_tss : workout.estimated_tss.to_f
-      def adjustable? = selected && workout.workout?
-      def reference_tss = selected ? estimated_tss : workout.generation_context.fetch("generated_tss", estimated_tss).to_f
-    end
-
     def initialize(plan, date: Date.current)
       @plan = plan
       @date = date
@@ -94,10 +86,8 @@ module Planning
         in_horizon = week_start <= Rules.horizon_end(@date) && week_start + 6 >= @date
         if reference && (in_horizon || items.any?(&:selected))
           limit = WeeklyLoadCap.limit(reference)
-          reduced = WeeklyLoadCap.reduce(items, limit: limit) do |candidate, stage|
-            LoadReduction.options(candidate.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
-              candidate.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
-            end
+          reduced = LoadReduction.reduce(items, limit: limit, intent: ->(candidate) { candidate.workout.intent }) do |candidate, definition|
+            candidate.reevaluate(definition, ftp_watts: @ftp)
           end
           items.each_with_index { |item, index| candidates[candidates.index(item)] = reduced[index] }
           items = reduced

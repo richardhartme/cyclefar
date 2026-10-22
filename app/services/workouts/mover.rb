@@ -1,13 +1,6 @@
 module Workouts
   class Mover
     Result = Data.define(:workout, :regenerated, :warnings)
-    Candidate = Data.define(:workout, :definition, :metrics) do
-      def scheduled_on = workout.scheduled_on
-      def progression_level = definition.progression_level
-      def estimated_tss = metrics.estimated_tss
-      def adjustable? = workout.workout?
-    end
-
     def initialize(workout)
       @workout = workout
       @plan = workout.training_plan
@@ -69,10 +62,7 @@ module Workouts
 
     def candidate_for(level, load_adjustments: {})
       definition = DefinitionFactory.for(@plan).for_workout(@workout, progression_level: level, load_adjustments: load_adjustments)
-      Candidate.new(
-        workout: @workout,
-        definition: definition,
-        metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
+      Planning::Candidate.new(workout: @workout).reevaluate(definition, ftp_watts: @ftp)
     end
 
     def limit_load(candidate)
@@ -81,11 +71,9 @@ module Workouts
       return candidate unless week.limit
 
       fixed_tss = week.workouts.reject { |workout| workout.id == @workout.id }.sum { |workout| review.estimated_tss(workout) }
-      Planning::WeeklyLoadCap.reduce([ candidate ], limit: week.limit - fixed_tss) do |item, stage|
-        # Explicit Move promises to retain the rider's selected subtype.
-        Planning::LoadReduction.options(item.definition, stage: stage, intent: @workout.subtype).map do |definition|
-          item.with(definition: definition, metrics: Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @ftp).call)
-        end
+      # Explicit Move promises to retain the rider's selected subtype.
+      Planning::LoadReduction.reduce([ candidate ], limit: week.limit - fixed_tss, intent: ->(_) { @workout.subtype }) do |item, definition|
+        item.reevaluate(definition, ftp_watts: @ftp)
       end.sole
     end
 
