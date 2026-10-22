@@ -209,10 +209,8 @@ module Planning
 
     def lower_week_load(prescriptions, week_start, cap)
       current = prescriptions.select { |item| item.scheduled_on.between?(week_start, week_start + 6) }
-      reduced = WeeklyLoadCap.reduce(current, limit: cap) do |candidate, stage|
-        LoadReduction.options(candidate.definition, stage: stage, intent: candidate.intent).map do |definition|
-          evaluated_definition(candidate.with(reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq), definition)
-        end
+      reduced = LoadReduction.reduce(current, limit: cap, intent: :intent.to_proc) do |candidate, definition|
+        evaluated_definition(candidate.with(reason_codes: (candidate.reason_codes + [ "weekly_load_cap" ]).uniq), definition)
       end
       prescriptions.map { |item| (index = current.index(item)) ? reduced[index] : item }
     end

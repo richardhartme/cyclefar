@@ -6,6 +6,15 @@ module Planning
       new(definition, intent: intent).options(stage)
     end
 
+    # Lowers +items+ under +limit+ through the ordered reduction stages.
+    # +intent+ names each item's intent; +rebuild+ turns an item and a
+    # replacement definition into the replacement item.
+    def self.reduce(items, limit:, intent:, &rebuild)
+      WeeklyLoadCap.reduce(items, limit: limit) do |item, stage|
+        options(item.definition, stage: stage, intent: intent.call(item)).map { |definition| rebuild.call(item, definition) }
+      end
+    end
+
     def initialize(definition, intent:)
       @definition = definition
       @intent = intent.to_s
