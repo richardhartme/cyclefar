@@ -1,9 +1,6 @@
 module Workouts
   # Edits and shuffles existing structured workouts (easier, harder, shorter, longer, adapt).
   class ManualEditor
-    Snapshot = Data.define(:kind, :subtype, :duration_minutes, :estimated_if, :estimated_tss)
-    Result = Data.define(:workout, :material_change, :before, :after)
-    Preview = Data.define(:kind, :definition, :metrics, :before, :after)
 
     def initialize(workout)
       @workout = workout
@@ -33,13 +30,13 @@ module Workouts
         definition = definition.with(steps: steps)
       end
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.ftp_watts_for_planning).call
-      after = Snapshot.new(
+      after = WorkoutSnapshot.new(
         kind: kind,
         subtype: definition.subtype.to_s,
         duration_minutes: definition.duration_minutes,
         estimated_if: metrics.estimated_if,
         estimated_tss: metrics.estimated_tss)
-      Preview.new(kind: kind, definition: definition, metrics: metrics, before: before, after: after)
+      EditPreview.new(kind: kind, definition: definition, metrics: metrics, before: before, after: after)
     end
 
     def apply!(**attributes)
@@ -76,7 +73,7 @@ module Workouts
       after = before.with(
         estimated_if: selected.metrics.estimated_if,
         estimated_tss: selected.metrics.estimated_tss)
-      Preview.new(
+      EditPreview.new(
         kind: "workout",
         definition: selected.definition.with(purpose: @workout.purpose),
         metrics: selected.metrics,
@@ -97,7 +94,7 @@ module Workouts
           intent: kind == "opener" ? :intervals : @workout.intent)
         @workout.save!
       end
-      Result.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
+      EditResult.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
     end
 
     def definition_for(action, subtype, duration_minutes, progression_level)
@@ -113,20 +110,12 @@ module Workouts
     end
 
     def next_attributes(action, subtype, duration_minutes, progression_level)
-      current_level = @workout.progression_level || 1
-      level, variation, duration, chosen_subtype = case action.to_s
-      when "same" then [ current_level, Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
-      when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - Training::Rules::SHORTER_LONGER_STEP_MINUTES, @workout.subtype ]
-      when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + Training::Rules::SHORTER_LONGER_STEP_MINUTES, @workout.subtype ]
-      when "change" then [ current_level, Variations.for_generation(subtype), Integer(duration_minutes), subtype.to_s ]
-      when "adapt" then [ Integer(progression_level).clamp(1, 7), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
-      else raise ArgumentError, "Unsupported workout action"
-      end
-      raise ArgumentError, "Workout duration cannot be below 30 minutes" if duration < Training::Rules::MINIMUM_DURATION_MINUTES
-      raise ArgumentError, "Unsupported workout subtype" unless Training::Rules::SUBTYPE_NAMES.key?(chosen_subtype.to_sym)
+      edit = EditActions.for(action).new(@workout, subtype: subtype, duration_minutes: duration_minutes, progression_level: progression_level)
+      raise ArgumentError, "Workout duration cannot be below 30 minutes" if edit.duration < Training::Rules::MINIMUM_DURATION_MINUTES
+      raise ArgumentError, "Unsupported workout subtype" unless Training::Rules::SUBTYPE_NAMES.key?(edit.subtype.to_sym)
 
-      { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || Variations.default_key(chosen_subtype),
-        load_adjustments: action.to_s == "adapt" ? @workout.generation_context.fetch("load_adjustments", {}) : {} }
+      { subtype: edit.subtype, duration_minutes: edit.duration, progression_level: edit.level,
+        variation_key: edit.variation_key || Variations.default_key(edit.subtype), load_adjustments: edit.load_adjustments }
     end
 
     def material_change?(before, after)
@@ -137,7 +126,7 @@ module Workouts
     end
 
     def snapshot_for(workout)
-      Snapshot.new(
+      WorkoutSnapshot.new(
         kind: workout.kind,
         subtype: workout.subtype,
         duration_minutes: workout.duration_minutes,

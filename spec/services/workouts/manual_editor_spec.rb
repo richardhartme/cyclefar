@@ -66,7 +66,7 @@ RSpec.describe Workouts::ManualEditor, type: :service do
 
   it "WKO-005 uses the documented material-change thresholds" do
     editor = described_class.new(workout)
-    before = described_class::Snapshot.new(
+    before = Workouts::WorkoutSnapshot.new(
       kind: "workout", subtype: "threshold", duration_minutes: 60, estimated_if: "0.80".to_d, estimated_tss: 100.to_d)
 
     expect(editor.send(:material_change?, before, before.with(estimated_tss: 115.to_d))).to be(true)
