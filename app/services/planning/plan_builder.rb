@@ -50,7 +50,7 @@ module Planning
       end
 
       def intensity?
-        %w[tempo sweet_spot threshold vo2_max over_under].include?(subtype)
+        Training::Rules::INTENSITY_SUBTYPES.include?(subtype)
       end
     end
 
@@ -180,7 +180,7 @@ module Planning
       else
         slot.intent.to_sym
       end
-      level = %i[tempo sweet_spot threshold vo2_max over_under].include?(subtype) ? level_for(date, phase) : nil
+      level = Training::Rules::INTENSITY_SUBTYPES.include?(subtype.to_s) ? level_for(date, phase) : nil
       [ subtype, level ]
     end
 
