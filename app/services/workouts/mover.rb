@@ -25,7 +25,7 @@ module Workouts
           (@workout.scheduled_on - destination).abs > Planning::Rules::MOVE_STRUCTURE_WINDOW_DAYS ||
           reduced_context(@workout.scheduled_on) != reduced_context(destination)
         @workout.update!(scheduled_on: destination, plan_phase: phase)
-        materialize = @workout.outline? && destination.between?(Date.current, Date.current + Planning::Rules::PLANNING_HORIZON_DAYS - 1)
+        materialize = @workout.outline? && destination.between?(Date.current, Planning::Rules.horizon_end(Date.current))
         if regenerate || materialize
           regenerate!(fresh_context: regenerate, materialize: materialize)
         elsif @workout.structured?
