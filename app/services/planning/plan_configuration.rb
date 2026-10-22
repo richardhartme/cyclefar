@@ -1,6 +1,4 @@
 require "active_model"
-require_relative "availability"
-require_relative "rules"
 
 module Planning
   # ActiveModel form object for plan creation with user inputs, parsing and validation.

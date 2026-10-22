@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   # Selects interval workout subtype based on goal, discipline, phase and ordinal.
   class IntervalSelector

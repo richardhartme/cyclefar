@@ -43,7 +43,7 @@ module Adaptations
           current_metrics: Metrics::WorkoutCalculator.new(steps: workout.workout_steps, ftp_watts: ftp).call,
           preview: preview)
       end
-      before = @plan.progression_state.fetch("intensity_bias", 0).to_i
+      before = @plan.intensity_bias
       after = (before + @proposal.payload.fetch("progression_bias", 0).to_i).clamp(*Training::Rules::PROGRESSION_BIAS_BOUNDS)
       Result.new(changes: changes, bias: Bias.new(before: before, after: after, delta: after - before), ftp_watts: ftp)
     rescue ProposalFreshness::Unavailable

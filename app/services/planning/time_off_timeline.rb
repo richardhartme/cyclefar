@@ -1,5 +1,3 @@
-require_relative "return_ramp"
-
 module Planning
   # The one place that decides which days a plan's time-off periods affect.
   # Periods are anything with id, starts_on, ends_on and return_ramp_days.

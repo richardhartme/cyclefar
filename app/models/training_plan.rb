@@ -31,6 +31,10 @@ class TrainingPlan < ApplicationRecord
     user.rider_profile&.ftp_watts || initial_ftp_watts
   end
 
+  def intensity_bias
+    progression_state.fetch("intensity_bias", 0).to_i
+  end
+
   private
 
   def progression_state_is_object

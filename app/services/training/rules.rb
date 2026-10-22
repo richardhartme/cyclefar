@@ -9,9 +9,16 @@ module Training
       value.freeze
     end
 
+    def self.reduced_duration(duration, factor)
+      [ (duration * factor).round, MINIMUM_DURATION_MINUTES ].max
+    end
+
     ENGINE_VERSION = "v1".freeze
     MINIMUM_DURATION_MINUTES = 30
     MINIMUM_STEP_SECONDS = 30
+    SHORTER_LONGER_STEP_MINUTES = 15
+    MATERIAL_CHANGE_TSS_RATIO = 0.15
+    MATERIAL_CHANGE_IF_DELTA = 0.08
     PROGRESSION_LEVELS = (1..7).freeze
     PROGRESSION_BIAS_BOUNDS = [ -2, 2 ].freeze
     FEEDBACK_HORIZON_DAYS = 14

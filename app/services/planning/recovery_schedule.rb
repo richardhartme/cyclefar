@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   # One calendar schedule shared by previews, presentation and load checks.
   class RecoverySchedule

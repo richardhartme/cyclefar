@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Training
   # Calculates progression levels with bias and maximum bounds.
   module Progression

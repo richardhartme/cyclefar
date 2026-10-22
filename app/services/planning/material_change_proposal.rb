@@ -18,12 +18,12 @@ module Planning
     def create_proposal!
       starts_on = [ Date.current, @workout.scheduled_on ].max
       Adaptations::ProposalCreator.new(@workout.training_plan).create!(
-        reason: "This changes the load or intent of the day. Replan the next 14 days around it?",
+        reason: "This changes the load or intent of the day. Replan the next #{Rules::PLANNING_HORIZON_DAYS} days around it?",
         payload: {
           "type" => AdaptationProposal::MATERIAL_CHANGE_REPLAN,
           "source_workout_id" => @workout.id,
           "starts_on" => starts_on.iso8601,
-          "ends_on" => [ starts_on + 13, @workout.training_plan.ends_on ].min.iso8601
+          "ends_on" => [ starts_on + Rules::PLANNING_HORIZON_DAYS - 1, @workout.training_plan.ends_on ].min.iso8601
         })
     end
 

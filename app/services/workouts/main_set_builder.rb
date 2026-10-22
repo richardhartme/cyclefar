@@ -1,6 +1,3 @@
-require_relative "../training/rules"
-require_relative "step_definition"
-
 module Workouts
   # Builds interval ladder main sets with work/recovery repetitions and variations.
   class MainSetBuilder

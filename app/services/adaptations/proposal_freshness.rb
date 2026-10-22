@@ -63,7 +63,7 @@ module Adaptations
       breaks = applicable_breaks(dates)
       overlapping = @timeline.periods_overlapping(weeks)
       {
-        plan: @plan.attributes.slice("id", "user_id", "status", *TrainingPlan::CONFIGURATION_ATTRIBUTES).except("initial_ftp_watts").merge("intensity_bias" => @plan.progression_state.fetch("intensity_bias", 0).to_i),
+        plan: @plan.attributes.slice("id", "user_id", "status", *TrainingPlan::CONFIGURATION_ATTRIBUTES).except("initial_ftp_watts").merge("intensity_bias" => @plan.intensity_bias),
         proposal: @proposal.payload.except("freshness"),
         workouts: relevant.sort_by(&:id).map { |workout| workout_context(workout) },
         phases: @plan.plan_phases.where("starts_on <= ? AND ends_on >= ?", dates.max.end_of_week, weeks.min).map { |phase| phase.attributes.slice("id", "kind", "starts_on", "ends_on", "position") },
@@ -77,7 +77,7 @@ module Adaptations
     def affected_dates
       if @proposal.material_change_replan?
         (Date.iso8601(@proposal.payload.fetch("starts_on"))..Date.iso8601(@proposal.payload.fetch("ends_on"))).to_a.tap do |dates|
-          raise Unavailable, UNAVAILABLE_MESSAGE if dates.empty? || dates.size > 14
+          raise Unavailable, UNAVAILABLE_MESSAGE if dates.empty? || dates.size > Planning::Rules::PLANNING_HORIZON_DAYS
         end
       else
         changes = @proposal.payload.fetch("changes", [])

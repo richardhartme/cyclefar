@@ -35,7 +35,7 @@ module Workouts
       end
       metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @workout.training_plan.ftp_watts_for_planning).call
       after = Snapshot.new(
-        kind: kind.to_s,
+        kind: kind,
         subtype: definition.subtype.to_s,
         duration_minutes: definition.duration_minutes,
         estimated_if: metrics.estimated_if,
@@ -78,7 +78,7 @@ module Workouts
         estimated_if: selected.metrics.estimated_if,
         estimated_tss: selected.metrics.estimated_tss)
       Preview.new(
-        kind: :workout,
+        kind: "workout",
         definition: selected.definition.with(purpose: @workout.purpose),
         metrics: selected.metrics,
         before: before,
@@ -95,7 +95,7 @@ module Workouts
           metrics,
           track_generation: attributes[:action].to_s == "adapt",
           kind: kind,
-          intent: kind == :opener ? :intervals : @workout.intent)
+          intent: kind == "opener" ? :intervals : @workout.intent)
         @workout.save!
       end
       Result.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
@@ -105,20 +105,20 @@ module Workouts
       factory = DefinitionFactory.for(@workout.training_plan)
       phase = @workout.plan_phase.kind
       if action.to_s == "change" && subtype == :opener
-        return [ :opener, factory.build(kind: :opener, duration_minutes: Integer(duration_minutes), phase: phase) ]
+        return [ "opener", factory.build(kind: "opener", duration_minutes: Integer(duration_minutes), phase: phase) ]
       end
 
       raise ArgumentError, "Only a regular workout can be shuffled" unless @workout.workout? || action.to_s == "change"
 
-      [ :workout, factory.build(kind: :workout, phase: phase, **next_attributes(action, subtype, duration_minutes, progression_level)) ]
+      [ "workout", factory.build(kind: "workout", phase: phase, **next_attributes(action, subtype, duration_minutes, progression_level)) ]
     end
 
     def next_attributes(action, subtype, duration_minutes, progression_level)
       current_level = @workout.progression_level || 1
       level, variation, duration, chosen_subtype = case action.to_s
       when "same" then [ current_level, Variations.next_key(@workout.variation_key || Variations.default_key(@workout.subtype), subtype: @workout.subtype), @workout.duration_minutes, @workout.subtype ]
-      when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - 15, @workout.subtype ]
-      when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + 15, @workout.subtype ]
+      when "shorter" then [ current_level, @workout.variation_key, @workout.duration_minutes - Training::Rules::SHORTER_LONGER_STEP_MINUTES, @workout.subtype ]
+      when "longer" then [ current_level, @workout.variation_key, @workout.duration_minutes + Training::Rules::SHORTER_LONGER_STEP_MINUTES, @workout.subtype ]
       when "change" then [ current_level, Variations.for_generation(subtype), Integer(duration_minutes), subtype.to_s ]
       when "adapt" then [ Integer(progression_level).clamp(1, 7), @workout.variation_key, @workout.duration_minutes, @workout.subtype ]
       else raise ArgumentError, "Unsupported workout action"
@@ -133,8 +133,8 @@ module Workouts
     def material_change?(before, after)
       after.kind != before.kind ||
         intensity?(after.subtype) != intensity?(before.subtype) ||
-        ((after.estimated_tss / before.estimated_tss) - 1).abs >= 0.15 ||
-        (after.estimated_if - before.estimated_if).abs >= 0.08
+        ((after.estimated_tss / before.estimated_tss) - 1).abs >= Training::Rules::MATERIAL_CHANGE_TSS_RATIO ||
+        (after.estimated_if - before.estimated_if).abs >= Training::Rules::MATERIAL_CHANGE_IF_DELTA
     end
 
     def snapshot_for(workout)

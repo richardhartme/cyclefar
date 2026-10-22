@@ -1,5 +1,3 @@
-require_relative "step_definition"
-
 module Workouts
   # Normalizes and validates step sequences with consecutive positions.
   module StepSequence

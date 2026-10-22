@@ -42,7 +42,7 @@ module Planning
       template = active_template_for(plan, Date.current)
       raise ArgumentError, "No availability template applies today" unless template
 
-      FuturePrescriber.new(plan: plan, slots: template.availability_slots).replace!(Date.current..[ Date.current + 13, plan.ends_on ].min)
+      FuturePrescriber.new(plan: plan, slots: template.availability_slots).replace!(Date.current..[ Date.current + Planning::Rules::PLANNING_HORIZON_DAYS - 1, plan.ends_on ].min)
     end
 
     def active_template_for(plan, date)

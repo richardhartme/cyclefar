@@ -1,15 +1,3 @@
-require_relative "../metrics/workout_calculator"
-require_relative "../workouts/generator"
-require_relative "../workouts/opener_generator"
-require_relative "interval_selector"
-require_relative "plan_configuration"
-require_relative "phase_allocator"
-require_relative "rules"
-require_relative "weekly_load_cap"
-require_relative "load_reduction"
-require_relative "phase_progression"
-require_relative "recovery_schedule"
-
 module Planning
   # Builds a training plan preview with workouts, weeks and load enforcement.
   class PlanBuilder
@@ -32,18 +20,18 @@ module Planning
         phase:, recovery_week: false, name: nil, purpose: nil, main_set_summary: nil, metrics: nil, reason_codes: [], definition: nil)
         super(
           scheduled_on: scheduled_on,
-          kind: kind.to_s.dup.freeze,
-          intent: intent&.to_s&.dup&.freeze,
-          subtype: subtype&.to_s&.dup&.freeze,
+          kind: -kind.to_s,
+          intent: intent && -intent.to_s,
+          subtype: subtype && -subtype.to_s,
           duration_minutes: duration_minutes,
           progression_level: progression_level,
-          phase: phase.to_s.dup.freeze,
+          phase: -phase.to_s,
           recovery_week: recovery_week,
-          name: name&.dup&.freeze,
-          purpose: purpose&.dup&.freeze,
-          main_set_summary: main_set_summary&.dup&.freeze,
+          name: name && -name,
+          purpose: purpose && -purpose,
+          main_set_summary: main_set_summary && -main_set_summary,
           metrics: metrics,
-          reason_codes: reason_codes.map { |code| code.to_s.dup.freeze }.freeze,
+          reason_codes: reason_codes.map { |code| -code.to_s }.freeze,
           definition: definition)
       end
 
@@ -138,7 +126,7 @@ module Planning
       (@configuration.starts_on..@configuration.ends_on).each do |date|
         phase = phase_for(date)
         if @configuration.event? && date == @configuration.ends_on
-          prescriptions << special(date, :event, phase, "Target event", "Your target event.")
+          prescriptions << special(date, "event", phase, "Target event", "Your target event.")
           next
         end
         if date == opener_on
@@ -152,7 +140,7 @@ module Planning
         subtype, level, duration, reason_codes = normal_attributes(slot, phase, date, interval_ordinals, recovery)
         prescriptions << Prescription.new(
           scheduled_on: date,
-          kind: :workout,
+          kind: "workout",
           intent: slot.intent,
           subtype: subtype,
           duration_minutes: duration,
@@ -167,16 +155,16 @@ module Planning
     def normal_attributes(slot, phase, date, interval_ordinals, recovery)
       if recovery
         subtype = slot.intent == "recovery" ? :recovery : :endurance
-        return [ subtype, nil, reduced_duration(slot.duration_minutes, Rules::RECOVERY_DURATION_FACTOR), [ "recovery_week_override" ] ]
+        return [ subtype, nil, Training::Rules.reduced_duration(slot.duration_minutes, Rules::RECOVERY_DURATION_FACTOR), [ "recovery_week_override" ] ]
       end
       if phase.kind == "taper"
         if slot.intensity? && taper_intensity?(date)
           subtype, level = planned_subtype_and_level(slot, taper_source_phase(phase), date, interval_ordinals)
           factor = early_long_taper?(date) ? Rules::LONG_TAPER_DURATION_FACTOR : Rules::TAPER_INTENSITY_DURATION_FACTOR
-          return [ subtype, level, reduced_duration(slot.duration_minutes, factor), [ "taper_reduced_intensity" ] ]
+          return [ subtype, level, Training::Rules.reduced_duration(slot.duration_minutes, factor), [ "taper_reduced_intensity" ] ]
         end
         factor = early_long_taper?(date) ? Rules::LONG_TAPER_DURATION_FACTOR : Rules::TAPER_DURATION_FACTOR
-        return [ slot.intent == "recovery" ? :recovery : :endurance, nil, reduced_duration(slot.duration_minutes, factor), [ "taper_easy_override" ] ]
+        return [ slot.intent == "recovery" ? :recovery : :endurance, nil, Training::Rules.reduced_duration(slot.duration_minutes, factor), [ "taper_easy_override" ] ]
       end
 
       subtype, level = planned_subtype_and_level(slot, phase, date, interval_ordinals)
@@ -201,7 +189,7 @@ module Planning
       duration = normal_duration.between?(40, 45) ? normal_duration : normal_duration >= 45 ? 45 : 30
       Prescription.new(
         scheduled_on: date,
-        kind: :opener,
+        kind: "opener",
         intent: :intervals,
         subtype: :endurance,
         duration_minutes: duration,
@@ -240,10 +228,6 @@ module Planning
       return phase unless phase.kind == "taper"
 
       @phases[-2]
-    end
-
-    def reduced_duration(duration, factor)
-      [ (duration * factor).round, Training::Rules::MINIMUM_DURATION_MINUTES ].max
     end
 
     def recovery_week_flags

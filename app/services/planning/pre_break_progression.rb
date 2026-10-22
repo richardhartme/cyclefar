@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   # Planned sessions support future breaks; missed/special records cannot
   # establish a reached or projected level. Selection is by recent family.

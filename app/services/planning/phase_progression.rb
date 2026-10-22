@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   module PhaseProgression
     def self.level(date:, kind:, starts_on:, ends_on:)

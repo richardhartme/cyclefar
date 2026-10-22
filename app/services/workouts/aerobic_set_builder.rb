@@ -1,6 +1,3 @@
-require_relative "../training/rules"
-require_relative "step_definition"
-
 module Workouts
   # Builds aerobic/endurance main set segments with variations (steady, alternating, undulating, ramps).
   class AerobicSetBuilder

@@ -1,6 +1,3 @@
-require_relative "../training/rules"
-require_relative "step_definition"
-
 module Workouts
   # Builds warm-up segments with optional primer efforts and settlement.
   class WarmUpBuilder

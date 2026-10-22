@@ -57,7 +57,7 @@ module Adaptations
 
     def candidates
       @candidates ||= @workout.training_plan.planned_workouts.planned.structured
-        .where(kind: :workout, scheduled_on: Date.current..(Date.current + Training::Rules::FEEDBACK_HORIZON_DAYS - 1))
+        .where(kind: "workout", scheduled_on: Date.current..(Date.current + Training::Rules::FEEDBACK_HORIZON_DAYS - 1))
         .where.not(id: @workout.id).includes(:workout_steps, :plan_phase).order(:scheduled_on).to_a
     end
 
@@ -102,7 +102,7 @@ module Adaptations
     def progression_bias
       return 0 unless intensity?
 
-      recent = @workout.training_plan.planned_workouts.completed.where(kind: :workout, subtype: @workout.subtype)
+      recent = @workout.training_plan.planned_workouts.completed.where(kind: "workout", subtype: @workout.subtype)
         .order(scheduled_on: :desc, id: :desc).limit(3).includes(:workout_feedback).to_a
       return 0 unless recent.size == 3 && recent.all?(&:workout_feedback)
 

@@ -1,8 +1,3 @@
-require_relative "step_definition"
-require_relative "step_sequence"
-require_relative "workout_definition"
-require_relative "../training/rules"
-
 module Workouts
   # Generates pre-event opener workouts with threshold and VO2 activation efforts.
   class OpenerGenerator

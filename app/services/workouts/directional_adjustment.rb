@@ -1,6 +1,3 @@
-require_relative "generator"
-require_relative "../metrics/workout_calculator"
-
 module Workouts
   # Selects a valid replacement whose canonical load moves in the requested direction.
   class DirectionalAdjustment

@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   class WeeklyLoadCap
     def self.limit(reference_tss)
