@@ -141,3 +141,54 @@ RSpec.describe PlannedWorkout, type: :model do
     expect(WorkoutStep.count).to eq(0)
   end
 end
+
+RSpec.describe PlannedWorkout, "#apply_definition", type: :model do
+  let(:plan) { create(:training_plan) }
+  let(:definition) { Workouts::DefinitionFactory.for(plan).build(kind: :workout, subtype: :tempo, duration_minutes: 60, phase: :base, progression_level: 2) }
+  let(:metrics) { Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: 250).call }
+
+  it "assigns attributes, metrics and canonical steps, replacing earlier steps" do
+    workout = create(:planned_workout, :structured, training_plan: plan)
+
+    workout.apply_definition(definition, metrics)
+    workout.save!
+
+    expect(workout.reload).to have_attributes(subtype: "tempo", progression_level: 2, detail_status: "structured")
+    expect(workout.estimated_tss).to be_within(0.01).of(metrics.estimated_tss)
+    expect(workout.workout_steps.map(&:label)).to eq(definition.steps.map(&:label))
+    expect(workout.generation_context).to eq({})
+  end
+
+  it "records generation context keys on request" do
+    workout = create(:planned_workout, training_plan: plan, generation_context: { "maximum_level" => 3 })
+
+    workout.apply_definition(definition, metrics, track_generation: true, baseline_level: 2)
+
+    expect(workout.generation_context).to eq(
+      "maximum_level" => 3, "baseline_level" => 2, "generated_level" => 2,
+      "generated_tss" => metrics.estimated_tss, "load_adjustments" => {})
+  end
+
+  it "leaves an outline workout without steps" do
+    workout = create(:planned_workout, training_plan: plan)
+
+    workout.apply_definition(definition, metrics, structured: false)
+    workout.save!
+
+    expect(workout.reload).to be_outline
+    expect(workout.workout_steps).to be_empty
+    expect(workout.estimated_tss).to be_present
+  end
+
+  it "never alters a completed workout" do
+    workout = create(:planned_workout, :completed, training_plan: plan)
+
+    expect { workout.reload.apply_definition(definition, metrics) }.to raise_error(ActiveRecord::RecordNotDestroyed)
+    expect(workout.reload.workout_steps).not_to be_empty
+
+    before = workout.reload.attributes
+    workout.assign_metrics(metrics)
+    expect { workout.save! }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    expect(workout.reload.attributes).to eq(before)
+  end
+end

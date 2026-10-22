@@ -61,28 +61,17 @@ module Planning
     end
 
     def definition_for(workout, level: nil, variation: nil)
-      attributes = {
-        duration_minutes: workout.duration_minutes,
-        phase: workout.plan_phase&.kind || "base",
-        goal: @plan.goal,
-        discipline: @plan.discipline
-      }
-      return Workouts::OpenerGenerator.new(**attributes).call if workout.opener?
-
       eligible = @selected_ids.include?(workout.id)
-      key = if variation
-        variation
-      elsif eligible
-        Workouts::Variations.for_generation(workout.subtype, current_key: workout.variation_key)
-      else
-        workout.variation_key || Workouts::Variations.default_key(workout.subtype)
+      Workouts::DefinitionFactory.for(@plan).for_workout(workout) do
+        key = if variation
+          variation
+        elsif eligible
+          Workouts::Variations.for_generation(workout.subtype, current_key: workout.variation_key)
+        else
+          workout.variation_key || Workouts::Variations.default_key(workout.subtype)
+        end
+        { progression_level: level || (eligible ? biased_level(workout) : workout.progression_level || 1), variation_key: key }
       end
-      Workouts::Generator.new(
-        **attributes,
-        subtype: workout.subtype,
-        progression_level: level || (eligible ? biased_level(workout) : workout.progression_level || 1),
-        variation_key: key,
-        load_adjustments: workout.generation_context.fetch("load_adjustments", {})).call
     end
 
     def biased_level(workout)
@@ -123,24 +112,13 @@ module Planning
 
     def persist!(candidate)
       workout, definition, metrics = candidate.workout, candidate.definition, candidate.metrics
-      context = workout.generation_context.merge(
-        "baseline_level" => workout.generation_context["baseline_level"] || workout.progression_level,
-        "generated_tss" => metrics.estimated_tss,
-        "generated_level" => definition.progression_level,
-        "load_adjustments" => definition.load_adjustments)
-      workout.assign_attributes(
-        detail_status: :structured,
-        subtype: definition.subtype,
-        progression_level: definition.progression_level,
-        generation_context: context,
-        variation_key: definition.variation_key,
-        name: definition.name,
-        purpose: workout.generation_context["maximum_level"] || workout.generation_context["return_ramp_stage"] ? workout.purpose : definition.purpose,
-        estimated_np_watts: metrics.estimated_np_watts,
-        estimated_if: metrics.estimated_if,
-        estimated_tss: metrics.estimated_tss,
-        estimated_work_kj: metrics.estimated_work_kj)
-      definition.steps.each { |step| workout.workout_steps.build(step.to_h) }
+      context = workout.generation_context
+      workout.apply_definition(
+        definition,
+        metrics,
+        track_generation: true,
+        baseline_level: context["baseline_level"] || workout.progression_level,
+        purpose: context["maximum_level"] || context["return_ramp_stage"] ? workout.purpose : definition.purpose)
       workout.save!
     end
   end

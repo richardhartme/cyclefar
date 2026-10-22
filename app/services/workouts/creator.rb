@@ -23,19 +23,8 @@ module Workouts
           plan_phase: phase_for(scheduled_on),
           scheduled_on: scheduled_on,
           kind: kind,
-          intent: intent_for(kind, definition.subtype),
-          subtype: definition.subtype,
-          duration_minutes: definition.duration_minutes,
-          progression_level: definition.progression_level,
-          variation_key: definition.variation_key,
-          name: definition.name,
-          purpose: definition.purpose,
-          detail_status: :structured,
-          estimated_np_watts: metrics.estimated_np_watts,
-          estimated_if: metrics.estimated_if,
-          estimated_tss: metrics.estimated_tss,
-          estimated_work_kj: metrics.estimated_work_kj)
-        definition.steps.each { |step| workout.workout_steps.build(step.to_h) }
+          intent: intent_for(kind, definition.subtype))
+        workout.apply_definition(definition, metrics)
         workout.save!
         workout
       end
@@ -50,23 +39,15 @@ module Workouts
 
     def definition_for(scheduled_on, subtype, duration_minutes)
       subtype = subtype.to_sym
-      phase = phase_for(scheduled_on)
-      if subtype == :opener
-        return [ :opener, OpenerGenerator.new(
-          duration_minutes: Integer(duration_minutes),
-          phase: phase.kind,
-          goal: @plan.goal,
-          discipline: @plan.discipline).call ]
-      end
-
-      [ :workout, Generator.new(
+      kind = subtype == :opener ? :opener : :workout
+      definition = DefinitionFactory.for(@plan).build(
+        kind: kind,
         subtype: subtype,
         duration_minutes: Integer(duration_minutes),
+        phase: phase_for(scheduled_on).kind,
         progression_level: DEFAULT_PROGRESSION_LEVEL,
-        variation_key: Variations.for_generation(subtype),
-        phase: phase.kind,
-        goal: @plan.goal,
-        discipline: @plan.discipline).call ]
+        variation_key: (Variations.for_generation(subtype) unless kind == :opener))
+      [ kind, definition ]
     end
 
     def intent_for(kind, subtype)
