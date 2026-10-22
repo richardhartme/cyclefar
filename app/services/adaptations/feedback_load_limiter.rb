@@ -38,7 +38,7 @@ module Adaptations
           items = Planning::WeeklyLoadCap.reduce(items, limit: Planning::WeeklyLoadCap.limit(reference)) do |candidate, stage|
             Planning::LoadReduction.options(candidate.preview.definition, stage: stage, intent: candidate.workout.intent).map do |definition|
               metrics = Metrics::WorkoutCalculator.new(steps: definition.steps, ftp_watts: @plan.ftp_watts_for_planning).call
-              after = Workouts::ManualEditor::Snapshot.new(
+              after = Workouts::WorkoutSnapshot.new(
                 kind: "workout",
                 subtype: definition.subtype,
                 duration_minutes: definition.duration_minutes,
