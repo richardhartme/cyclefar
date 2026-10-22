@@ -297,7 +297,7 @@ Prefer service/query objects for:
 
 ## Ownership schema
 
-This section records ownership constraints. [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
+This section records ownership constraints. [USR-001–USR-008](REQUIREMENTS.md#16-independent-riders) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|

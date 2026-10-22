@@ -155,7 +155,7 @@ Preview shows:
 
 The rider may go back and edit the configuration, then confirm to create the plan.
 
-Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice Preview and confirmation share the active timing rules; Back to edit restores entered duration/event fields and the optional disclosure state without persisting a plan.
+Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice. Preview and confirmation share the active timing rules; Back to edit restores entered duration/event fields and the optional disclosure state without persisting a plan.
 
 ### PLN-014 One active plan
 
@@ -494,10 +494,10 @@ When a week still exceeds the cap after the ordered reductions, show a non-block
 
 A `Sync to Intervals.icu` button syncs all upcoming planned structured workouts.
 
-- Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count 
+- Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count.
 - Exclude past, completed, missed and outline workouts, target-event dates and inclusive time-off dates. Include regular workouts and openers.
 - No automatic background syncing in V1.
-- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
+- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above. Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
 - If one of the previously synced workouts is no longer in the eligible calendar set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
@@ -513,7 +513,7 @@ See `INTERVALS_ICU.md`.
 - Workout scheduling: date only; no preferred time-of-day feature.
 - Store date concepts as Rails `date` where possible to avoid timezone drift.
 
-## 16. Independent-rider release
+## 16. Independent riders
 
 These are the acceptance criteria for independent riders. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 

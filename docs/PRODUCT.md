@@ -135,7 +135,7 @@ This describes the V1 scope as built.
 
 Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery is unverified; operator provisioning is disabled by default.
 
-There is no Google or other social sign-in, and there are no coaches, shared plans or teams. There is no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) for the acceptance and test contract.
+There is no Google or other social sign-in, and there are no coaches, shared plans or teams. There is no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) for the acceptance and test contract.
 
 ## Future-friendly seams
 

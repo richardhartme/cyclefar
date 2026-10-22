@@ -22,7 +22,7 @@ The session-backed preview configuration is bound to its authenticated creator o
 
 `IntervalsIcu::SyncCalendar` receives the signed-in rider's profile, plan and owner-scoped sync relation. A direct `IntervalsIcuSync.user_id` identifies detached records after a workout is deleted, so cleanup cannot consume another rider's stale record. The durable `cyclefar-workout-<id>` identity is stable. API keys and remote operations never cross owner boundaries.
 
-The ownership migrations enforce required profile/plan/sync foreign keys and per-user profile/active-plan indexes. Archived plans and immutable completed records stay attached to their owner. [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) lists the acceptance criteria.
+The ownership migrations enforce required profile/plan/sync foreign keys and per-user profile/active-plan indexes. Archived plans and immutable completed records stay attached to their owner. [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) defines the schema; [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) lists the acceptance criteria.
 
 Services and presenters live under `app/services/`:
 
