@@ -5,25 +5,66 @@ module Planning
   class PlanConfiguration
     include ActiveModel::Model
 
-    attr_accessor :goal,
-      :discipline,
-      :starts_on,
-      :plan_length,
-      :duration_mode,
-      :duration_months,
-      :custom_duration_weeks,
-      :ftp_watts,
-      :include_base,
-      :progression_mode,
-      :hard_weeks_before_recovery,
-      :event_name,
-      :event_on,
-      :event_discipline,
-      :event_distance_km,
-      :event_elevation_m,
-      :event_expected_duration_minutes,
-      :event_details_open,
-      :availability
+    # Coercion that maps anything unparsable to nil, so validation can tell
+    # "missing" from "malformed" using the raw input.
+    class StrictInteger < ActiveModel::Type::Value
+      def cast(value)
+        return value if value.is_a?(Integer)
+        return if value.blank?
+
+        Integer(value, exception: false)
+      end
+    end
+
+    class StrictDecimal < ActiveModel::Type::Value
+      def cast(value)
+        return if value.blank?
+
+        Float(value, exception: false)
+      end
+    end
+
+    class IsoDate < ActiveModel::Type::Value
+      def cast(value)
+        return value if value.is_a?(Date)
+        return if value.blank?
+
+        Date.iso8601(value.to_s)
+      rescue Date::Error
+        nil
+      end
+    end
+
+    class Text < ActiveModel::Type::Value
+      def cast(value) = value.to_s.presence
+    end
+
+    class StrippedText < ActiveModel::Type::Value
+      def cast(value) = value.to_s.strip.presence
+    end
+
+    include ActiveModel::Attributes
+
+    attribute :goal, Text.new
+    attribute :discipline, Text.new
+    attribute :starts_on, IsoDate.new
+    attribute :duration_mode, Text.new
+    attribute :duration_months, StrictInteger.new
+    attribute :custom_duration_weeks, StrictInteger.new
+    attribute :ftp_watts, StrictInteger.new
+    attribute :include_base, :boolean
+    attribute :progression_mode, Text.new
+    attribute :hard_weeks_before_recovery, StrictInteger.new
+    attribute :event_name, StrippedText.new
+    attribute :event_on, IsoDate.new
+    attribute :event_discipline, Text.new
+    attribute :event_distance_km, StrictDecimal.new
+    attribute :event_elevation_m, StrictInteger.new
+    attribute :event_expected_duration_minutes, StrictInteger.new
+    attribute :event_details_open, :boolean
+
+    # +plan_length+ is the form's single-select shorthand for duration mode and months.
+    attr_accessor :plan_length, :availability
 
     validates :goal, inclusion: { in: Training::Rules::GOALS }
     validates :starts_on, :ftp_watts, :progression_mode, presence: true
@@ -38,28 +79,11 @@ module Planning
     def initialize(attributes = {})
       @input_values = attributes.to_h.stringify_keys
       super
-      @goal = goal.to_s.presence
-      @discipline = discipline.to_s.presence
-      @starts_on = parse_date(starts_on)
-      @duration_mode = duration_mode.presence || "preset"
-      @duration_months = integer(duration_months || 3)
-      @custom_duration_weeks = integer(custom_duration_weeks)
-      if plan_length.present?
-        @duration_mode = plan_length == "custom" ? "custom" : "preset"
-        @duration_months = integer(plan_length) unless plan_length == "custom"
-      end
-      @plan_length = plan_length.presence || (duration_mode == "custom" ? "custom" : duration_months.to_s)
-      @ftp_watts = integer(ftp_watts)
-      @include_base = ActiveModel::Type::Boolean.new.cast(include_base)
-      @progression_mode = progression_mode.presence || "continuous"
-      @hard_weeks_before_recovery = @progression_mode == "hard_recovery_cycle" ? integer(hard_weeks_before_recovery) : nil
-      @event_name = event_name.to_s.strip.presence
-      @event_on = parse_date(event_on)
-      @event_discipline = event_discipline.to_s.presence
-      @event_distance_km = decimal(event_distance_km)
-      @event_elevation_m = integer(event_elevation_m)
-      @event_expected_duration_minutes = integer(event_expected_duration_minutes)
-      @event_details_open = ActiveModel::Type::Boolean.new.cast(event_details_open)
+      self.duration_mode = "preset" if duration_mode.blank?
+      self.duration_months = 3 if @input_values["duration_months"].nil?
+      resolve_plan_length
+      self.progression_mode = "continuous" if progression_mode.blank?
+      self.hard_weeks_before_recovery = nil unless progression_mode == "hard_recovery_cycle"
       @invalid_availability = false
       @availability = normalize_availability(availability)
     end
@@ -81,13 +105,7 @@ module Planning
       return event_on if event?
       return unless starts_on
 
-      if duration_mode == "custom"
-        return unless custom_duration_weeks.is_a?(Integer) && custom_duration_weeks >= Rules::MINIMUM_CUSTOM_WEEKS
-
-        starts_on + custom_duration_weeks.weeks - 1
-      elsif duration_mode == "preset" && Rules::PRESET_MONTHS.include?(duration_months)
-        starts_on.advance(months: duration_months) - 1
-      end
+      duration_mode == "custom" ? custom_ends_on : preset_ends_on
     end
 
     def slot_for(weekday)
@@ -104,6 +122,26 @@ module Planning
       end
     end
 
+    def custom_ends_on
+      return unless custom_duration_weeks.is_a?(Integer) && custom_duration_weeks >= Rules::MINIMUM_CUSTOM_WEEKS
+
+      starts_on + custom_duration_weeks.weeks - 1
+    end
+
+    def preset_ends_on
+      return unless duration_mode == "preset" && Rules::PRESET_MONTHS.include?(duration_months)
+
+      starts_on.advance(months: duration_months) - 1
+    end
+
+    def resolve_plan_length
+      if plan_length.present?
+        self.duration_mode = plan_length == "custom" ? "custom" : "preset"
+        self.duration_months = Integer(plan_length, exception: false) unless plan_length == "custom"
+      end
+      @plan_length = plan_length.presence || (duration_mode == "custom" ? "custom" : duration_months.to_s)
+    end
+
     def event_is_valid
       return unless event?
 
@@ -113,18 +151,19 @@ module Planning
       if starts_on && event_on && event_on < starts_on + Rules::MINIMUM_EVENT_LEAD_DAYS
         errors.add(:event_on, "must be at least four weeks after the plan start")
       end
-      errors.add(:event_distance_km, "must be positive") if event_distance_km && event_distance_km <= 0
-      if input_value(:event_distance_km).present? && event_distance_km.nil?
-        errors.add(:event_distance_km, "must be a positive number")
-      end
-      errors.add(:event_elevation_m, "must be zero or greater") if event_elevation_m && event_elevation_m.negative?
-      if input_value(:event_elevation_m).present? && event_elevation_m.nil?
-        errors.add(:event_elevation_m, "must be a whole number")
-      end
-      if event_expected_duration_minutes && event_expected_duration_minutes <= 0
-        errors.add(:event_expected_duration_minutes, "must be positive")
-      elsif input_value(:event_expected_duration_minutes).present? && event_expected_duration_minutes.nil?
-        errors.add(:event_expected_duration_minutes, "must be a positive whole number")
+      validate_optional_number(:event_distance_km, "must be positive", "must be a positive number") { |value| value <= 0 }
+      validate_optional_number(:event_elevation_m, "must be zero or greater", "must be a whole number", &:negative?)
+      validate_optional_number(:event_expected_duration_minutes, "must be positive", "must be a positive whole number") { |value| value <= 0 }
+    end
+
+    # +out_of_range+ is checked on a parsed value; +malformed+ applies when
+    # something was entered that did not parse.
+    def validate_optional_number(attribute, out_of_range, malformed)
+      value = public_send(attribute)
+      if value
+        errors.add(attribute, out_of_range) if yield(value)
+      elsif input_value(attribute).present?
+        errors.add(attribute, malformed)
       end
     end
 
@@ -159,26 +198,8 @@ module Planning
       [].freeze
     end
 
-    def parse_date(value)
-      return value if value.is_a?(Date)
-      return if value.blank?
-
-      Date.iso8601(value.to_s)
-    rescue Date::Error
-      nil
-    end
-
     def integer(value)
-      return value if value.is_a?(Integer)
-      return if value.blank?
-
-      Integer(value, exception: false)
-    end
-
-    def decimal(value)
-      return if value.blank?
-
-      Float(value, exception: false)
+      StrictInteger.new.cast(value)
     end
   end
 end
