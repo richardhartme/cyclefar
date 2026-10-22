@@ -265,24 +265,15 @@ module Planning
     def evaluate(prescription)
       return prescription unless prescription.executable?
 
-      definition = if prescription.kind == "opener"
-        Workouts::OpenerGenerator.new(
-          duration_minutes: prescription.duration_minutes,
-          phase: prescription.phase,
-          goal: @configuration.goal,
-          discipline: @configuration.training_discipline).call
-      else
-        Workouts::Generator.new(
-          subtype: prescription.subtype,
-          duration_minutes: prescription.duration_minutes,
-          progression_level: prescription.progression_level || 1,
-          variation_key: Workouts::Variations.default_key(prescription.subtype),
-          phase: prescription.phase,
-          goal: @configuration.goal,
-          discipline: @configuration.training_discipline,
-          load_adjustments: prescription.reason_codes.include?("taper_reduced_intensity") ?
-            { "main_set_factor" => early_long_taper?(prescription.scheduled_on) ? Rules::LONG_TAPER_WORK_FACTOR : Rules::TAPER_WORK_FACTOR } : {}).call
-      end
+      definition = Workouts::DefinitionFactory.new(goal: @configuration.goal, discipline: @configuration.training_discipline).build(
+        kind: prescription.kind,
+        subtype: prescription.subtype,
+        duration_minutes: prescription.duration_minutes,
+        progression_level: prescription.progression_level || 1,
+        variation_key: (Workouts::Variations.default_key(prescription.subtype) unless prescription.kind == "opener"),
+        phase: prescription.phase,
+        load_adjustments: prescription.reason_codes.include?("taper_reduced_intensity") ?
+          { "main_set_factor" => early_long_taper?(prescription.scheduled_on) ? Rules::LONG_TAPER_WORK_FACTOR : Rules::TAPER_WORK_FACTOR } : {})
       evaluated_definition(prescription, definition)
     end
 

@@ -29,7 +29,7 @@ module Planning
         next if @plan.planned_workouts.where(scheduled_on: item.scheduled_on).exists?
 
         phase = @plan.plan_phases.find { |candidate| item.scheduled_on.between?(candidate.starts_on, candidate.ends_on) }
-        @plan.planned_workouts.create!(
+        workout = @plan.planned_workouts.build(
           plan_phase: phase,
           scheduled_on: item.scheduled_on,
           kind: item.kind,
@@ -41,11 +41,9 @@ module Planning
           variation_key: item.definition&.variation_key,
           name: item.name,
           purpose: item.purpose,
-          detail_status: :outline,
-          estimated_np_watts: item.metrics&.estimated_np_watts,
-          estimated_if: item.metrics&.estimated_if,
-          estimated_tss: item.metrics&.estimated_tss,
-          estimated_work_kj: item.metrics&.estimated_work_kj)
+          detail_status: :outline)
+        workout.assign_metrics(item.metrics)
+        workout.save!
       end
       WorkoutBuilder.new(@plan).call
     end
@@ -147,15 +145,14 @@ module Planning
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:, load_adjustments: {}, return_ramp_stage: nil)
       level = progression_level || 1
-      definition = Workouts::Generator.new(
+      definition = Workouts::DefinitionFactory.for(@plan).build(
+        kind: :workout,
         subtype: subtype,
         duration_minutes: duration_minutes,
         progression_level: level,
         variation_key: Workouts::Variations.default_key(subtype),
         phase: item.phase,
-        goal: @plan.goal,
-        discipline: @plan.discipline,
-        load_adjustments: (item.phase == "taper" ? item.definition.load_adjustments : {}).merge(load_adjustments)).call
+        load_adjustments: (item.phase == "taper" ? item.definition.load_adjustments : {}).merge(load_adjustments))
       context = item.generation_context.merge("load_adjustments" => definition.load_adjustments)
       if item.intensity?
         context.merge!("baseline_level" => item.progression_level, "maximum_level" => definition.progression_level)

@@ -21,7 +21,7 @@ module Adaptations
         # Overdue structured workouts are outside FTP recalculation's future
         # scope. Freeze coherent metrics at the same FTP as their watt targets.
         metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: ftp).call
-        PlannedWorkout::METRICS.each { |key| @workout.public_send("#{key}=", metrics.public_send(key)) }
+        @workout.assign_metrics(metrics)
 
         snapshot = {
           steps: @workout.workout_steps.map { |step|

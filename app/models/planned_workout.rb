@@ -30,6 +30,41 @@ class PlannedWorkout < ApplicationRecord
     (persisted? && status_in_database == "completed") || super
   end
 
+  def assign_metrics(metrics)
+    METRICS.each { |key| public_send("#{key}=", metrics&.public_send(key)) }
+  end
+
+  # Replaces the steps with canonical definitions; the caller saves.
+  def replace_steps(step_definitions)
+    workout_steps.destroy_all
+    step_definitions.each { |step| workout_steps.build(step.to_h) }
+  end
+
+  # The one path that persists a generated definition onto a workout. Extra
+  # attributes override the definition-derived ones. Callers save.
+  def apply_definition(definition, metrics, structured: true, track_generation: false, baseline_level: nil, **attributes)
+    context = attributes.delete(:generation_context) || generation_context
+    if track_generation
+      context = context.merge(
+        "generated_level" => definition.progression_level,
+        "generated_tss" => metrics.estimated_tss,
+        "load_adjustments" => definition.load_adjustments)
+      context["baseline_level"] = baseline_level if baseline_level
+    end
+    assign_attributes({
+      detail_status: structured ? :structured : :outline,
+      subtype: definition.subtype,
+      duration_minutes: definition.duration_minutes,
+      progression_level: definition.progression_level,
+      variation_key: definition.variation_key,
+      name: definition.name,
+      purpose: definition.purpose,
+      generation_context: context
+    }.merge(attributes))
+    assign_metrics(metrics)
+    replace_steps(structured ? definition.steps : [])
+  end
+
   private
 
   def generation_context_is_object

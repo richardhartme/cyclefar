@@ -30,8 +30,8 @@ RSpec.describe Workouts::Copier, type: :service do
     expect(copy.estimated_if).to be_within(0.00001).of(expected_metrics.estimated_if)
     expect(copy.estimated_tss).to be_within(0.0001).of(expected_metrics.estimated_tss)
     expect(copy.estimated_work_kj).to be_within(0.0001).of(expected_metrics.estimated_work_kj)
-    expect(copy.workout_steps.map { |step| step.attributes.slice(*Workouts::Copier::STEP_ATTRIBUTES.map(&:to_s)) }).to eq(
-      workout.workout_steps.map { |step| step.attributes.slice(*Workouts::Copier::STEP_ATTRIBUTES.map(&:to_s)) }
+    expect(copy.workout_steps.map { |step| step.attributes.slice(*Workouts::StepDefinition.members.map(&:to_s)) }).to eq(
+      workout.workout_steps.map { |step| step.attributes.slice(*Workouts::StepDefinition.members.map(&:to_s)) }
     )
     expect(workout.reload.scheduled_on).to eq(Date.current - 1)
     expect(other_profile.reload.ftp_watts).to eq(410)

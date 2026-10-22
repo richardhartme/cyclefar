@@ -40,7 +40,8 @@ module Workouts
 
     def refresh_metrics!
       metrics = Metrics::WorkoutCalculator.new(steps: @workout.workout_steps, ftp_watts: @plan.ftp_watts_for_planning).call
-      @workout.update!(PlannedWorkout::METRICS.to_h { |key| [ key, metrics.public_send(key) ] })
+      @workout.assign_metrics(metrics)
+      @workout.save!
     end
 
     def regenerate!(fresh_context:, materialize:)
@@ -53,43 +54,21 @@ module Workouts
       definition, metrics = candidate.definition, candidate.metrics
       # Destination references replace source-week ceilings. The saved baseline
       # also prevents bias stacking when a moved outline later materialises.
-      context.merge!(
-        "baseline_level" => baseline,
-        "generated_level" => definition.progression_level,
-        "generated_tss" => metrics.estimated_tss,
-        "load_adjustments" => definition.load_adjustments)
       if definition.progression_level && definition.progression_level < level
         context["maximum_level"] = [ maximum || 7, definition.progression_level ].min
       end
-      structured = @workout.structured? || materialize
-      @workout.workout_steps.destroy_all
-      @workout.assign_attributes(
-        detail_status: structured ? :structured : :outline,
-        progression_level: definition.progression_level,
-        generation_context: context,
-        variation_key: definition.variation_key,
-        name: definition.name,
-        purpose: definition.purpose,
-        estimated_np_watts: metrics.estimated_np_watts,
-        estimated_if: metrics.estimated_if,
-        estimated_tss: metrics.estimated_tss,
-        estimated_work_kj: metrics.estimated_work_kj)
-      definition.steps.each { |step| @workout.workout_steps.build(step.to_h) } if structured
+      @workout.apply_definition(
+        definition,
+        metrics,
+        structured: @workout.structured? || materialize,
+        track_generation: true,
+        baseline_level: baseline,
+        generation_context: context)
       @workout.save!
     end
 
     def candidate_for(level, load_adjustments: {})
-      attributes = { duration_minutes: @workout.duration_minutes, phase: @workout.plan_phase.kind, goal: @plan.goal, discipline: @plan.discipline }
-      definition = if @workout.opener?
-        OpenerGenerator.new(**attributes).call
-      else
-        Generator.new(
-          **attributes,
-          subtype: @workout.subtype,
-          progression_level: level,
-          variation_key: @workout.variation_key || Variations.default_key(@workout.subtype),
-          load_adjustments: load_adjustments).call
-      end
+      definition = DefinitionFactory.for(@plan).for_workout(@workout, progression_level: level, load_adjustments: load_adjustments)
       Candidate.new(
         workout: @workout,
         definition: definition,

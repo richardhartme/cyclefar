@@ -36,7 +36,7 @@ module Planning
         preview.prescriptions.each do |item|
           next if item.kind == "event"
           phase = phases.values.find { |candidate| item.scheduled_on.between?(candidate.starts_on, candidate.ends_on) }
-          plan.planned_workouts.create!(
+          workout = plan.planned_workouts.build(
             plan_phase: phase,
             scheduled_on: item.scheduled_on,
             kind: item.kind,
@@ -48,11 +48,9 @@ module Planning
             variation_key: item.definition&.variation_key,
             name: item.name,
             purpose: item.purpose,
-            detail_status: :outline,
-            estimated_np_watts: item.metrics&.estimated_np_watts,
-            estimated_if: item.metrics&.estimated_if,
-            estimated_tss: item.metrics&.estimated_tss,
-            estimated_work_kj: item.metrics&.estimated_work_kj)
+            detail_status: :outline)
+          workout.assign_metrics(item.metrics)
+          workout.save!
         end
         WorkoutBuilder.new(plan).call
         plan

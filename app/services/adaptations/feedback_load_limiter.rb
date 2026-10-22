@@ -77,17 +77,7 @@ module Adaptations
       steps = if workout.structured?
         workout.workout_steps
       else
-        attributes = { duration_minutes: workout.duration_minutes, phase: workout.plan_phase&.kind || "base", goal: @plan.goal, discipline: @plan.discipline }
-        if workout.opener?
-          Workouts::OpenerGenerator.new(**attributes).call.steps
-        else
-          Workouts::Generator.new(
-            **attributes,
-            subtype: workout.subtype,
-            progression_level: workout.progression_level || 1,
-            variation_key: workout.variation_key || Workouts::Variations.default_key(workout.subtype),
-            load_adjustments: workout.generation_context.fetch("load_adjustments", {})).call.steps
-        end
+        Workouts::DefinitionFactory.for(@plan).for_workout(workout).steps
       end
       Metrics::WorkoutCalculator.new(steps: steps, ftp_watts: workout.completed? ? workout.completed_ftp_watts : @plan.ftp_watts_for_planning).call.estimated_tss
     end

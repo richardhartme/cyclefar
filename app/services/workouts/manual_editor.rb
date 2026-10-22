@@ -90,49 +90,27 @@ module Workouts
       kind, definition, metrics = proposed.kind, proposed.definition, proposed.metrics
       material_change = material_change?(proposed.before, proposed.after)
       @workout.transaction do
-        if attributes[:action].to_s == "adapt"
-          @workout.generation_context = @workout.generation_context.merge(
-            "generated_level" => definition.progression_level,
-            "generated_tss" => metrics.estimated_tss,
-            "load_adjustments" => definition.load_adjustments)
-        end
-        @workout.workout_steps.destroy_all
-        @workout.assign_attributes(
+        @workout.apply_definition(
+          definition,
+          metrics,
+          track_generation: attributes[:action].to_s == "adapt",
           kind: kind,
-          intent: kind == :opener ? :intervals : @workout.intent,
-          subtype: definition.subtype,
-          duration_minutes: definition.duration_minutes,
-          progression_level: definition.progression_level,
-          variation_key: definition.variation_key,
-          name: definition.name,
-          purpose: definition.purpose,
-          estimated_np_watts: metrics.estimated_np_watts,
-          estimated_if: metrics.estimated_if,
-          estimated_tss: metrics.estimated_tss,
-          estimated_work_kj: metrics.estimated_work_kj)
-        definition.steps.each { |step| @workout.workout_steps.build(step.to_h) }
+          intent: kind == :opener ? :intervals : @workout.intent)
         @workout.save!
       end
       Result.new(workout: @workout, material_change: material_change, before: proposed.before, after: proposed.after)
     end
 
     def definition_for(action, subtype, duration_minutes, progression_level)
+      factory = DefinitionFactory.for(@workout.training_plan)
+      phase = @workout.plan_phase.kind
       if action.to_s == "change" && subtype == :opener
-        return [ :opener, opener_definition(duration_minutes) ]
+        return [ :opener, factory.build(kind: :opener, duration_minutes: Integer(duration_minutes), phase: phase) ]
       end
 
       raise ArgumentError, "Only a regular workout can be shuffled" unless @workout.workout? || action.to_s == "change"
 
-      attributes = next_attributes(action, subtype, duration_minutes, progression_level)
-      [ :workout, Generator.new(**attributes).call ]
-    end
-
-    def opener_definition(duration_minutes)
-      OpenerGenerator.new(
-        duration_minutes: Integer(duration_minutes),
-        phase: @workout.plan_phase.kind,
-        goal: @workout.training_plan.goal,
-        discipline: @workout.training_plan.discipline).call
+      [ :workout, factory.build(kind: :workout, phase: phase, **next_attributes(action, subtype, duration_minutes, progression_level)) ]
     end
 
     def next_attributes(action, subtype, duration_minutes, progression_level)
@@ -149,7 +127,6 @@ module Workouts
       raise ArgumentError, "Unsupported workout subtype" unless Training::Rules::SUBTYPE_NAMES.key?(chosen_subtype.to_sym)
 
       { subtype: chosen_subtype, duration_minutes: duration, progression_level: level, variation_key: variation || Variations.default_key(chosen_subtype),
-        phase: @workout.plan_phase.kind, goal: @workout.training_plan.goal, discipline: @workout.training_plan.discipline,
         load_adjustments: action.to_s == "adapt" ? @workout.generation_context.fetch("load_adjustments", {}) : {} }
     end
 
