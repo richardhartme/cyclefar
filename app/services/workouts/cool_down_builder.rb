@@ -1,6 +1,3 @@
-require_relative "../training/rules"
-require_relative "step_definition"
-
 module Workouts
   # Builds cool-down segments with duration and subtype variations.
   class CoolDownBuilder

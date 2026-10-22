@@ -39,9 +39,9 @@ module Planning
       @ftp = @plan.ftp_watts_for_planning
       @load_context = LoadContext.new(@plan)
       eligible = @plan.planned_workouts.planned.outline
-      eligible = workout_id ? eligible.where(id: workout_id) : eligible.where(scheduled_on: @date..(@date + 13))
+      eligible = workout_id ? eligible.where(id: workout_id) : eligible.where(scheduled_on: @date..(@date + Rules::PLANNING_HORIZON_DAYS - 1))
       @selected_ids = eligible.pluck(:id)
-      candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + 13).end_of_week)
+      candidates = @plan.planned_workouts.where("scheduled_on <= ?", (@date + Rules::PLANNING_HORIZON_DAYS - 1).end_of_week)
         .includes(:plan_phase, :workout_steps).order(:scheduled_on).map { |workout| candidate_for(workout) }
       candidates, warnings = limit_load(candidates)
       candidates.select(&:selected).each { |candidate| persist!(candidate) }
@@ -81,7 +81,7 @@ module Planning
       maximum = @load_context.maximum_level(workout)
       Training::Progression.level(
         baseline: context["baseline_level"] || workout.progression_level || 1,
-        bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
+        bias: @plan.intensity_bias,
         maximum: maximum)
     end
 
@@ -91,7 +91,7 @@ module Planning
       candidates.group_by { |item| item.scheduled_on.beginning_of_week }.each do |week_start, items|
         next unless @load_context.comparable_week?(week_start, items.map(&:workout))
 
-        in_horizon = week_start <= @date + 13 && week_start + 6 >= @date
+        in_horizon = week_start <= @date + Rules::PLANNING_HORIZON_DAYS - 1 && week_start + 6 >= @date
         if reference && (in_horizon || items.any?(&:selected))
           limit = WeeklyLoadCap.limit(reference)
           reduced = WeeklyLoadCap.reduce(items, limit: limit) do |candidate, stage|

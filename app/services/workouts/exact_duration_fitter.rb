@@ -1,8 +1,3 @@
-require_relative "warm_up_builder"
-require_relative "cool_down_builder"
-require_relative "main_set_builder"
-require_relative "aerobic_set_builder"
-
 module Workouts
   # Fits workout steps to exact duration by adjusting progression and fill.
   class ExactDurationFitter

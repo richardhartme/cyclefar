@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   # Allocates base, build, speciality and taper phases across the plan duration.
   class PhaseAllocator

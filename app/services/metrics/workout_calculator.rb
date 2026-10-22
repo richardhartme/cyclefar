@@ -1,6 +1,3 @@
-require_relative "../training/rules"
-require_relative "../workouts/step_sequence"
-
 module Metrics
   # Calculates workout metrics (power, NP, IF, TSS, work) from step definitions and FTP.
   class WorkoutCalculator

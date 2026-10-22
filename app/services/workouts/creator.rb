@@ -39,19 +39,19 @@ module Workouts
 
     def definition_for(scheduled_on, subtype, duration_minutes)
       subtype = subtype.to_sym
-      kind = subtype == :opener ? :opener : :workout
+      kind = subtype == :opener ? "opener" : "workout"
       definition = DefinitionFactory.for(@plan).build(
         kind: kind,
         subtype: subtype,
         duration_minutes: Integer(duration_minutes),
         phase: phase_for(scheduled_on).kind,
         progression_level: DEFAULT_PROGRESSION_LEVEL,
-        variation_key: (Variations.for_generation(subtype) unless kind == :opener))
+        variation_key: (Variations.for_generation(subtype) unless kind == "opener"))
       [ kind, definition ]
     end
 
     def intent_for(kind, subtype)
-      return :intervals if kind == :opener || subtype.to_sym == :over_under
+      return :intervals if kind == "opener" || subtype.to_sym == :over_under
 
       subtype
     end

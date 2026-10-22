@@ -37,7 +37,7 @@ module Planning
     def proposal_range
       starts_on = Date.iso8601(@proposal.payload.fetch("starts_on"))
       ends_on = Date.iso8601(@proposal.payload.fetch("ends_on"))
-      raise ArgumentError, "Proposal is stale" unless starts_on <= ends_on && starts_on >= Date.current && ends_on <= @plan.ends_on && (ends_on - starts_on).to_i <= 13
+      raise ArgumentError, "Proposal is stale" unless starts_on <= ends_on && starts_on >= Date.current && ends_on <= @plan.ends_on && (ends_on - starts_on).to_i < Rules::PLANNING_HORIZON_DAYS
 
       starts_on..ends_on
     rescue Date::Error, KeyError

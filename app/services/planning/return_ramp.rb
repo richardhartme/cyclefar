@@ -1,5 +1,3 @@
-require_relative "rules"
-
 module Planning
   # Calendar-based stages also cover short ramps that skip some quarters.
   class ReturnRamp
@@ -8,7 +6,7 @@ module Planning
     end
 
     def stage_on(date)
-      [ ((date - @ends_on - 1) * 4 / @days).floor, 3 ].min
+      [ ((date - @ends_on - 1) * Rules::RETURN_RAMP_STAGE_COUNT / @days).floor, Rules::RETURN_RAMP_FINAL_STAGE ].min
     end
 
     def duration_factor(date)

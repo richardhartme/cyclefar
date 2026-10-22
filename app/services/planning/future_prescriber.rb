@@ -24,7 +24,7 @@ module Planning
       @generation_contexts = {}
       @pre_break_levels = pre_break_levels
       replaceable_workouts(preserve_workout_ids).where(scheduled_on: dates & blocked_dates(dates)).destroy_all
-      replaceable_workouts(preserve_workout_ids).where(kind: :workout, scheduled_on: dates).destroy_all
+      replaceable_workouts(preserve_workout_ids).where(kind: "workout", scheduled_on: dates).destroy_all
       prescriptions.filter_map { |item| prepared_prescription(item, dates) }.each do |item|
         next if @plan.planned_workouts.where(scheduled_on: item.scheduled_on).exists?
 
@@ -93,7 +93,7 @@ module Planning
       recalculate(
         item,
         subtype: subtype,
-        duration_minutes: reduced_duration(item.duration_minutes, ramp.duration_factor(item.scheduled_on)),
+        duration_minutes: Training::Rules.reduced_duration(item.duration_minutes, ramp.duration_factor(item.scheduled_on)),
         progression_level: level,
         load_adjustments: band ? { "return_target_band" => band } : {},
         return_ramp_stage: stage + 1,
@@ -120,19 +120,15 @@ module Planning
       end
       biased_level = Training::Progression.level(
         baseline: item.progression_level,
-        bias: @plan.progression_state.fetch("intensity_bias", 0).to_i,
+        bias: @plan.intensity_bias,
         maximum: item.phase == "taper" ? item.generation_context["maximum_level"] : nil)
       [ biased_level, ceiling ].min
-    end
-
-    def reduced_duration(duration, factor)
-      [ (duration * factor).round, Training::Rules::MINIMUM_DURATION_MINUTES ].max
     end
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:, load_adjustments: {}, return_ramp_stage: nil)
       level = progression_level || 1
       definition = Workouts::DefinitionFactory.for(@plan).build(
-        kind: :workout,
+        kind: "workout",
         subtype: subtype,
         duration_minutes: duration_minutes,
         progression_level: level,

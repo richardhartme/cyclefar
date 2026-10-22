@@ -1,9 +1,3 @@
-require_relative "../training/rules"
-require_relative "exact_duration_fitter"
-require_relative "workout_definition"
-require_relative "variations"
-require_relative "target_band_limiter"
-
 module Workouts
   # Generates WorkoutDefinitions with progression levels, durations, and variation rules.
   class Generator

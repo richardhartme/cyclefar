@@ -1,6 +1,3 @@
-require_relative "step_definition"
-require_relative "../training/rules"
-
 module Workouts
   # Main work stays in its return band; easier preparation and recovery may
   # stay below it, but no primer or ramp endpoint exceeds its upper limit.

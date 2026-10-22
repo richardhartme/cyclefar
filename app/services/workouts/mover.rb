@@ -25,7 +25,7 @@ module Workouts
           (@workout.scheduled_on - destination).abs > Planning::Rules::MOVE_STRUCTURE_WINDOW_DAYS ||
           reduced_context(@workout.scheduled_on) != reduced_context(destination)
         @workout.update!(scheduled_on: destination, plan_phase: phase)
-        materialize = @workout.outline? && destination.between?(Date.current, Date.current + 13)
+        materialize = @workout.outline? && destination.between?(Date.current, Date.current + Planning::Rules::PLANNING_HORIZON_DAYS - 1)
         if regenerate || materialize
           regenerate!(fresh_context: regenerate, materialize: materialize)
         elsif @workout.structured?
@@ -49,7 +49,7 @@ module Workouts
       context = fresh_context ? destination_context : @workout.generation_context.dup
       baseline = context["baseline_level"] || @workout.progression_level || 1
       maximum = fresh_context ? context["maximum_level"] : Planning::LoadContext.new(@plan).maximum_level(@workout)
-      level = Training::Progression.level(baseline: baseline, bias: @plan.progression_state.fetch("intensity_bias", 0).to_i, maximum: maximum)
+      level = Training::Progression.level(baseline: baseline, bias: @plan.intensity_bias, maximum: maximum)
       candidate = limit_load(candidate_for(level, load_adjustments: context.fetch("load_adjustments", {})))
       definition, metrics = candidate.definition, candidate.metrics
       # Destination references replace source-week ceilings. The saved baseline

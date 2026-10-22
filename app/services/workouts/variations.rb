@@ -1,5 +1,3 @@
-require_relative "../training/rules"
-
 module Workouts
   # Manages variation keys for workouts (sustained, alternating, undulating, redistributed recovery).
   module Variations
