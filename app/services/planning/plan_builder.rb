@@ -10,12 +10,12 @@ module Planning
 
       @phases = PhaseAllocator.new(@configuration).call
       @taper = TaperPlan.new(configuration: @configuration, phases: @phases)
-      @week_flags = recovery_week_flags
+      @calendar = PreviewCalendar.new(configuration: @configuration, phases: @phases, recovery_flags: recovery_week_flags)
       prescriptions = build_prescriptions
       evaluated = prescriptions.map { |prescription| evaluate(prescription) }
       evaluated, warnings = enforce_load_cap(evaluated)
       evaluated = taper_load(evaluated)
-      weeks = build_weeks(evaluated, warnings)
+      weeks = @calendar.weeks(evaluated, warnings)
       PlanPreview.new(
         configuration: @configuration,
         starts_on: @configuration.starts_on,
@@ -33,7 +33,7 @@ module Planning
       opener_on = @configuration.event? ? @configuration.ends_on - 1 : nil
       prescriptions = []
       (@configuration.starts_on..@configuration.ends_on).each do |date|
-        phase = phase_for(date)
+        phase = @calendar.phase_for(date)
         if @configuration.event? && date == @configuration.ends_on
           prescriptions << special(date, "event", phase, "Target event", "Your target event.")
           next
@@ -118,10 +118,6 @@ module Planning
       Prescription.new(scheduled_on: date, kind: kind, phase: phase.kind, name: name, purpose: purpose)
     end
 
-    def phase_for(date)
-      @phases.find { |phase| phase.includes?(date) } || raise("No phase for #{date}")
-    end
-
     def recovery_week_flags
       RecoverySchedule.new(
         starts_on: @configuration.starts_on,
@@ -131,7 +127,7 @@ module Planning
     end
 
     def recovery_week?(date)
-      @week_flags.fetch(date.beginning_of_week)
+      @calendar.recovery?(date.beginning_of_week)
     end
 
     def level_for(date, phase)
@@ -170,10 +166,10 @@ module Planning
       return prescriptions unless @taper.phase
 
       peak_items = prescriptions.group_by { |item| item.scheduled_on.beginning_of_week }.filter_map do |week_start, items|
-        next if partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start)
+        next unless @calendar.regular?(week_start)
 
         items
-      end.max_by { |items| tss_for(items) }
+      end.max_by { |items| items.sum(&:estimated_tss) }
       return prescriptions unless peak_items
 
       prescriptions = prescriptions.map do |item|
@@ -183,21 +179,21 @@ module Planning
         reference ? evaluate(item.with(progression_level: reference.progression_level)) : item
       end
 
-      @taper.balance(prescriptions, peak: tss_for(peak_items)) { |item| evaluate(item) }
+      @taper.balance(prescriptions, peak: peak_items.sum(&:estimated_tss)) { |item| evaluate(item) }
     end
 
     def enforce_load_cap(prescriptions)
       adjusted = prescriptions.dup
       warnings = []
       reference_tss = nil
-      weekly_starts.each do |week_start|
+      @calendar.week_starts.each do |week_start|
         week_prescriptions = adjusted.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }
-        next if week_prescriptions.empty? || partial_week?(week_start) || recovery_week_start?(week_start) || taper_week?(week_start)
+        next if week_prescriptions.empty? || !@calendar.regular?(week_start)
 
-        current_tss = tss_for(week_prescriptions)
+        current_tss = week_prescriptions.sum(&:estimated_tss)
         if reference_tss && current_tss > reference_tss * (1 + Rules::HARD_WEEK_GROWTH_CAP)
           adjusted = lower_week_load(adjusted, week_start, reference_tss * (1 + Rules::HARD_WEEK_GROWTH_CAP))
-          current_tss = tss_for(adjusted.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) })
+          current_tss = adjusted.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }.sum(&:estimated_tss)
           if current_tss > reference_tss * (1 + Rules::HARD_WEEK_GROWTH_CAP)
             warnings << "Week of #{week_start}: your availability keeps projected load above the 8% growth target."
           end
@@ -215,44 +211,5 @@ module Planning
       prescriptions.map { |item| (index = current.index(item)) ? reduced[index] : item }
     end
 
-    def build_weeks(prescriptions, warnings)
-      weekly_starts.map do |week_start|
-        items = prescriptions.select { |prescription| prescription.scheduled_on.between?(week_start, week_start + 6) }.sort_by(&:scheduled_on)
-        phases = items.map(&:phase).uniq
-        PreviewWeek.new(
-          starts_on: week_start,
-          ends_on: week_start + 6,
-          phase: phases.one? ? phases.first : "mixed",
-          recovery_week: recovery_week_start?(week_start),
-          partial: partial_week?(week_start),
-          prescriptions: items,
-          duration_minutes: items.sum { |item| item.duration_minutes.to_i },
-          estimated_tss: tss_for(items),
-          estimated_work_kj: items.sum { |item| item.metrics&.estimated_work_kj.to_f },
-          warning: warnings.find { |warning| warning.include?(week_start.to_s) })
-      end
-    end
-
-    def weekly_starts
-      (@configuration.starts_on.beginning_of_week..@configuration.ends_on.beginning_of_week).step(7).to_a
-    end
-
-    def tss_for(prescriptions)
-      prescriptions.sum { |prescription| prescription.metrics&.estimated_tss.to_f }
-    end
-
-    def partial_week?(week_start)
-      week_start < @configuration.starts_on || week_start + 6 > @configuration.ends_on
-    end
-
-    def recovery_week_start?(week_start)
-      @week_flags.fetch(week_start)
-    end
-
-    def taper_week?(week_start)
-      (week_start..week_start + 6).any? do |date|
-        date.between?(@configuration.starts_on, @configuration.ends_on) && phase_for(date).kind == "taper"
-      end
-    end
   end
 end
