@@ -31,6 +31,7 @@ module Training
       "threshold" => 7..9,
       "vo2_max" => 8..10,
       "over_under" => 7..9)
+    INTENSITY_SUBTYPES = %w[tempo sweet_spot threshold vo2_max over_under].freeze
     COMPARABLE_FAMILIES = deep_freeze([ %w[tempo sweet_spot threshold], %w[vo2_max over_under] ])
     MAXIMUM_TARGET_PCT = 120
     INTENSITY_VARIATION_KEYS = %w[standard redistributed_recovery].freeze

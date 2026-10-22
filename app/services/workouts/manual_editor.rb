@@ -4,7 +4,6 @@ module Workouts
     Snapshot = Data.define(:kind, :subtype, :duration_minutes, :estimated_if, :estimated_tss)
     Result = Data.define(:workout, :material_change, :before, :after)
     Preview = Data.define(:kind, :definition, :metrics, :before, :after)
-    INTENSITY_SUBTYPES = %w[tempo sweet_spot threshold vo2_max over_under].freeze
 
     def initialize(workout)
       @workout = workout
@@ -147,7 +146,7 @@ module Workouts
     end
 
     def intensity?(subtype)
-      INTENSITY_SUBTYPES.include?(subtype.to_s)
+      Training::Rules::INTENSITY_SUBTYPES.include?(subtype.to_s)
     end
   end
 end
