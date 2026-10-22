@@ -54,11 +54,7 @@ module Planning
     def recovery_week?(starts_on)
       return false unless @plan
 
-      @recovery_flags ||= RecoverySchedule.new(
-        starts_on: @plan.starts_on,
-        ends_on: @plan.ends_on,
-        phases: @plan.plan_phases.sort_by(&:position),
-        hard_weeks: @plan.hard_recovery_cycle? ? @plan.hard_weeks_before_recovery : nil).flags
+      @recovery_flags ||= RecoverySchedule.for_plan(@plan).flags
       @recovery_flags.fetch(starts_on, false)
     end
   end

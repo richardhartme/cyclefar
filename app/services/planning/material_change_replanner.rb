@@ -27,9 +27,7 @@ module Planning
     def dates_by_template
       templates = @plan.availability_templates.includes(:availability_slots).to_a
       proposal_range.to_a.group_by do |date|
-        template = templates.select do |candidate|
-          candidate.effective_from <= date && (candidate.effective_until.nil? || candidate.effective_until >= date)
-        end.max_by { |candidate| [ candidate.one_week_override? ? 1 : 0, candidate.effective_from ] }
+        template = AvailabilityTemplate.for_date(templates, date)
         raise ArgumentError, "No availability template applies on #{date.to_fs(:long)}" unless template
 
         template

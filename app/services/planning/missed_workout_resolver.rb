@@ -46,9 +46,7 @@ module Planning
     end
 
     def active_template_for(plan, date)
-      plan.availability_templates.includes(:availability_slots).select do |template|
-        template.effective_from <= date && (template.effective_until.nil? || template.effective_until >= date)
-      end.max_by { |template| [ template.one_week_override? ? 1 : 0, template.effective_from ] }
+      AvailabilityTemplate.for_date(plan.availability_templates.includes(:availability_slots).to_a, date)
     end
   end
 end

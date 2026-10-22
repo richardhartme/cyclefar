@@ -59,36 +59,22 @@ module Planning
     def prepared_prescription(item, dates)
       return unless dates.include?(item.scheduled_on)
       return unless %w[workout opener].include?(item.kind)
-      return if time_off_period_for(item.scheduled_on)
-      return if return_ramp_period_for(item.scheduled_on) && item.kind != "workout"
+      return if timeline.break_on(item.scheduled_on)
+      return if timeline.ramp_period_for(item.scheduled_on) && item.kind != "workout"
       return item unless item.kind == "workout"
 
       reentry_prescription(item)
     end
 
     def blocked_dates(dates)
-      dates.select { |date| blocked?(date) }
-    end
-
-    def blocked?(date)
-      time_off_period_for(date) || return_ramp_period_for(date)
-    end
-
-    def time_off_period_for(date)
-      time_off_periods.find { |period| date.between?(period.starts_on, period.ends_on) }
-    end
-
-    def return_ramp_period_for(date)
-      time_off_periods.find do |period|
-        period.return_ramp_days.present? && date.between?(period.ends_on + 1, period.ends_on + period.return_ramp_days)
-      end
+      dates.select { |date| timeline.blocked?(date) }
     end
 
     def reentry_prescription(item)
-      period = return_ramp_period_for(item.scheduled_on)
+      period = timeline.ramp_period_for(item.scheduled_on)
       return illness_reentry(item, period) if period
 
-      period = latest_completed_break_before(item.scheduled_on)
+      period = timeline.latest_completed_before(item.scheduled_on)
       return item unless period
 
       resume_after_break(item, period)
@@ -171,15 +157,15 @@ module Planning
         definition: definition)
     end
 
-    def latest_completed_break_before(date)
-      time_off_periods.select { |period| period.ends_on < date }.max_by(&:ends_on)
-    end
-
     def pre_break_levels
       workouts = @plan.planned_workouts.workout.where.not(status: :missed).where.not(progression_level: nil).to_a
       time_off_periods.to_h do |period|
         [ period.id, PreBreakProgression.levels(workouts, before: period.starts_on) ]
       end
+    end
+
+    def timeline
+      @timeline ||= TimeOffTimeline.new(time_off_periods)
     end
 
     def time_off_periods
