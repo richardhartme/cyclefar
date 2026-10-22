@@ -18,7 +18,12 @@ RSpec.describe Workouts::DefinitionFactory, type: :service do
   end
 
   it "rebuilds a stored workout's definition, honouring its saved load adjustments" do
-    workout = create(:planned_workout, training_plan: plan, subtype: :tempo, intent: :tempo, progression_level: 2,
+    workout = create(
+      :planned_workout,
+      training_plan: plan,
+      subtype: :tempo,
+      intent: :tempo,
+      progression_level: 2,
       generation_context: { "load_adjustments" => { "easy_filler" => true } })
 
     definition = factory.for_workout(workout)

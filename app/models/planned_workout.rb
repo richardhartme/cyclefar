@@ -51,16 +51,17 @@ class PlannedWorkout < ApplicationRecord
         "load_adjustments" => definition.load_adjustments)
       context["baseline_level"] = baseline_level if baseline_level
     end
-    assign_attributes({
-      detail_status: structured ? :structured : :outline,
-      subtype: definition.subtype,
-      duration_minutes: definition.duration_minutes,
-      progression_level: definition.progression_level,
-      variation_key: definition.variation_key,
-      name: definition.name,
-      purpose: definition.purpose,
-      generation_context: context
-    }.merge(attributes))
+    assign_attributes(
+      {
+            detail_status: structured ? :structured : :outline,
+            subtype: definition.subtype,
+            duration_minutes: definition.duration_minutes,
+            progression_level: definition.progression_level,
+            variation_key: definition.variation_key,
+            name: definition.name,
+            purpose: definition.purpose,
+            generation_context: context
+          }.merge(attributes))
     assign_metrics(metrics)
     replace_steps(structured ? definition.steps : [])
   end
