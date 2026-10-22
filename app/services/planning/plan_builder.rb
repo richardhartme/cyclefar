@@ -210,6 +210,5 @@ module Planning
       end
       prescriptions.map { |item| (index = current.index(item)) ? reduced[index] : item }
     end
-
   end
 end

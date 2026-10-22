@@ -1,7 +1,6 @@
 module Workouts
   # Edits and shuffles existing structured workouts (easier, harder, shorter, longer, adapt).
   class ManualEditor
-
     def initialize(workout)
       @workout = workout
       raise ArgumentError, "Only planned structured workouts can be edited" unless workout.planned? && workout.structured? && (workout.workout? || workout.opener?)
