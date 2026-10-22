@@ -1,6 +1,6 @@
 # Triage labels
 
-| Skill role | Jira label | Meaning |
+| Skill role | Status string | Meaning |
 | --- | --- | --- |
 | `needs-triage` | `needs-triage` | Maintainer needs to evaluate the issue |
 | `needs-info` | `needs-info` | Waiting on the reporter for more information |
@@ -8,4 +8,4 @@
 | `ready-for-human` | `ready-for-human` | Requires human implementation |
 | `wontfix` | `wontfix` | Will not be actioned |
 
-Use the Jira label corresponding to the role named by an engineering skill.
+Write the string corresponding to the role named by an engineering skill into the `Status:` line of the issue file.

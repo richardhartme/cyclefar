@@ -200,7 +200,7 @@ Keep commits/changes small enough that the training rules can be reviewed indepe
 
 ### Issue tracker
 
-CycleFar work items live in Jira project `CYF`; use the connected Atlassian tools. See `docs/agents/issue-tracker.md`.
+CycleFar work items live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

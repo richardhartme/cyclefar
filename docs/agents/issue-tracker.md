@@ -1,15 +1,34 @@
-# Issue tracker: Jira
+# Issue tracker: Local Markdown
 
-CycleFar work items and specifications live in Jira project `CYF`. Use the connected Atlassian Jira tools to search, read, create, comment on, label, and transition issues. Keep the issue key in implementation branches and pull requests.
+Issues and specs for this repo live as markdown files in `.scratch/`.
 
 ## Conventions
 
-- Search within project `CYF` when finding relevant work.
-- Read an issue's description, acceptance criteria, comments, links, and attachments before acting on it.
-- Create new work in project `CYF` with a descriptive summary and acceptance criteria. Link related issues when applicable.
-- Use the issue's available workflow transitions rather than assuming a status can be set directly.
-- Apply triage labels using `docs/agents/triage-labels.md`.
-- Publish a new issue when a skill says to publish to the issue tracker.
-- Fetch the relevant Jira issue when a skill says to fetch a ticket.
+- One feature per directory: `.scratch/<feature-slug>/`
+- The spec is `.scratch/<feature-slug>/spec.md`
+- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file
+- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
+- Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
-GitHub remains the source repository and pull request host; Jira is the issue tracker.
+## When a skill says "publish to the issue tracker"
+
+Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+
+## When a skill says "fetch the relevant ticket"
+
+Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+
+## Wayfinding operations
+
+Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
+
+- **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
+- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
+- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
+- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
+- **Claim**: set `Status: claimed` and save before any work.
+- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+
+## History
+
+Work before this change was tracked in Jira project `CYF`. Existing `CYF-<n>` references in `docs/` and commit messages are historical identifiers and are not migrated.
