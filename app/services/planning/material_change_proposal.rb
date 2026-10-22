@@ -23,7 +23,7 @@ module Planning
           "type" => AdaptationProposal::MATERIAL_CHANGE_REPLAN,
           "source_workout_id" => @workout.id,
           "starts_on" => starts_on.iso8601,
-          "ends_on" => [ starts_on + Rules::PLANNING_HORIZON_DAYS - 1, @workout.training_plan.ends_on ].min.iso8601
+          "ends_on" => [ Rules.horizon_end(starts_on), @workout.training_plan.ends_on ].min.iso8601
         })
     end
 

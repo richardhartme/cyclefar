@@ -26,6 +26,11 @@ module Planning
     RETURN_RAMP_FINAL_STAGE = RETURN_RAMP_STAGE_COUNT - 1
     PLANNING_HORIZON_DAYS = 14
 
+    # Last date of the detail horizon that starts on +date+.
+    def self.horizon_end(date)
+      date + PLANNING_HORIZON_DAYS - 1
+    end
+
     PHASE_PROPORTIONS = {
       with_base: { base: 0.35, build: 0.40, speciality: 0.25 }.freeze,
       without_base: { build: 0.60, speciality: 0.40 }.freeze

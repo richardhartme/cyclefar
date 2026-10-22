@@ -47,12 +47,12 @@ module Adaptations
     def adjustment
       band = RPE_BANDS.fetch(@workout.subtype)
       if !intensity? && (@feedback.could_not_complete? || @feedback.struggled_completed?)
-        return [ -1, "Difficult easy ride; reduce targets on the next comparable easy workout within the next 14 days." ]
+        return [ -1, "Difficult easy ride; reduce targets on the next comparable easy workout within the next #{Training::Rules::FEEDBACK_HORIZON_DAYS} days." ]
       end
-      return [ -2, "Could not complete; reduce comparable and nearby hard workouts within the next 14 days." ] if @feedback.could_not_complete?
-      return [ -1, "Struggled to complete; reduce comparable and nearby broad interval workouts within the next 14 days." ] if @feedback.struggled_completed?
-      return [ 1, "RPE was well below the expected range; progress the next comparable workout within the next 14 days." ] if intensity? && @feedback.rpe <= band.begin - 2
-      [ -1, "RPE was above the expected range; reduce the next comparable workout within the next 14 days." ] if @feedback.rpe > band.end
+      return [ -2, "Could not complete; reduce comparable and nearby hard workouts within the next #{Training::Rules::FEEDBACK_HORIZON_DAYS} days." ] if @feedback.could_not_complete?
+      return [ -1, "Struggled to complete; reduce comparable and nearby broad interval workouts within the next #{Training::Rules::FEEDBACK_HORIZON_DAYS} days." ] if @feedback.struggled_completed?
+      return [ 1, "RPE was well below the expected range; progress the next comparable workout within the next #{Training::Rules::FEEDBACK_HORIZON_DAYS} days." ] if intensity? && @feedback.rpe <= band.begin - 2
+      [ -1, "RPE was above the expected range; reduce the next comparable workout within the next #{Training::Rules::FEEDBACK_HORIZON_DAYS} days." ] if @feedback.rpe > band.end
     end
 
     def candidates
