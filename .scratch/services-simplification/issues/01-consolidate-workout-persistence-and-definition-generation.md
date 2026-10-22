@@ -1,6 +1,6 @@
 # Consolidate workout persistence and definition generation
 
-Status: needs-triage
+Status: resolved
 Blocked by: none
 
 Covers review items 1 and 2 of the `app/services` complexity review.
@@ -24,3 +24,5 @@ Eight services copy the same block that assigns a generated workout's attributes
 - [ ] `bundle exec rspec` and `bin/rails zeitwerk:check` pass.
 
 ## Comments
+
+Implemented in a873072 and merged (follow-up lint fix 8853c5a).
