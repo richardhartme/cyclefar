@@ -3,6 +3,14 @@ require_relative "rules"
 module Planning
   # One calendar schedule shared by previews, presentation and load checks.
   class RecoverySchedule
+    def self.for_plan(plan)
+      new(
+        starts_on: plan.starts_on,
+        ends_on: plan.ends_on,
+        phases: plan.plan_phases.sort_by(&:position),
+        hard_weeks: plan.hard_recovery_cycle? ? plan.hard_weeks_before_recovery : nil)
+    end
+
     def initialize(starts_on:, ends_on:, phases:, hard_weeks: nil)
       @starts_on, @ends_on, @phases, @hard_weeks = starts_on, ends_on, phases, hard_weeks
     end

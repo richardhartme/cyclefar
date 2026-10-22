@@ -55,18 +55,20 @@ module Adaptations
       @plan.reload
       @workouts = @plan.planned_workouts.includes(:workout_steps, :plan_phase).order(:scheduled_on, :id).to_a
       @periods = @plan.time_off_periods.order(:starts_on, :id).to_a
+      @timeline = Planning::TimeOffTimeline.new(@periods)
       dates = affected_dates
       weeks = load_weeks(dates)
       relevant = @workouts.select { |workout| weeks.include?(workout.scheduled_on.beginning_of_week) }
       relevant |= @workouts.select { |workout| workout.id == @proposal.source_workout_id }
       breaks = applicable_breaks(dates)
+      overlapping = @timeline.periods_overlapping(weeks)
       {
         plan: @plan.attributes.slice("id", "user_id", "status", *TrainingPlan::CONFIGURATION_ATTRIBUTES).except("initial_ftp_watts").merge("intensity_bias" => @plan.progression_state.fetch("intensity_bias", 0).to_i),
         proposal: @proposal.payload.except("freshness"),
         workouts: relevant.sort_by(&:id).map { |workout| workout_context(workout) },
         phases: @plan.plan_phases.where("starts_on <= ? AND ends_on >= ?", dates.max.end_of_week, weeks.min).map { |phase| phase.attributes.slice("id", "kind", "starts_on", "ends_on", "position") },
         availability: availability_context(dates),
-        time_off: @periods.select { |period| breaks.include?(period) || relevant_period?(period, weeks) }.map { |period| period.attributes.slice("id", "starts_on", "ends_on", "reason", "return_ramp_days") },
+        time_off: @periods.select { |period| breaks.include?(period) || overlapping.include?(period) }.map { |period| period.attributes.slice("id", "starts_on", "ends_on", "reason", "return_ramp_days") },
         pre_break_levels: breaks.map { |period| [ period.id, pre_break_level(period) ] },
         event: @proposal.material_change_replan? ? @plan.reload.target_event&.attributes&.except("created_at", "updated_at") : nil
       }
@@ -101,22 +103,16 @@ module Adaptations
     def availability_context(dates)
       templates = @plan.availability_templates.includes(:availability_slots).order(:id).to_a
       dates.sort.map do |date|
-        template = templates.select do |candidate|
-          candidate.effective_from <= date && (candidate.effective_until.nil? || candidate.effective_until >= date)
-        end.max_by { |candidate| [ candidate.one_week_override? ? 1 : 0, candidate.effective_from ] }
+        template = AvailabilityTemplate.for_date(templates, date)
         { date: date, template_id: template&.id,
           slots: template&.availability_slots&.sort_by(&:weekday)&.map { |slot| slot.attributes.slice("weekday", "duration_minutes", "intent") } }
       end
     end
 
-    def relevant_period?(period, weeks)
-      weeks.any? { |week| period.starts_on <= week + 6 && period.ends_on + period.return_ramp_days.to_i >= week }
-    end
-
     def applicable_breaks(dates)
       return [] unless @proposal.material_change_replan?
 
-      dates.filter_map { |date| @periods.select { |period| period.ends_on < date }.max_by(&:ends_on) }.uniq.sort_by(&:id)
+      dates.filter_map { |date| @timeline.latest_completed_before(date) }.uniq.sort_by(&:id)
     end
 
     def pre_break_level(period)

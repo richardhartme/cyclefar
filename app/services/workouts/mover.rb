@@ -16,7 +16,7 @@ module Workouts
     def move_to!(destination:)
       @plan.with_lock do
         @workout.reload
-        @periods = nil
+        @timeline = @recovery_flags = nil
         raise ArgumentError, "Completed workouts cannot be moved; only planned workouts can be moved" unless @workout.planned?
         raise ArgumentError, "Only workouts in an active plan can be moved" unless @plan.active?
 
@@ -103,13 +103,12 @@ module Workouts
       ceilings = []
       ceilings << Planning::Rules::RECOVERY_MAXIMUM_LEVEL if recovery_week?(date)
       ceilings << Planning::Rules::PHASE_LEVELS[:taper].end if @workout.plan_phase.kind_taper?
-      if (period = periods.select { |item| item.ends_on < date }.max_by(&:ends_on))
+      if (period = timeline.latest_completed_before(date))
         reached = @plan.planned_workouts.where("scheduled_on < ?", period.starts_on).where.not(id: @workout.id).map do |workout|
           workout.generation_context.fetch("generated_level", workout.progression_level)
         end.compact.max || 1
         week_offset = ((date - period.ends_on - 1) / 7).to_i
-        if period.return_ramp_days && date <= period.ends_on + period.return_ramp_days
-          stage = return_stage(period, date)
+        if (stage = timeline.ramp_stage(period, date))
           # Explicit Move retains subtype/duration while bounding the level by
           # the destination's return-to-training ceiling.
           ceilings << (stage < 3 ? 1 : [ reached - 1 + week_offset, 1 ].max)
@@ -121,24 +120,20 @@ module Workouts
     end
 
     def reduced_context(date)
-      period = periods.select { |item| item.ends_on < date }.max_by(&:ends_on)
-      stage = return_stage(period, date) if period&.return_ramp_days && date <= period.ends_on + period.return_ramp_days
-      [ recovery_week?(date), period&.id, stage ]
-    end
-
-    def return_stage(period, date)
-      [ ((date - period.ends_on - 1) * 4 / period.return_ramp_days).floor, 3 ].min
+      period = timeline.latest_completed_before(date)
+      [ recovery_week?(date), period&.id, period && timeline.ramp_stage(period, date) ]
     end
 
     def recovery_week?(date)
-      return false unless @plan.hard_recovery_cycle?
-
-      index = ((date.beginning_of_week - @plan.starts_on.beginning_of_week) / 7).to_i
-      index % (@plan.hard_weeks_before_recovery + 1) == @plan.hard_weeks_before_recovery
+      recovery_flags.fetch(date.beginning_of_week, false)
     end
 
-    def periods
-      @periods ||= @plan.time_off_periods.order(:starts_on).to_a
+    def recovery_flags
+      @recovery_flags ||= Planning::RecoverySchedule.for_plan(@plan).flags
+    end
+
+    def timeline
+      @timeline ||= Planning::TimeOffTimeline.new(@plan.time_off_periods.to_a)
     end
   end
 end
