@@ -6,15 +6,15 @@ This document defines a pragmatic, deterministic V1 training engine for indoor E
 
 These rules are not a claim that there is one scientifically perfect training plan. They combine established power-training conventions with product heuristics suitable for a first implementation. Persist `engine_version = "v1"` so future versions can change rules deliberately.
 
-These remain the intended rules. Implementation gaps are tracked in Jira and do not redefine them.
+These are the rules the application implements, except where a section says otherwise.
 
 ### Current implementation
 
 Constants live in `Training::Rules` and `Planning::Rules`. The pure `Training::Progression` calculation applies accepted global intensity bias once to eligible outlines under the plan lock, clamps levels to 1–7, and respects saved recovery/taper/re-entry/load ceilings. Materialisation persists canonical steps, the fitted effective level and generation references atomically. Forecasts use explicit variations; initial endurance profiles are sampled and saved. Existing structured and completed workouts remain stable when the horizon rolls or FTP changes.
 
-Feedback proposals now target regular planned structured workouts in today through day 13. They prefer the same subtype, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals when the source used that intent. Nearby reductions use two calendar days after the source date: broad Intervals for struggled completion, any intensity session for failure, always within the current horizon. Difficult easy rides can lower the next same-subtype ride's existing ranges without changing its duration or turning it into intensity. `ProposalComparison` and `FeedbackLoadLimiter` generate read-only comparisons and recheck load ceilings/caps before atomic acceptance.
+Feedback proposals target regular planned structured workouts in today through day 13. They prefer the same subtype, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals when the source used that intent. Nearby reductions use two calendar days after the source date: broad Intervals for struggled completion, any intensity session for failure, always within the current horizon. Difficult easy rides can lower the next same-subtype ride's existing ranges without changing its duration or turning it into intensity. `ProposalComparison` and `FeedbackLoadLimiter` generate read-only comparisons and recheck load ceilings/caps before atomic acceptance.
 
-The accepted bias is still global, although repeated-pattern detection reads the last three completed workouts of the source subtype; per-family/subtype stored bias (§32) and bias-driven subtype substitution (§11) remain unimplemented. CYF-6 enforces seven-day expiry and proposal-time canonical-input validation for both feedback and material-change proposals. Relevant prescription, schedule, load or progression changes invalidate pending proposals; FTP-only metric recalculation does not. Legacy proposals without a verifiable baseline require dismissal. Ordinary and missed-workout moves now share destination-aware regeneration (§35), preserving eligible short structures and checking destination load, including outside the detail horizon. CYF-10 implements the ordered §27 load reductions across previews, actual horizon materialisation and feedback comparisons/acceptance. Reduced generation choices survive outline persistence; sampled endurance profiles retain their identity and existing structured/completed workouts remain fixed on horizon requests. Late-feedback suppression checks whether the next scheduled workout after the source is completed (§33). Due/overdue executable outlines can be individually materialised for manual completion without changing other workouts. Openers record feedback without progression adaptation, since no expected opener RPE band is defined. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries and [UX.md](UX.md) for presentation limits.
+The accepted bias is global, although repeated-pattern detection reads the last three completed workouts of the source subtype; per-family/subtype stored bias (§32) and bias-driven subtype substitution (§11) are not implemented. Feedback and material-change proposals enforce seven-day expiry and proposal-time canonical-input validation for both feedback and material-change proposals. Relevant prescription, schedule, load or progression changes invalidate pending proposals; FTP-only metric recalculation does not. Proposals without a verifiable baseline require dismissal. Ordinary and missed-workout moves share destination-aware regeneration (§35), preserving eligible short structures and checking destination load, including outside the detail horizon. The ordered §27 load reductions apply across previews, actual horizon materialisation and feedback comparisons/acceptance. Reduced generation choices survive outline persistence; sampled endurance profiles retain their identity and existing structured/completed workouts remain fixed on horizon requests. Late-feedback suppression checks whether the next scheduled workout after the source is completed (§33). Due/overdue executable outlines can be individually materialised for manual completion without changing other workouts. Openers record feedback without progression adaptation, since no expected opener RPE band is defined. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries and [UX.md](UX.md) for presentation limits.
 
 ## 2. Non-negotiable engine constraints
 
@@ -191,7 +191,7 @@ Alignment preference:
 - if a planned recovery week naturally falls within one week of a Base→Build or Build→Speciality transition, align the recovery week immediately before the new phase when feasible;
 - do not insert a recovery week inside the final taper.
 
-CYF-11 shares this schedule across preview, calendar and load checks. A nearby recovery can move by one calendar week to the last complete Monday–Sunday week before a transition. An alignment must leave at least one hard week between recoveries; the N-hard-week cycle resumes from the aligned week. Midweek phase boundaries use the preceding complete week. Continuous progression adds no scheduled recovery weeks.
+This schedule is shared across preview, calendar and load checks. A nearby recovery can move by one calendar week to the last complete Monday–Sunday week before a transition. An alignment must leave at least one hard week between recoveries; the N-hard-week cycle resumes from the aligned week. Midweek phase boundaries use the preceding complete week. Continuous progression adds no scheduled recovery weeks.
 
 ### Recovery-week load target
 
@@ -235,7 +235,7 @@ Base/Build are broadly developmental; Speciality is strongly discipline-specific
 
 Discipline emphasis applies to **event plans only**. Event Base uses the generic event cycle; Event discipline selects the Build/Speciality broad Intervals cycles in §11. The descriptions below explain those cycles, not additional power, progression, duration or volume rules.
 
-For General Fitness, Increase FTP, Improve Endurance and Improve Climbing, keep §11's goal/phase cycles independent of discipline. Explicit weekly subtypes bypass selection, subject to existing reduced-load and load-cap rules. CYF-86 specifies omission of non-event discipline from setup with an internal `road` compatibility default for new plans; existing plans retain their saved values. CYF-87 implements the setup/defaulting policy without changing training rules. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
+For General Fitness, Increase FTP, Improve Endurance and Improve Climbing, keep §11's goal/phase cycles independent of discipline. Explicit weekly subtypes bypass selection, subject to existing reduced-load and load-cap rules. Non-event setup omits discipline; new plans save an internal `road` compatibility default (`Planning::Rules::NON_EVENT_DISCIPLINE`) that never changes training, and existing plans keep their saved values. Non-event phase allocation, recovery, load limits, Endurance/Recovery and explicit intensity intents are likewise independent of discipline.
 
 ### Road
 
@@ -315,7 +315,7 @@ For non-event goals:
 
 For event plans, discipline takes priority:
 
-New event configurations use the single Event discipline choice for the cycles below; preview and confirmation save the same discipline on the plan and target event (CYF-85). Base remains generic, and explicit weekly subtypes still bypass automatic subtype selection. Existing plans continue using their saved plan discipline, even where a legacy event label differs; this fix does not regenerate or reinterpret confirmed plans.
+New event configurations use the single Event discipline choice for the cycles below; preview and confirmation save the same discipline on the plan and target event Base remains generic, and explicit weekly subtypes still bypass automatic subtype selection. Existing plans continue using their saved plan discipline, even where a legacy event label differs.
 
 - Road: Threshold → VO2 → Over-under → Threshold
 - Gravel: Sweet Spot → Threshold → Tempo → Over-under
@@ -583,7 +583,7 @@ If no alternate structure can satisfy tolerance, use the closest valid variation
 
 Affects this workout only.
 
-CYF-81 makes these actions directional in total planned load:
+These actions are directional in total planned load:
 
 - Calculate current load from the canonical steps and candidate load from generated steps, both at the owning rider's current FTP.
 - Easier requires strictly lower estimated TSS and a lower displayed whole-number TSS; Harder requires strictly higher values for both. For the displayed comparison, first round to the database column's decimal precision, then to a whole number, matching persistence and the UI. Hidden rounding differences do not count.
@@ -905,7 +905,7 @@ If the rider selects a very short ramp (e.g. 2–3 days), collapse stages propor
 
 The user explicitly chooses ramp length, but the engine chooses the stepped content.
 
-CYF-12 uses 60/70/80/100% duration factors with the existing 30-minute minimum. The first two stages constrain main-set targets to 45–60% and 55–68% FTP; warm-up, recovery and cool-down steps may remain easier but cannot exceed the stage ceiling. The third stage uses level-1 Tempo on intensity days, with primers also capped at the normal Tempo band's 87% upper limit, or normal Endurance on easy days. Saved power limits apply to every initial endurance profile and survive later horizon materialisation. Explicit profile regeneration remains deterministic.
+Return stages use 60/70/80/100% duration factors with the existing 30-minute minimum. The first two stages constrain main-set targets to 45–60% and 55–68% FTP; warm-up, recovery and cool-down steps may remain easier but cannot exceed the stage ceiling. The third stage uses level-1 Tempo on intensity days, with primers also capped at the normal Tempo band's 87% upper limit, or normal Endurance on easy days. Saved power limits apply to every initial endurance profile and survive later horizon materialisation. Explicit profile regeneration remains deterministic.
 
 Pre-break progression uses the latest planned or completed regular session in the comparable Tempo/Sweet Spot/Threshold or VO2/Over-under family; missed workouts and special items are excluded. Planned sessions allow a future break to use its projected recent training. With no comparable session, use level 1. The final return stage stays one level below this baseline, bounded below by level 1; weekly progression resumes from that reduced level after the selected ramp ends. Holiday/Event/Other resume from the comparable baseline without this reduction. Existing phase, duration-fitting, accepted-bias and load ceilings can reduce the effective level further. Completed history and fixed plan/event end dates are preserved.
 
@@ -915,9 +915,9 @@ Pre-break progression uses the latest planned or completed regular session in th
 
 ## 40–42. No scheduled FTP tests
 
-CYF-77 removes automatic assessment placement and FTP-test workout records. Configured training dates retain their normal prescriptions in preview, creation and replanning. There is no assessment protocol or completion action. Riders may assess independently and update FTP in Settings.
+The engine places no assessments and creates no FTP-test workout records. Configured training dates retain their normal prescriptions in preview, creation and replanning. There is no assessment protocol or completion action. Riders may assess independently and update FTP in Settings.
 
-The cleanup deletes existing FTP-test records, including completed tests, without rebuilding plans or rewriting ordinary completed workouts. Removed dates stay empty until an explicit replan. Section numbering is retained for existing references.
+Sections 41 and 42 are unused; the numbering is kept for cross-references.
 
 ---
 
@@ -950,7 +950,7 @@ For 10–14 day taper:
 - event week: ~40–60% of normal peak load before the event;
 - retain brief intensity exposures.
 
-CYF-11 uses the final seven dates through the event as the event stage, including for non-Sunday events. The earlier stage of a long taper is prorated by its number of days. Stage targets are 75% and 50% of the highest comparable generated hard-week TSS; partial, recovery and taper weeks are excluded from that reference. Keep configured intensity exposures in the first stage with reduced hard time, then retain one early intensity session in the final stage. Normal intensity power bands remain unchanged. Tapered main sets use 75%/60% of ladder work time, rounded to positive 30-second segments, and saved progression ceilings prevent positive bias from escalating them. Adjust scheduled ride duration toward the stage budget; retain the 30-minute minimum and fixed opener even if sparse availability makes the approximate target infeasible. Do not add training dates to fill a budget. Existing plans are not bulk rewritten by this change.
+The final seven dates through the event form the event stage, including for non-Sunday events. The earlier stage of a long taper is prorated by its number of days. Stage targets are 75% and 50% of the highest comparable generated hard-week TSS; partial, recovery and taper weeks are excluded from that reference. Keep configured intensity exposures in the first stage with reduced hard time, then retain one early intensity session in the final stage. Normal intensity power bands remain unchanged. Tapered main sets use 75%/60% of ladder work time, rounded to positive 30-second segments, and saved progression ceilings prevent positive bias from escalating them. Adjust scheduled ride duration toward the stage budget; retain the 30-minute minimum and fixed opener even if sparse availability makes the approximate target infeasible. Do not add training dates to fill a budget.
 
 ## 45. Opener workout
 

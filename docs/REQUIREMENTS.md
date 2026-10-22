@@ -1,14 +1,14 @@
 # CycleFar Functional Requirements
 
-Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria, not a statement that every behaviour is implemented. Outstanding gaps are tracked in Jira.
+Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria for the application as built. Where a feature is deliberately absent, that is stated.
 
-## Current implementation
+## Implementation summary
 
-Rails authentication was generated after the original V1 requirements. The application now has a public homepage with Sign In and Register, email/password self-registration, sign-out, password-reset routes and a default authentication check on private controllers. Profiles, plans and sync records have required user ownership in PostgreSQL. Controlled provisioning, configured SMTP and an automated two-rider matrix are implemented; live mail verification remains open. The `USR-*` requirements below describe the independent-rider release; see [ARCHITECTURE.md](ARCHITECTURE.md) for current state.
+The application has a public homepage with Sign In and Register, email/password self-registration, sign-out and password reset. Profiles, plans and sync records have required user ownership in PostgreSQL, and an automated two-rider matrix covers isolation. Controlled provisioning and SMTP are configured; live mail delivery has not been verified. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries.
 
-Feedback adaptation now includes owner-scoped Current / Proposed comparisons (FBK-002), targets bounded to today through day 13, comparable-family fallback and nearby hard-session reductions. Accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and relevant canonical-input staleness are enforced for feedback and material-change replans. Ordinary and missed-workout moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load (CYF-7). Manual completion includes executable openers and individually materialised overdue outlines, with coherent current-FTP completion snapshots and the next-scheduled-workout late-feedback guard (CYF-9). Per-family progression bias remains a gap.
+Feedback adaptation uses owner-scoped Current / Proposed comparisons (FBK-002) for targets from today through day 13, with comparable-family fallback and nearby hard-session reductions. The accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and canonical-input staleness are enforced for feedback and material-change replans. Moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load. Manual completion covers executable openers and individually materialised overdue outlines, with current-FTP completion snapshots and the next-scheduled-workout late-feedback guard. Per-family progression bias is not implemented.
 
-Ordered weekly load reductions, shared recovery scheduling and staged taper budgets are implemented (CYF-10/11). Return ramps save stage power limits and resume from the latest comparable pre-break session (CYF-12, OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration (CYF-13). Manual sync reconciles all of the rider's tracked events outside the eligible calendar set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (CYF-14, ICU-001). These notes do not replace the acceptance criteria below.
+Ordered weekly load reductions, shared recovery scheduling and staged taper budgets apply across previews, materialisation and feedback comparisons. Return ramps save stage power limits and resume from the latest comparable pre-break session (OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration. Manual sync reconciles all of the rider's tracked events outside the eligible calendar set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (ICU-001). These notes do not replace the acceptance criteria below.
 
 ## 0. Product identity
 
@@ -36,10 +36,10 @@ Acceptance criteria:
 - Plan setup defaults its FTP field from Settings.
 - Changing Settings FTP after a plan exists updates future planned workout wattage displays/exports.
 - Completed workouts retain the FTP and watt targets that applied when they were completed.
-- FTP changes are recorded in a lightweight FTP history table and displayed newest first in Settings (CYF-78).
+- FTP changes are recorded in a lightweight FTP history table and displayed newest first in Settings.
 - Riders may edit the watts/date or delete their own readings. The most recent `effective_on` date sets current FTP; the newest entry (highest ID) wins a same-date tie. Historical edits do not change current FTP unless they change which reading is newest.
 - Deleting the newest reading falls back to the newest remaining reading. Retain at least one reading because FTP is required. A current-FTP change refreshes future metrics/targets without changing canonical percentages or completed snapshots.
-- After a committed current-FTP change, refresh previously confirmed, eligible Intervals.icu exports in the foreground (CYF-83). This applies to new readings, edits/date reordering and deletion fallback. Unchanged current watts and invalid mutations make no refresh request. Remote failure preserves the FTP/history/local metrics and confirmed sync metadata, with manual Sync retry guidance.
+- After a committed current-FTP change, refresh previously confirmed, eligible Intervals.icu exports in the foreground. This applies to new readings, edits/date reordering and deletion fallback. Unchanged current watts and invalid mutations make no refresh request. Remote failure preserves the FTP/history/local metrics and confirmed sync metadata, with manual Sync retry guidance.
 
 ### SET-002 Intervals.icu API key
 
@@ -75,7 +75,7 @@ For non-event goals:
 
 - a single Plan length selector offers 1 month, 3 months, 6 months and Custom weeks. Custom whole weeks appears only when selected, with a visible four-week minimum; inactive duration values do not affect validation or dates.
 - show the calculated end date using server-side calendar-month advances or inclusive whole weeks.
-- do not request discipline; goal and phase determine automatic interval selection (CYF-86).
+- do not request discipline; goal and phase determine automatic interval selection.
 - resolve and persist an internal `road` discipline for new plans; missing, blank, invalid or stale non-event discipline input is ignored and cannot block preview/confirmation. It is not a rider-selected training input.
 
 For event goal:
@@ -91,11 +91,11 @@ For event goal:
 - group riding time, distance and elevation in a native “Additional event details (optional)” disclosure. Distance/elevation are calendar information.
 - preserve entered draft values across goal, length and disclosure toggles, validation errors and Back to edit. Inactive controls are disabled for native validation and keyboard interaction; they remain draft data. Use native controls, persistent labels and accessible field errors.
 
-For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning (CYF-85). Preserve Event discipline across goal changes, validation errors and preview editing; only active event mode validates/uses it. An explicit invalid event choice is rejected. Do not infer the active event choice from stale non-event input, including legacy drafts.
+For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning. Preserve Event discipline across goal changes, validation errors and preview editing; only active event mode validates/uses it. An explicit invalid event choice is rejected. Do not infer the active event choice from stale non-event input, including legacy drafts.
 
-CYF-87 implements CYF-86’s decision: non-event discipline is omitted and defaults internally to Road. Event discipline is required independently of stale non-event input, including legacy drafts. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md) for persistence, legacy-draft handling, delivery boundaries and required coverage.
+Non-event discipline is omitted from setup and defaults internally to Road, set in `Planning::Rules`. Event discipline is required independently of stale non-event input, including legacy session drafts, which follow the same defaulting and active-validation rules. Non-event goals, phases, broad Intervals, explicit intensity intents, Endurance/Recovery, forecasts, weekly totals and load warnings must be identical whatever discipline value is submitted or stored.
 
-Existing non-event plans retain their stored discipline through materialisation/replanning, with no backfill or workout regeneration caused by this decision. Non-event setup summaries, previews and calendar headers must omit discipline, including the internal default and existing stored values.
+Existing non-event plans retain their stored discipline through materialisation/replanning, with no backfill or workout regeneration. Non-event setup summaries, previews and calendar headers must omit discipline, including the internal default and existing stored values.
 
 Existing event plans retain their saved `TrainingPlan.discipline` for training, including legacy records whose event label differs. Do not backfill either discipline or regenerate existing/completed workouts. Changing confirmed discipline still requires creating a new plan.
 
@@ -155,7 +155,7 @@ Preview shows:
 
 The rider may go back and edit the configuration, then confirm to create the plan.
 
-Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice (CYF-86/87). Preview and confirmation share the active timing rules; Back to edit restores entered duration/event fields and the optional disclosure state without persisting a plan.
+Show goal for every plan and discipline only for event plans. Never label the non-event internal Road default as a rider choice Preview and confirmation share the active timing rules; Back to edit restores entered duration/event fields and the optional disclosure state without persisting a plan.
 
 ### PLN-014 One active plan
 
@@ -175,7 +175,7 @@ Archiving/deleting an active plan:
 - removes all uncompleted future/planned workouts;
 - keeps completed workouts and their parent archived plan records as history;
 - does not expose a History screen in V1.
-- removes the plan's tracked Intervals.icu calendar events and the rider's detached sync identities before local removal (CYF-79). If remote cleanup fails or its API key is missing, keep the active plan and metadata for an explicit retry. Unsynced plans need no API key. Other riders' events and local completed history remain untouched.
+- removes the plan's tracked Intervals.icu calendar events and the rider's detached sync identities before local removal. If remote cleanup fails or its API key is missing, keep the active plan and metadata for an explicit retry. Unsynced plans need no API key. Other riders' events and local completed history remain untouched.
 
 ## 4. Plan structure
 
@@ -194,7 +194,7 @@ Setup explains that Include Base adds an initial foundation phase before Build a
 
 ### PLN-021 Discipline specificity
 
-Non-event Base, Build and Speciality broad Intervals use the deterministic goal/phase cycles in TRAINING_ENGINE.md §11, independently of stored discipline. Discipline does not change their power targets, progression, durations, phases or load rules (CYF-86).
+Non-event Base, Build and Speciality broad Intervals use the deterministic goal/phase cycles in TRAINING_ENGINE.md §11, independently of stored discipline. Discipline does not change their power targets, progression, durations, phases or load rules.
 
 For event plans, Event discipline selects broad Intervals cycles in Build/Speciality; Base uses the generic event cycle. Explicit weekly subtypes bypass automatic selection, subject to existing recovery/taper/time-off and load rules. Discipline never adds days or volume to the rider's schedule.
 
@@ -329,7 +329,7 @@ Easier/Harder:
 - affect only this workout;
 - preserve subtype and exact duration;
 - modify structure/progression level, not arbitrary wattage hacks;
-- Easier strictly lowers both canonical estimated TSS and its displayed whole-number value; Harder strictly raises both (CYF-81);
+- Easier strictly lowers both canonical estimated TSS and its displayed whole-number value; Harder strictly raises both;
 - calculate the current and candidate load from canonical steps at the owning rider's current FTP; do not use stale stored metrics to choose the direction;
 - for interval subtypes with a progression ladder, try the next lower/higher levels nearest first, skipping entries that move load in the wrong direction or leave displayed TSS unchanged; try variations at the current level after directional levels are exhausted;
 - Endurance/Recovery have no progression level: evaluate their valid profiles at the same duration and keep `progression_level` unset;
@@ -370,7 +370,7 @@ Add, Copy, Move and missed Move share destination exclusions: reject dates outsi
 
 An empty calendar date inside the plan links to an add-workout form. The rider chooses a workout type and duration; CycleFar generates its canonical structured workout using the current FTP. The date must not be occupied, a target-event date or within time off.
 
-### WKO-010 Remove workout (CYF-80)
+### WKO-010 Remove workout
 
 The rider may remove a planned or missed workout from an active plan on a past, current or future date, including openers and outlines. Removal deletes its canonical steps, leaves the rest of the plan unchanged and updates calendar totals. Normal calendar refreshes do not recreate it; a later explicit replan may refill the date from availability. Completed workouts cannot be removed because their history is immutable. Retain any owned sync identity for cleanup on the next manual Intervals.icu sync.
 
@@ -459,15 +459,13 @@ For Illness or Recovery, the rider additionally chooses the duration of an easie
 
 ## 12. FTP assessments
 
-### FTP-001 Scheduled assessments (retired by CYF-77)
+### FTP-001 No scheduled assessments
 
 CycleFar does not schedule FTP tests or replace training sessions with assessments.
 
-- Preview, creation and replanning retain normal training prescriptions on configured workout dates.
-- Preview and calendar do not show FTP-test items or assessment actions.
-- Existing FTP-test records, including completed tests, are deleted by the CYF-77 cleanup migration. Existing plans are not rebuilt and freed dates remain empty until an explicit replan.
-- Ordinary completed workouts, their steps, feedback and snapshots remain immutable.
-- Riders continue to update FTP manually in Settings; SET-001 remains unchanged.
+- Preview, creation and replanning keep normal training prescriptions on configured workout dates.
+- Preview and calendar show no FTP-test items or assessment actions.
+- Riders update FTP manually in Settings; SET-001 applies.
 
 ## 13. Training load control
 
@@ -496,10 +494,10 @@ When a week still exceeds the cap after the ordered reductions, show a non-block
 
 A `Sync to Intervals.icu` button syncs all upcoming planned structured workouts.
 
-- Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count (CYF-82).
+- Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count 
 - Exclude past, completed, missed and outline workouts, target-event dates and inclusive time-off dates. Include regular workouts and openers.
 - No automatic background syncing in V1.
-- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above (CYF-83). Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
+- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
 - If one of the previously synced workouts is no longer in the eligible calendar set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
@@ -517,7 +515,7 @@ See `INTERVALS_ICU.md`.
 
 ## 16. Independent-rider release
 
-These are the acceptance criteria for the independent-rider release. Ownership and isolation code, public registration and automated two-rider coverage are implemented. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
+These are the acceptance criteria for independent riders. Preserve deterministic training rules and completed-workout immutability. There is one rider per `User`, with no coach or shared-plan permissions.
 
 ### USR-001 Account registration and authentication
 
@@ -530,7 +528,7 @@ Automated coverage target: public-home and registration request specs, plus auth
 ### USR-002 One owned rider profile and FTP history
 
 - Each `User` can have at most one `RiderProfile`; first Settings save establishes it when the rider supplies the required FTP. Thereafter that rider has one profile. Its encrypted Intervals.icu API key and all `FtpReading` rows belong to that rider through the profile.
-- Replace the global `RiderProfile.current`/`id = 1` contract. A unique, required `rider_profiles.user_id` foreign key enforces at most one profile per user; concurrent first Settings saves must establish only one profile safely.
+- A unique, required `rider_profiles.user_id` foreign key enforces at most one profile per user; concurrent first Settings saves must establish only one profile safely.
 - Updating FTP recalculates only that user's future plan metrics and watts. Both users' completed workout snapshots remain immutable.
 
 Automated coverage target: model/database uniqueness and foreign-key specs, concurrent first-profile creation, two-user Settings/FTP service and request specs, and completed-history regression specs.
@@ -538,7 +536,7 @@ Automated coverage target: model/database uniqueness and foreign-key specs, conc
 ### USR-003 One active plan per user and archived history
 
 - Each `TrainingPlan` belongs to one `User`. Each user may have at most one active plan and any number of archived plans; another user's active plan does not block plan creation.
-- Replace the global partial active-plan index with a unique partial index on `training_plans.user_id` where `status = 'active'`, alongside a required user foreign key. Archive retains completed workouts and their parent plan as private history; uncompleted future prescriptions follow the existing archive policy. No separate History screen is required.
+- A unique partial index on `training_plans.user_id` where `status = 'active'` sits alongside a required user foreign key. Archive retains completed workouts and their parent plan as private history; uncompleted future prescriptions follow the existing archive policy. No separate History screen is required.
 - Target events, phases, availability, workouts, time off and adaptation proposals inherit ownership through their plan. FTP readings inherit it through the profile. Completed records remain immutable.
 
 Automated coverage target: two-user and concurrent plan-creation model/database specs, archive/history service specs, and request specs proving each user's calendar and plan actions see only their own records.
@@ -564,10 +562,6 @@ Automated coverage target: request specs for A sign-out/B sign-in in one browser
 - FTP-triggered refresh uses the same owner boundary, confirmed upload handling and advisory lock as manual sync/removal. Commit FTP/history/future metrics before HTTP, release database row locks, and serialize uploads so queued manual sync/FTP changes use current committed FTP. Plan deletion cannot be followed by recreation of its events.
 
 Automated coverage target: stubbed HTTP two-user adapter/service specs with distinct keys, eligible calendar sets and stale/detached records; repeat-sync and partial-failure specs; assertions that the other user's remote events are untouched.
-
-### USR-007 Explicit-owner legacy migration (retired)
-
-No legacy single-rider data was migrated; all environments were reset when multi-rider support was added. The ID is retained so USR-008 references stay stable.
 
 ### USR-008 Two-user isolation
 

@@ -5,7 +5,7 @@ These references informed the initial V1 rules and integration design. They are 
 ## Rails / Ruby
 
 - Ruby on Rails releases: https://rubyonrails.org/releases
-  - Repository pin: Rails 8.1.4 (`Gemfile` and `Gemfile.lock`); the initial scaffold used 8.1.3.1.
+  - Repository pin: Rails 8.1.4 (`Gemfile` and `Gemfile.lock`).
 - Rails maintenance policy: https://rubyonrails.org/maintenance
 - Rails 8.1 release notes: https://guides.rubyonrails.org/8_1_release_notes.html
 - Ruby downloads/releases: https://www.ruby-lang.org/en/downloads/

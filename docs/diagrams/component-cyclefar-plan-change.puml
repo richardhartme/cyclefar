@@ -13,12 +13,12 @@ ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar'
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controllers, "Workout and plan-change controllers", "Ruby on Rails controllers", "Scope workout, proposal and time-off lookups to Current.user; handle edits, feedback, schedule and settings.")
   Component(home, "HomeController and comparison view", "Rails / ERB", "Render owner-scoped Current / Proposed workout metrics and clamped bias; unavailable proposals offer Reject only.")
-  Component(editor, "ManualEditor", "Workouts service", "Regenerates manual edits; acceptance saves the exact load-limited definition shown in the comparison.")
+  Component(editor, "ManualEditor and EditActions", "Workouts service", "Regenerates manual edits through one small action object per kind (Same, Shorter, Longer, Change, Adapt); acceptance saves the exact load-limited definition shown in the comparison.")
   Component(directional, "DirectionalAdjustment", "Workouts pure calculation", "Selects Easier/Harder candidates by subtype ladder or aerobic profile; requires calculated and displayed TSS to move in the requested direction, or raises a limit without writes.")
   Component(mover, "Mover", "Workouts service", "Preserves short same-context moves or regenerates from destination progression; rechecks weekly load and warnings.")
   Component(destination, "DestinationValidator", "Workouts service", "Shares Add/Copy/Move/missed Move exclusions: occupied, out-of-plan, unphased, time-off and target-event dates.")
   Component(load_review, "WeeklyLoadReview", "Planning service", "Reads destination weekly load and calendar-wide load without mutations; includes weeks beyond the detail horizon.")
-  Component(freshness, "ProposalCreator and ProposalFreshness", "Adaptations services", "Save seven-day expiry and a digest of relevant canonical inputs; reject expired, stale, archived or unverifiable proposals without writes.")
+  Component(freshness, "ProposalCreator, ProposalFreshness and PlanFingerprint", "Adaptations services", "Save seven-day expiry and a PlanFingerprint digest of relevant canonical inputs; reject expired, stale, archived or unverifiable proposals without writes.")
   Component(manual_creation, "Creator and Copier", "Workouts services", "Add a generated workout or copy canonical steps to an empty plan date using current FTP.")
   Component(completion, "CompletionRecorder", "Adaptations service", "Materialises a due outline if needed; records feedback and current-FTP snapshots, then evaluates adaptations under the plan lock.")
   Component(evaluator, "FeedbackEvaluator", "Adaptations service", "Proposes same-subtype/family or broad-Intervals changes within today through day 13; nearby reductions and difficult-easy targets; optional global bias.")
@@ -33,7 +33,8 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(materializer, "WorkoutBuilder", "Planning service", "Applies accepted bias once when outlines enter the next 14 days; saves fitted levels, steps and automatic load references under the plan lock.")
   Component(load_rules, "LoadContext, WeeklyLoadCap and LoadReduction", "Planning services", "Use shared RecoverySchedule flags, comparable-week rules and ceilings; apply ordered reductions while retaining hard-week duration and endurance profiles.")
   Component(progression, "Progression", "Training pure calculation", "Combines baseline and bias; clamps to 1-7 and reduced-load ceilings.")
-  Component(ftp, "Settings::Update, FtpHistory and FtpRecalculator", "Settings and Planning services", "Record, edit and delete FTP history, sync current FTP from the newest reading and recalculate future structured-workout metrics without changing completed snapshots.")
+  Component(ftp, "Settings::Update, FtpHistory, FtpMutation and FtpRecalculator", "Settings and Planning services", "Record, edit and delete FTP history, sync current FTP from the newest reading and recalculate future structured-workout metrics without changing completed snapshots; FtpMutation holds the owner lock and refreshes confirmed Intervals.icu exports after commit.")
+  Component(ftp_refresh, "RefreshSyncedWorkouts", "IntervalsIcu service", "Re-sends previously confirmed eligible exports with the new FTP; a remote failure never undoes the FTP save.")
   Component(engine, "Workout engine and TargetBandLimiter", "Workouts and Metrics services", "Generate definitions and metrics; constrain saved return main targets and every step ceiling, including sampled endurance profiles.")
   Component(models, "Plan and workout models", "Active Record", "Enforce validations and completed-workout immutability while persisting plans, workouts, steps, feedback, proposals, settings and time off.")
 }
@@ -98,6 +99,7 @@ Rel(prescriber, models, "Replaces affected planned workouts")
 Rel(controllers, ftp, "Updates FTP")
 Rel(ftp, engine, "Recalculates metrics from stored percentage steps")
 Rel(ftp, models, "Stores FTP reading and updates future metrics")
+Rel(ftp, ftp_refresh, "After commit, when current FTP changed")
 Rel(editor, directional, "Selects Easier/Harder from canonical steps, saved adjustments and current FTP")
 Rel(editor, load_rules, "Reads shared LoadContext ceiling for Easier/Harder")
 Rel(directional, engine, "Generates exact-duration candidates and calculates current/proposed metrics")
@@ -107,7 +109,7 @@ Rel(models, database, "Reads and writes", "SQL")
 
 note bottom of proposals
   Accepted global intensity bias feeds later horizon generation.
-  Per-family stored bias remains unimplemented.
+  Per-family stored bias is not implemented.
   Seven-day expiry and relevant canonical-input freshness are enforced.
   Expired, stale, legacy or invalid proposals require dismissal;
   acceptance failure rolls back all edits and preserves the proposal.

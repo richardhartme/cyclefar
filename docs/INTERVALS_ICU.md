@@ -4,9 +4,9 @@
 
 On explicit rider action, sync all upcoming planned structured cycling workouts from the active plan to the rider's Intervals.icu calendar.
 
-Initial export and full-calendar reconciliation remain manual. Current-FTP changes refresh already-confirmed eligible exports in the foreground (CYF-83). No background sync, activity import, completion detection, OAuth or webhook handling in V1.
+Initial export and full-calendar reconciliation remain manual. Current-FTP changes refresh already-confirmed eligible exports in the foreground. No background sync, activity import, completion detection, OAuth or webhook handling in V1.
 
-The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-11, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete (CYF-82); event field names/types were checked on 2026-10-02. The bulk upload body and response remain arrays; neither source documents a count limit for this endpoint, so the service sends the complete eligible set in one request. This is not a live authenticated sync certification. Local specs stub HTTP.
+The request details below describe the implemented adapter and owner-scoped reconciliation. On 2026-10-11, the [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624) and the [public OpenAPI schema](https://intervals.icu/api/v1/docs) were rechecked for athlete `0` and bulk upsert/delete; event field names/types were checked on 2026-10-02. The bulk upload body and response remain arrays; neither source documents a count limit for this endpoint, so the service sends the complete eligible set in one request. This is not a live authenticated sync certification. Local specs stub HTTP.
 
 ## Authentication
 
@@ -113,7 +113,7 @@ Supported constructs documented by Intervals.icu include:
 - repeat blocks;
 - cue text.
 
-The Rails domain stores expanded canonical steps. `IntervalsIcu::WorkoutSerializer` currently emits one flat text line per step, without repeat compression. Steady steps export FTP ranges; ramps export the rounded midpoint of each endpoint range as `ramp start-end%`. The repeat block above illustrates the notation, not the current serializer output.
+The Rails domain stores expanded canonical steps. `IntervalsIcu::WorkoutSerializer` emits one flat text line per step, without repeat compression. Steady steps export FTP ranges; ramps export the rounded midpoint of each endpoint range as `ramp start-end%`. The repeat block above illustrates the notation, not the current serializer output.
 
 Do not send cadence targets because V1 does not prescribe cadence.
 
@@ -123,7 +123,7 @@ Use percentage-of-FTP targets in the Intervals.icu workout description rather th
 
 Send `icu_ftp`/current FTP where supported so Intervals.icu has the correct context.
 
-### FTP-triggered refresh (CYF-83)
+### FTP-triggered refresh
 
 Settings saves/new readings and history edits/deletion fallback share `Settings::FtpMutation`. Only a change in resulting current watts triggers `RefreshSyncedWorkouts`, after local FTP/history/future metrics commit. The owner advisory lock spans the local mutation and remote refresh, but no database row lock or FTP transaction spans HTTP. Queued manual sync reloads the profile under that lock.
 
@@ -131,11 +131,11 @@ Refresh uses the normal calendar eligibility plus confirmed prior metadata (`int
 
 Both upload paths validate complete responses and re-read owned linkage/eligibility under the plan lock before advancing confirmed metadata. Removal/status changes during HTTP result in retry guidance rather than reattaching records or falsely confirming ineligible exports. Missing credentials, rejected requests and incomplete confirmations keep the local save and previous confirmed metadata. Manual Sync remains the explicit recovery path.
 
-The official upload guide and public schema were rechecked on 2026-10-11. The schema still accepts integer `icu_ftp` on `EventEx`/`Event`; bulk upsert accepts native percentage descriptions. Live displayed/downloaded power interpretation remains unverified because no authenticated test-athlete validation was performed; this change preserves the existing serializer contract and does not certify downstream device behavior.
+The official upload guide and public schema (rechecked 2026-10-11) show that the schema accepts integer `icu_ftp` on `EventEx`/`Event`; bulk upsert accepts native percentage descriptions. Live displayed/downloaded power interpretation remains unverified because no authenticated test-athlete validation was performed. The serializer contract does not certify downstream device behavior.
 
 ## Sync reconciliation
 
-Current call order:
+Call order:
 
 1. Resolve the active plan's full eligible calendar set.
 2. Build payloads with stable external IDs and transactionally retain their owned sync identities before HTTP. New records have no event ID, digest or successful-sync timestamp yet.
@@ -145,17 +145,17 @@ Current call order:
 
 Digests are stored for reference; repeat sync still upserts all selected workouts. Deleted local workouts leave detached sync records via a nullable workout foreign key and required `user_id`, allowing only their owner to clean them up. The service rejects a profile or linked sync record belonging to another rider. The serializer exports stored estimated metrics; current FTP is passed separately and percentage steps remain canonical.
 
-CycleFar's tracked remote calendar-event set matches the eligible calendar set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged (CYF-14).
+CycleFar's tracked remote calendar-event set matches the eligible calendar set after a successful sync. A moved workout still selected is updated under its original external ID; every tracked event outside the set is removed, even when its former workout is completed or belongs to an archived plan. Only owned calendar events are deleted: there are no activity/history API calls, and completed local workouts, steps, snapshots and feedback remain unchanged.
 
 The [manual sync sequence](diagrams/sequence-cyclefar-intervals-icu-sync.puml) shows the separate local transactions, remote calls and failure paths. With no eligible workouts, upload is skipped and all stale owned events are still reconciled.
 
-## Plan deletion and archival (CYF-79)
+## Plan deletion and archival
 
 Delete/Archive explicitly removes tracked events linked to the active plan, including completed/missed workouts, plus the rider's detached identities left by earlier workout deletion. It does not upload replacements or remove events linked to another plan. `Planning::PlanRemover` calls `IntervalsIcu::RemovePlanEvents` before local deletion/archival. Plans without matching sync identities need no profile or API key.
 
 Missing credentials or remote failure leave the plan active and retain identities, with Settings/retry guidance. Confirmed cleanup and local removal commit together; if local removal fails after remote success, retained external IDs can safely be deleted again. Completed local snapshots, steps and feedback remain unchanged. Manual sync and removal share an owner-scoped PostgreSQL session advisory lock so an in-flight sync cannot recreate events after cleanup; sync rechecks active status under that lock. Unlike a transaction lock, it allows sync to commit retry identities before HTTP and confirmed upload metadata before cleanup.
 
-The [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624), rechecked on 2026-10-10, continues to document bulk deletion by external ID and ignores already absent events. The existing HTTP adapter contract is unchanged; tests use stubbed HTTP.
+The [official upload guide](https://forum.intervals.icu/t/uploading-planned-workouts-to-intervals-icu/63624), rechecked on 2026-10-10, continues to document bulk deletion by external ID and ignores already absent events. Tests use stubbed HTTP.
 
 ## Partial failure
 

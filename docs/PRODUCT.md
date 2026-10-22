@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-The original V1 release was a single-rider planner. Email/password sign-in and self-registration are implemented, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are also implemented. Operator provisioning stays disabled until live mail delivery is verified.
+Riders use email/password sign-in and self-registration, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are in place. Operator provisioning stays disabled until live mail delivery is verified.
 
 The assumed rider:
 
@@ -57,7 +57,7 @@ For Prepare for an Event, the rider chooses one Event discipline during plan set
 
 Event Base uses a generic cycle; Event discipline selects the broad Intervals mix in Build and Speciality. Explicit weekly subtypes retain their intent subject to the normal reduced-load overrides.
 
-Non-event goals use goal/phase rules without discipline customisation. The CYF-86 decision omits discipline from non-event setup and summaries, retains existing plans' stored values, and specifies an internal `road` compatibility default for new non-event plans. CYF-87 implements the form, draft defaulting and preview/calendar presentation policy. See [the decision and delivery contract](NON_EVENT_DISCIPLINE_DECISION.md).
+Non-event goals use goal/phase rules without discipline customisation. Discipline is omitted from non-event setup and summaries. New non-event plans save an internal `road` compatibility default that does not affect training, and existing plans keep their stored values.
 
 ## Product principles
 
@@ -73,7 +73,7 @@ The rider should not need to decide whether today's threshold session is 3x8, 4x
 
 The plan should not silently regenerate every time anything changes. Adaptation is targeted and visible. Proposed changes require acceptance.
 
-Current feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Feedback and material-change proposals enforce their seven-day expiry and validate proposal-time canonical inputs before acceptance. Stale or unverifiable proposals can be dismissed without changing completed history. Per-family progression bias remains an implementation gap; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
+Feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Feedback and material-change proposals enforce their seven-day expiry and validate proposal-time canonical inputs before acceptance. Stale or unverifiable proposals can be dismissed without changing completed history. Per-family progression bias is not implemented; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
 
 ### Near-term specificity, long-term flexibility
 
@@ -87,7 +87,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 ### Included
 
-This describes intended V1 scope, including later additions. Known implementation gaps are tracked in Jira.
+This describes the V1 scope as built.
 
 - Email/password registration, sign-in, sign-out and password reset
 - Settings with FTP and Intervals.icu API key
@@ -131,11 +131,11 @@ This describes intended V1 scope, including later additions. Known implementatio
 - Multiple target events
 - AI-generated plans or workouts
 
-## Independent-rider release
+## Independent riders
 
-The independent-rider release's ownership schema, owner-scoped application paths, public registration, controlled provisioning and automated two-rider matrix are implemented. Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery remains unverified; operator provisioning remains disabled by default.
+Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery is unverified; operator provisioning is disabled by default.
 
-The first independent-rider release excludes Google or other social sign-in, coaches, shared plans and teams. It does not add a separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) for the acceptance and test contract.
+There is no Google or other social sign-in, and there are no coaches, shared plans or teams. There is no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-rider-release) for the acceptance and test contract.
 
 ## Future-friendly seams
 

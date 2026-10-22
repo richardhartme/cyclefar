@@ -8,11 +8,11 @@ This describes the implemented persistence shape in [`db/structure.sql`](../db/s
 
 Rails-generated authentication records are separate from the training domain. `User` has a unique, normalized `email_address`, a `password_digest` managed by `has_secure_password`, timestamps and many sessions. `Session` belongs to a user and stores `ip_address`, `user_agent` and timestamps. The `users` and `sessions` migrations add the required columns, unique email index and session foreign key.
 
-`RiderProfile`, `TrainingPlan` and `IntervalsIcuSync` now have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups, preview drafts and sync reconciliation are owner-scoped, and FTP-based services use the plan's owner. Public registration creates an ordinary `User` and `Session`; it adds no registration table.
+`RiderProfile`, `TrainingPlan` and `IntervalsIcuSync` have required `user_id` foreign keys. Plan children inherit ownership through their plan; FTP readings inherit it through their profile. Training controller record lookups, preview drafts and sync reconciliation are owner-scoped, and FTP-based services use the plan's owner. Public registration creates an ordinary `User` and `Session`; it adds no registration table.
 
 ## RiderProfile
 
-One profile per `User`, enforced by a required foreign key and unique index. The singleton `id = 1` rule and `RiderProfile.current` API were removed. First Settings save builds the signed-in user's profile when needed.
+One profile per `User`, enforced by a required foreign key and unique index. First Settings save builds the signed-in user's profile when needed.
 
 Fields:
 
@@ -25,11 +25,11 @@ Validations:
 
 - FTP > 0
 
-Public registration, controlled account provisioning and an automated two-rider isolation matrix are implemented. The operator provisioning task remains disabled by default.
+Public registration and controlled account provisioning create profiles through Settings; the operator provisioning task is disabled by default.
 
 ## FtpReading
 
-Editable history shown in Settings (CYF-78). `belongs_to :rider_profile` via required `rider_profile_id`.
+Editable history shown in Settings. `belongs_to :rider_profile` via required `rider_profile_id`.
 
 Fields:
 
@@ -37,7 +37,7 @@ Fields:
 - `effective_on: date, null: false`
 - timestamps
 
-Create one whenever Settings FTP changes to a new value, dated today. Riders may edit watts/date and delete entries through `Settings::FtpHistory`, which retains the final reading. Current FTP is cached in `RiderProfile#ftp_watts` from the most recent `effective_on`, with highest ID breaking same-date ties. Settings and history mutations share the owning-user lock and refresh the cache/future structured metrics atomically. Completed snapshots remain immutable. A composite profile/date/ID index supports recency queries; the CYF-78 migration backfills missing history from existing profiles without replacing readings.
+Create one whenever Settings FTP changes to a new value, dated today. Riders may edit watts/date and delete entries through `Settings::FtpHistory`, which retains the final reading. Current FTP is cached in `RiderProfile#ftp_watts` from the most recent `effective_on`, with highest ID breaking same-date ties. Settings and history mutations share the owning-user lock and refresh the cache/future structured metrics atomically. Completed snapshots remain immutable. A composite profile/date/ID index supports recency queries.
 
 ## TrainingPlan
 
@@ -53,7 +53,7 @@ Fields:
 - `progression_mode: enum` — `continuous`, `hard_recovery_cycle`
 - `hard_weeks_before_recovery: integer, nullable`
 - `initial_ftp_watts: integer`
-- `progression_state: jsonb, default: {}` — currently stores the accepted global `intensity_bias` (-2..+2)
+- `progression_state: jsonb, default: {}` — stores the accepted global `intensity_bias` (-2..+2)
 - `engine_version: string` — e.g. `v1`
 - timestamps
 
@@ -61,9 +61,9 @@ Constraints:
 
 - partial unique index on `user_id` ensuring at most one `active` plan per user.
 
-CYF-86 keeps the required discipline enum/constraint. CYF-87 setup persists `road` internally for new non-event plans and omits the value from their summaries; this is not Road-specific training. Existing active/archived non-event values remain unchanged, with no backfill or workout rewrite. New non-event previews and confirmation ignore submitted discipline values; existing saved plan values remain authoritative for replanning. Event plans retain the effective Event discipline and CYF-85's legacy policy. See [the decision](NON_EVENT_DISCIPLINE_DECISION.md).
+Discipline is a required enum and database constraint. New non-event plans persist `road` as an internal compatibility value set by `Planning::Rules`; it is not Road-specific training and is omitted from summaries. New non-event previews and confirmation ignore submitted discipline values. Existing active and archived plans keep their saved value, which stays authoritative for replanning; there is no backfill or workout rewrite. Event plans persist the effective Event discipline on both the plan and target event; legacy plans whose event label differs keep their saved plan discipline.
 
-Do not destroy archived plans that have completed workouts. The current archive action removes planned records and retains completed and missed records; a plan without completed workouts is deleted.
+Do not destroy archived plans that have completed workouts. The archive action removes planned records and retains completed and missed records; a plan without completed workouts is deleted.
 
 ## TargetEvent
 
@@ -179,22 +179,20 @@ Important:
 
 - Do not store planned target watts as the source of truth. Store percentage targets in steps and derive watts from current FTP.
 - On completion, snapshot watts/metrics so later FTP changes do not alter history.
-- Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes. CYF-77 uses a transaction with table locks for a one-time deletion of all legacy FTP-test records, including completed tests; ordinary completed history is unchanged.
+- Active Record guards and PostgreSQL triggers protect completed workouts, steps and feedback against updates/deletes.
 - Missed records retain their structure/metrics and occupy their date under the same unique constraint. Current calendar totals include them.
 
 `generation_context` is generation metadata, not a replacement for canonical steps. `baseline_level` preserves the unbiased prescription when a time-off ceiling is based on a previously reached effective level; `maximum_level` retains load/re-entry limits. `generated_level` and `generated_tss` record the effective automatic prescription. Manual one-off edits leave those references intact so they do not escalate future generation; accepted feedback adaptations refresh them. Existing rows default to an empty object, with current level/metrics as the fallback; completed rows are not backfilled or rewritten. Both model validation and a database constraint require an object.
 
-Easier/Harder (CYF-81) replaces the selected workout's steps, effective level, variation and metrics only after a qualifying load change is found. Aerobic replacements retain a `nil` level. The selector uses canonical steps rather than stored estimates as its baseline, and matches the `estimated_tss` column's decimal scale before comparing whole-number displayed TSS. A limit writes nothing; successful one-off adjustments retain the existing `generation_context` and automatic references. No schema change is required.
+Easier/Harder replaces the selected workout's steps, effective level, variation and metrics only after a qualifying load change is found. Aerobic replacements retain a `nil` level. The selector uses canonical steps rather than stored estimates as its baseline, and matches the `estimated_tss` column's decimal scale before comparing whole-number displayed TSS. A limit writes nothing; successful one-off adjustments retain the existing `generation_context` and automatic references.
 
-`load_adjustments` inside that context saves §27 target/filler generation choices (`lower_targets` and `easy_filler`). Preview persistence and later materialisation use those choices together with the saved subtype, level and variation. Canonical structured steps remain authoritative; comparison and adaptation acceptance apply the same load-limited definition atomically. No migration is required for these optional JSON keys.
+`load_adjustments` inside that context saves §27 target/filler generation choices (`lower_targets` and `easy_filler`). Preview persistence and later materialisation use those choices together with the saved subtype, level and variation. Canonical structured steps remain authoritative; comparison and adaptation acceptance apply the same load-limited definition atomically.
 
-CYF-11 also saves `main_set_factor` for tapered intensity sets, alongside their fitted progression ceiling. It reduces hard time while retaining normal power bands when outlines become structured; completed rows are unchanged.
+`load_adjustments` also saves `main_set_factor` for tapered intensity sets, alongside their fitted progression ceiling. It reduces hard time while retaining normal power bands when outlines become structured; completed rows are unchanged.
 
-CYF-12 saves `load_adjustments.return_target_band` for return-stage main power ranges and an overall step ceiling, plus `return_ramp_stage` (1–4) for the prescription's explanation. These choices survive initial endurance-profile sampling and later materialisation, including easy outlines. The final ramp stage retains its reduced progression ceiling. No migration or completed-row rewrite is required.
+`load_adjustments.return_target_band` holds the return-stage main power ranges and an overall step ceiling, and `return_ramp_stage` (1–4) explains the prescription. These choices survive initial endurance-profile sampling and later materialisation, including easy outlines. The final ramp stage retains its reduced progression ceiling.
 
-Material-replan proposals with pre-break fingerprints from the previous baseline algorithm become stale and require dismissal/recreation. Their payload format remains readable; acceptance rechecks the current comparable baseline.
-
-The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity remains unimplemented. Existing proposal payload formats remain readable, subject to expiry and canonical-input freshness checks.
+The plan's existing global `intensity_bias` is consumed once when eligible intensity outlines enter the horizon. Missing bias means zero. This is not the per-family/subtype feedback state described in TRAINING_ENGINE.md §32; that granularity is not implemented.
 
 ## WorkoutStep
 
@@ -257,9 +255,9 @@ Fields:
 - `expires_at: datetime`
 - timestamps
 
-Feedback-proposal payloads contain `changes` (workout ID and proposed progression level, plus optional `lower_targets: true` for Recovery/Endurance), `progression_bias`, and `source_workout_id`. Easy reductions keep a compatibility level in the payload, but persist no intensity progression level; their canonical steps narrow existing target ranges to the lower endpoints. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths enforce a seven-day `expires_at`, including rejection exactly at the deadline. Their payload also stores `freshness`: a version and SHA-256 digest of the relevant canonical workout/schedule/load inputs at creation. No new table or ownership column is added. Legacy proposals without that verifiable context are unavailable and can be rejected safely (CYF-6).
+Feedback-proposal payloads contain `changes` (workout ID and proposed progression level, plus optional `lower_targets: true` for Recovery/Endurance), `progression_bias`, and `source_workout_id`. Easy reductions keep a compatibility level in the payload, but persist no intensity progression level; their canonical steps narrow existing target ranges to the lower endpoints. Material Change Workout proposals use a type discriminator plus the source workout and bounded replan dates. Both proposal paths enforce a seven-day `expires_at`, including rejection exactly at the deadline. Their payload also stores `freshness`: a version and SHA-256 digest of the relevant canonical workout/schedule/load inputs at creation. Proposals without that verifiable context are unavailable and can be rejected safely.
 
-Feedback comparisons are derived in memory from canonical steps and the owning plan's current FTP; no before/after watt targets or new ownership columns are persisted. Existing feedback payloads with no `type` or `type = feedback` remain supported. The comparison resolves all source/target IDs through the proposal's plan and shows effective generated levels, metrics and clamped global bias. Invalid references make the whole comparison unavailable without exposing a partial target set.
+Feedback comparisons are derived in memory from canonical steps and the owning plan's current FTP; no before/after watt targets or new ownership columns are persisted. Feedback payloads with no `type`, or `type = feedback`, are treated as feedback proposals. The comparison resolves all source/target IDs through the proposal's plan and shows effective generated levels, metrics and clamped global bias. Invalid references make the whole comparison unavailable without exposing a partial target set.
 
 On feedback acceptance: enforce expiry, active plan status and unchanged relevant canonical inputs, then verify target workouts are still planned/structured and inside the current 14-day horizon, recheck generated level/load constraints, apply atomically, then destroy the proposal. The completed source remains immutable. A material-change replan preserves its changed source workout and regenerates only its bounded future block. On reject: destroy the proposal.
 
@@ -280,11 +278,11 @@ Fields:
 - `payload_digest: string` — records the last successfully exported payload; current sync still upserts on every call
 - timestamps
 
-Sync identities are saved before upload so uncertain remote results remain attributable after status/date changes or deletion. New identities have null event ID, digest and `last_synced_at` until upload is confirmed. Confirmed upload metadata is saved before stale-event cleanup; cleanup failures retain stale identities for retry. Explicit sync reconciles all of the rider's tracked calendar events outside the current eligible calendar set, including completed and previous-plan workouts, without mutating local workout history (CYF-14).
+Sync identities are saved before upload so uncertain remote results remain attributable after status/date changes or deletion. New identities have null event ID, digest and `last_synced_at` until upload is confirmed. Confirmed upload metadata is saved before stale-event cleanup; cleanup failures retain stale identities for retry. Explicit sync reconciles all of the rider's tracked calendar events outside the current eligible calendar set, including completed and previous-plan workouts, without mutating local workout history.
 
 Unique indexes on `external_id` and `planned_workout_id`.
 
-FTP-triggered refresh (CYF-83) requires both a confirmed `intervals_event_id` and `last_synced_at`, excluding identities retained only for uncertain uploads. It advances existing metadata only after a complete confirmation, retains previous metadata on failure and creates no identities or schema fields. Detached records remain available for manual cleanup.
+FTP-triggered refresh requires both a confirmed `intervals_event_id` and `last_synced_at`, excluding identities retained only for uncertain uploads. It advances existing metadata only after a complete confirmation, retains previous metadata on failure and creates no identities or schema fields. Detached records remain available for manual cleanup.
 
 ## Derived concepts (do not necessarily persist)
 
@@ -299,18 +297,16 @@ Prefer service/query objects for:
 
 ## Ownership schema
 
-This section records the independent-rider ownership design and its implementation. CYF-67–72 delivered required ownership constraints, request/service scoping, preview isolation and sync isolation. CYF-73/74 added controlled provisioning and an automated two-rider matrix. [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
+This section records ownership constraints. [USR-001–USR-008](REQUIREMENTS.md#16-independent-rider-release) define the full acceptance contract.
 
 | Record | Ownership and constraint |
 |---|---|
-| `RiderProfile` | Implemented: required `user_id` foreign key and unique index; the `id = 1` check and `RiderProfile.current` have been removed. First Settings save with a valid FTP establishes the user's profile. |
+| `RiderProfile` | Required `user_id` foreign key and unique index. First Settings save with a valid FTP establishes the user's profile. |
 | `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
-| `TrainingPlan` | Implemented: required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'` in place of the global active-plan index. Archived plans remain attached to their owner with completed history. |
+| `TrainingPlan` | Required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'`. Archived plans remain attached to their owner with completed history. |
 | Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback` and `AdaptationProposal` inherit ownership through their plan. |
-| `IntervalsIcuSync` | Implemented: required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Unique `external_id` and `planned_workout_id` indexes remain. |
+| `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Unique `external_id` and `planned_workout_id` indexes apply. |
 
 Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.
 
-The ownership migrations enforce profile/plan/sync `NOT NULL`, foreign keys and per-user uniqueness. No legacy single-rider data was migrated; all environments were reset to fresh databases when multi-rider support was added.
-
-The ownership, scoping, preview and sync code has automated two-rider coverage, but operator provisioning remains disabled pending live mail verification. The checked-in `db/structure.sql` and the implemented model descriptions above remain authoritative for current behavior.
+The schema enforces profile/plan/sync `NOT NULL`, foreign keys and per-user uniqueness. Automated two-rider specs cover ownership, scoping, preview and sync; operator provisioning stays disabled pending live mail verification. `db/structure.sql` is authoritative for the schema.

@@ -7,12 +7,16 @@ title CycleFar — Intervals.icu Sync Components
 
 LAYOUT_LEFT_RIGHT()
 
-Person(rider, "Rider", "Starts manual sync or removes a plan from the CycleFar calendar.")
+Person(rider, "Rider", "Starts manual sync, changes FTP or removes a plan from the CycleFar calendar.")
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's plans, workouts, settings and sync records.")
 
 Container_Boundary(web_application, "CycleFar web application") {
   Component(controller, "IntervalsIcuSyncsController", "Ruby on Rails controller", "Uses the signed-in rider's active plan and profile; displays outcome without exposing the API key.")
+  Component(ftp_mutation, "Settings::FtpMutation", "Settings service", "Commits the FTP change and releases row locks, then calls the refresh while still holding the owner advisory lock.")
+  Component(refresh, "RefreshSyncedWorkouts", "IntervalsIcu service", "Selects eligible workouts that already have a confirmed event ID and sync timestamp, re-sends them with current FTP and performs no deletion; failure leaves the FTP save intact and returns retry guidance.")
+  Component(eligible, "EligibleWorkouts", "IntervalsIcu service", "Defines the eligible calendar set: planned structured workouts and openers from today, excluding time off and the event date.")
+  Component(confirmed, "ConfirmedUpserts", "IntervalsIcu service", "Validates a complete bulk response by external ID, then under the plan lock rechecks linkage and eligibility before saving event IDs, digests and timestamps.")
   Component(sync, "SyncCalendar", "IntervalsIcu service", "Rechecks active plan under the owner lock, validates profile ownership; selects all eligible structured workouts and reconciles this owner's tracked events.")
   Component(remover, "Planning::PlanRemover", "Planning service", "Under owner and plan locks, cleans remote events before archiving/deleting; failure keeps the plan active.")
   Component(cleanup, "RemovePlanEvents", "IntervalsIcu service", "Deletes this plan's tracked events and the owner's detached identities; removes local identities only after confirmed remote cleanup.")
@@ -24,6 +28,16 @@ Container_Boundary(web_application, "CycleFar web application") {
 
 Rel(rider, controller, "Starts manual sync", "HTTPS")
 Rel(controller, sync, "Synchronizes active plan")
+Rel(rider, ftp_mutation, "Changes FTP in Settings", "HTTPS")
+Rel(ftp_mutation, synchronization, "Holds the owner lock across save and refresh")
+Rel(ftp_mutation, refresh, "Refreshes after commit when current FTP changed")
+Rel(refresh, eligible, "Selects eligible workouts")
+Rel(refresh, serializer, "Builds payloads with current FTP")
+Rel(refresh, client, "Bulk-upserts confirmed exports only")
+Rel(refresh, confirmed, "Saves metadata after a complete confirmation")
+Rel(sync, eligible, "Selects the eligible calendar set")
+Rel(sync, confirmed, "Saves metadata after a complete confirmation")
+Rel(confirmed, models, "Updates confirmed sync records under the plan lock")
 Rel(rider, remover, "Requests archive/delete through TrainingPlansController", "HTTPS")
 Rel(remover, synchronization, "Serializes cleanup against manual sync")
 Rel(sync, synchronization, "Serializes HTTP and persistence against removal")
@@ -32,12 +46,12 @@ Rel(remover, cleanup, "Cleans events before local plan mutation")
 Rel(cleanup, models, "Reads linked/detached identities and key; deletes identities after confirmed cleanup")
 Rel(cleanup, client, "Deletes tracked external IDs; failure retains plan and identities")
 Rel(remover, models, "Archives completed history or deletes plan in the same local transaction")
-Rel(sync, models, "Selects eligible workouts and this rider's linked/detached sync records")
+Rel(sync, models, "Reads this rider's linked/detached sync records")
 Rel(sync, serializer, "Builds event payloads")
 Rel(serializer, models, "Reads canonical steps and current FTP context")
 Rel(sync, client, "Bulk-upserts desired set, then bulk-deletes stale external IDs")
 Rel(client, intervals_icu, "Sends authenticated bulk event requests", "HTTPS / JSON")
-Rel(sync, models, "Retains identities before HTTP; saves confirmed upload metadata; removes stale identities after confirmed deletion")
+Rel(sync, models, "Retains identities before HTTP; removes stale identities after confirmed deletion")
 Rel(models, database, "Reads and writes", "SQL")
 
 note bottom of sync
@@ -53,6 +67,14 @@ note bottom of sync
   Sync selects existing detail; it does not materialise outlines.
   Remote calls and local persistence are separate transactions;
   failed cleanup retains stale identities for an idempotent retry.
+end note
+
+note bottom of refresh
+  Eligible = existing calendar rules AND confirmed prior export.
+  Never uploads unsynced or uncertain-only workouts, generates outlines,
+  deletes stale events or changes the athlete's global FTP.
+  No active plan, no connection or nothing to refresh means no HTTP.
+  Initial export and full reconciliation remain manual.
 end note
 
 note bottom of remover

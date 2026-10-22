@@ -1,6 +1,6 @@
 # CycleFar UX Specification
 
-This document combines the intended interaction design with current implementation notes. Outstanding acceptance gaps are tracked in Jira; proposed controls below must not be assumed to exist.
+This document describes the interaction design as implemented. Controls not described here do not exist.
 
 ## Branding
 
@@ -23,7 +23,7 @@ The public homepage offers **Sign In** and **Register**. Private application req
 
 ## Independent-rider account flow
 
-Account access for independent riders and an automated two-rider request matrix are implemented. Riders can register through the public homepage; an authorized operator can also provision a rider once live mail delivery is verified and the provisioning flag is enabled. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI in the first independent-rider release.
+Riders can register through the public homepage; an authorized operator can also provision a rider once live mail delivery is verified and the provisioning flag is enabled. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI.
 
 After sign-in, Calendar, Settings, plan setup and all workout actions show only that account's profile and plan. Each rider can have one active plan; archived plans retain private completed history without adding a History page. Foreign workout, proposal and time-off links respond like missing records, without showing another rider's details. Intervals.icu sync uses only the signed-in rider's key and owned events.
 
@@ -53,7 +53,7 @@ Behaviour:
 - API key is password-style/masked after save;
 - FTP history appears below the settings form, newest first, with the current reading labelled. Edit opens a form for watts/date; Delete asks for confirmation and is hidden for the final reading. The newest remaining dated reading sets future targets; same-date ties use the newest entry. Saving a changed FTP adds a reading dated today.
 - A changed current FTP refreshes already-synced eligible future workouts in Intervals.icu. Settings/history success messages include the confirmed refresh count when nonzero. Remote failure keeps the save successful and shows separate guidance to check the API key and use the calendar's Sync action to retry. Unsynced workouts are exported only through manual Sync.
-- optional `Test connection` button is useful but not required for the first implementation milestone.
+- there is no `Test connection` button.
 
 ## 3. Create-plan configuration
 
@@ -71,11 +71,11 @@ Radio/cards:
 
 ### Discipline
 
-For non-event goals, omit this section and any discipline summary. Explain that broad Intervals follow goal/phase rules; explicit weekly subtypes retain their intent. Never expose the internal Road compatibility default as a selected discipline (CYF-86).
+For non-event goals, omit this section and any discipline summary. Explain that broad Intervals follow goal/phase rules; explicit weekly subtypes retain their intent. Never expose the internal Road compatibility default as a selected discipline.
 
 Event mode shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Fresh forms default it to Road. Switching goals preserves the Event discipline; inactive event input does not affect non-event training. Validation errors and Back to edit restore its entered value.
 
-CYF-87 implements the [CYF-86 delivery contract](NON_EVENT_DISCIPLINE_DECISION.md). Non-event setup omits discipline and saves an internal Road default. Event discipline is required independently of retained legacy input.
+Non-event setup omits discipline and saves an internal Road default. Event discipline is required independently of retained legacy input.
 
 - Road
 - Gravel
@@ -137,7 +137,7 @@ This is a review screen, not an editable form.
 
 Show:
 
-- goal; Event discipline only for event plans (CYF-86/87);
+- goal; Event discipline only for event plans;
 - date range;
 - event summary if applicable;
 - phase timeline;
@@ -163,7 +163,7 @@ Desktop-first layout can assume meaningful horizontal width. At narrower widths,
 
 Include:
 
-- plan goal summary; discipline only for event plans, including when displaying existing plans (CYF-86/87);
+- plan goal summary; discipline only for event plans, including when displaying existing plans;
 - current FTP;
 - `Sync all structured workouts to Intervals.icu`;
 - `Change availability`;
@@ -227,7 +227,7 @@ Empty date headings offer Add Workout. The form accepts type (including Opener) 
 
 ## 6. Workout detail
 
-Current implementation: a full page with Back to calendar, a large graph, zone-coloured step cards and inline action forms. A Turbo Frame modal remains a design preference for preserving calendar context; it is not currently implemented.
+Workout detail is a full page with Back to calendar, a large graph, zone-coloured step cards and inline action forms. It is not a Turbo Frame modal.
 
 Sections:
 
@@ -264,7 +264,7 @@ Options displayed as explicit choices:
 
 Shorter can be repeated down to a 30-minute minimum. Longer can be repeated without a hard maximum.
 
-Easier/Harder preserve workout type and duration and require both actual TSS and the displayed whole-number TSS to decrease/increase. They skip unsuitable ladder entries and select profiles by load, retaining existing training restrictions. When no suitable replacement remains, keep the workout unchanged and show `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder uses `higher-load` and `Longer`. Same continues to rotate valid profiles (CYF-81).
+Easier/Harder preserve workout type and duration and require both actual TSS and the displayed whole-number TSS to decrease/increase. They skip unsuitable ladder entries and select profiles by load, retaining existing training restrictions. When no suitable replacement remains, keep the workout unchanged and show `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder uses `higher-load` and `Longer`. Same continues to rotate valid profiles.
 
 Interval sessions search their progression ladders; Endurance/Recovery switch among valid aerobic profiles and continue to have no progression level. Profile load differences can be small: for a normal 60-minute Endurance session, Easier can switch alternating (45 displayed TSS) to sustained (44), then reaches the limit. An available profile with the same displayed TSS does not qualify. These controls do not continuously lower aerobic power targets.
 
@@ -288,7 +288,7 @@ Buttons:
 - Keep rest of plan unchanged
 - Replan upcoming workouts
 
-Current implementation: a material Change creates a persisted proposal and shows both choices on the workout detail page. The changed workout remains fixed; acceptance atomically re-prescribes the bounded following 14-day block using the effective availability template for each date.
+A material Change creates a persisted proposal and shows both choices on the workout detail page. The changed workout remains fixed; acceptance atomically re-prescribes the bounded following 14-day block using the effective availability template for each date.
 
 ## 9. Completion flow
 
@@ -308,7 +308,7 @@ If adaptation is warranted, next show an adaptation proposal:
 
 Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accepted bias affects eligible intensity outlines as they enter the next 14 days, subject to duration, reduced-load and weekly growth limits; already structured workouts remain stable. Accept all / Reject all remain beside the comparison.
 
-Feedback targets are bounded to today through day 13, including comparable-family fallbacks and nearby hard-session reductions where warranted. High-RPE, struggled or failed easy rides can reduce the next same-subtype easy ride within its existing power ranges. Comparisons recheck reduced-load ceilings and weekly load limits, preserving type/intent and duration. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Expired, stale and legacy unverifiable proposals show dismissal guidance and omit acceptance on the calendar and material-change workout detail controls; direct acceptance is also rejected. Dismissal preserves workouts and bias. A rider can review current upcoming workouts; a fresh material replan can be proposed by changing the workout again after dismissal. Completed feedback is never rewritten to recover a proposal (CYF-6).
+Feedback targets are bounded to today through day 13, including comparable-family fallbacks and nearby hard-session reductions where warranted. High-RPE, struggled or failed easy rides can reduce the next same-subtype easy ride within its existing power ranges. Comparisons recheck reduced-load ceilings and weekly load limits, preserving type/intent and duration. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Expired, stale and legacy unverifiable proposals show dismissal guidance and omit acceptance on the calendar and material-change workout detail controls; direct acceptance is also rejected. Dismissal preserves workouts and bias. A rider can review current upcoming workouts; a fresh material replan can be proposed by changing the workout again after dismissal. Completed feedback is never rewritten to recover a proposal.
 
 ## 10. Awaiting-status flow
 
@@ -351,6 +351,6 @@ If reason = Illness or Recovery:
 
 - additional field for user-selected return-to-training duration (days/weeks; normalise internally to days).
 
-After save, the app confirms that time off was added and future training replanned. It does not yet show a per-workout change summary. Holiday, Event and Other do not use a return ramp.
+After save, the app confirms that time off was added and future training replanned. It does not show a per-workout change summary. Holiday, Event and Other do not use a return ramp.
 
 Illness/Recovery return workouts show their return-stage purpose. The engine applies saved stage power limits and reduced durations, then resumes intensity progression from one level below the latest comparable pre-break session. Holiday/Event/Other resume from that comparable baseline without the reduction. See [TRAINING_ENGINE.md §39](TRAINING_ENGINE.md#39-time-off) for the staged prescription rules.

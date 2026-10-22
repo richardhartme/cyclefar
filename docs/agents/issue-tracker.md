@@ -47,4 +47,4 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 
 ## History
 
-Work was tracked in Jira project `CYF`, then briefly as local markdown under `.scratch/`, before moving to GitHub Issues. Existing `CYF-<n>` references in `docs/` and commit messages are historical identifiers and are not migrated.
+Work was tracked in Jira project `CYF`, then briefly as local markdown under `.scratch/`, before moving to GitHub Issues. Existing `CYF-<n>` references in commit messages are historical identifiers and are not migrated. Documentation under `docs/` describes current state and carries no ticket references.

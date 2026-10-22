@@ -7,6 +7,8 @@ hide footbox
 actor Rider
 boundary "IntervalsIcuSyncsController" as Controller
 control "SyncCalendar" as Sync
+control "EligibleWorkouts" as Eligible
+control "ConfirmedUpserts" as Confirmed
 control "WorkoutSerializer" as Serializer
 control "IntervalsIcu::Client" as Client
 database "PostgreSQL" as Database
@@ -19,8 +21,8 @@ Sync -> Database: resolve plan owner's profile (default initializer input)
 group owner session advisory lock (Synchronization; released in ensure)
 Sync -> Database: acquire owner advisory lock; reload plan\nreject unless still active
 Sync -> Sync: validate profile owner and API key
-Sync -> Database: select all planned structured workouts/openers\nfrom today; exclude time off and target event date
-Database --> Sync: full eligible calendar set (any count)
+Sync -> Eligible: select all planned structured workouts/openers\nfrom today; exclude time off and target event date
+Eligible --> Sync: full eligible calendar set (any count)
 loop each selected workout
   Sync -> Serializer: payload(canonical steps, current FTP, stable external ID)
   Serializer --> Sync: event payload
@@ -42,7 +44,7 @@ alt eligible set is not empty
   else upload confirmed
     Remote --> Client: returned events with external IDs and event IDs
     Client --> Sync: events
-    Sync -> Sync: validate complete confirmation set by external ID
+    Sync -> Confirmed: validate complete confirmation set by external ID
     alt invalid or incomplete confirmation
       break stop before cleanup
         Sync --> Controller: retry error; retain owned identities and prior metadata
@@ -56,7 +58,7 @@ end
 
 group following successful upload or empty-set selection
   group local transaction
-    Sync -> Database: save confirmed selected event IDs, digests and timestamps
+    Confirmed -> Database: under plan lock, recheck linkage and eligibility;\nsave confirmed selected event IDs, digests and timestamps
   end
   Sync -> Database: load all this rider's sync records outside selected set\nincluding missed/completed, past-moved, deleted and previous-plan
   Database --> Sync: stale owned external IDs
@@ -96,5 +98,7 @@ note over Sync, Remote
   Sync uses existing structured detail without materialising outlines.
   No remote listing, unrelated-event edits or activity/history API calls.
   Local completed workouts, steps, snapshots and feedback remain immutable.
+  An FTP change reuses Eligible and Confirmed through RefreshSyncedWorkouts,
+  limited to workouts with confirmed prior export and with no deletion.
 end note
 @enduml
