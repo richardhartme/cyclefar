@@ -165,8 +165,11 @@ RSpec.describe PlannedWorkout, "#apply_definition", type: :model do
     workout.apply_definition(definition, metrics, track_generation: true, baseline_level: 2)
 
     expect(workout.generation_context).to eq(
-      "maximum_level" => 3, "baseline_level" => 2, "generated_level" => 2,
-      "generated_tss" => metrics.estimated_tss, "load_adjustments" => {})
+      "maximum_level" => 3,
+      "baseline_level" => 2,
+      "generated_level" => 2,
+      "generated_tss" => metrics.estimated_tss,
+      "load_adjustments" => {})
   end
 
   it "leaves an outline workout without steps" do
