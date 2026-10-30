@@ -659,7 +659,7 @@ For the initial <30 seconds, either:
 
 Choose one approach, document it in code and lock it with tests. Since all V1 workouts are >=30 minutes, the edge has negligible plan-level effect.
 
-The implemented calculator uses a progressively growing window for the first 29 samples, then a rolling 30-second window across step boundaries. Metrics specs lock this choice.
+The implemented calculator uses a progressively growing window for the first 29 samples, then a rolling 30-second window across step boundaries. Metrics specs lock this choice. `Metrics::NormalizedPower` holds this accumulator, and ridden metrics from uploaded FIT files (FBK-004) use it too, so planned and ridden NP are comparable.
 
 Call the result `estimated_np_watts` in code/UI where displayed.
 

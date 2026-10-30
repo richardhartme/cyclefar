@@ -7,13 +7,14 @@ title CycleFar — Web Application Component Diagram
 
 LAYOUT_LEFT_RIGHT()
 
-Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
+Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, uploads ride files, and controls manual sync.")
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 System_Ext(smtp, "SMTP provider", "Delivers setup and password-reset mail; live delivery remains unverified.")
 ContainerDb_Ext(database, "PostgreSQL database", "PostgreSQL", "Stores CycleFar's persistent data.")
+ContainerDb_Ext(file_storage, "Ride file storage", "Active Storage local disk on the Kamal volume", "Keeps uploaded FIT files so ridden metrics can be recalculated.")
 
 Container_Boundary(web_application, "CycleFar web application") {
-  Component(controllers, "Rails controllers", "Ruby on Rails", "Handle authenticated requests for settings, plans, workouts, adaptations, availability, time off and sync.")
+  Component(controllers, "Rails controllers", "Ruby on Rails", "Handle authenticated requests for settings, plans, workouts, ride files, adaptations, availability, time off and sync.")
   Component(authentication, "Authentication concern and account controllers", "Rails authentication", "Require a signed session for private requests; register, sign in/out and handle password reset.")
   Component(auth_models, "User, Session and Current", "Active Record / CurrentAttributes", "Store password digests and login sessions; expose the owner for training requests.")
   Component(account_access, "Accounts::Provision and operator task", "Service / Rake", "Creates a rider with a random password and sends a setup link behind a release flag.")
@@ -23,11 +24,12 @@ Container_Boundary(web_application, "CycleFar web application") {
   Component(load_review, "WeeklyLoadReview", "Planning service", "Reads fixed workouts and outline forecasts to report infeasible load growth, including weeks beyond the detail horizon; feeds the home load-guidance panel.")
   Component(plan_management, "Plan management services", "Planning services", "Preview/create and re-prescribe plans (PlanConfiguration, PlanBuilder with its Prescription, PreviewCalendar and TaperPlan helpers) with aligned recovery and staged taper budgets; materialise saved choices with accepted bias and load limits.")
   Component(workouts, "Workout services", "Workouts and Metrics services", "Generate canonical steps, calculate metrics and select directional Easier/Harder replacements by ladder or aerobic profile; add/copy/edit/move workouts and build graph profiles.")
+  Component(ride_files, "Ride file services", "RideFileAttacher, RideFileRemover, Fit::Reader and Metrics::RideCalculator", "Validate and decode uploaded FIT activity files; calculate ridden metrics at the frozen completion FTP; replace or remove a completed workout's ride. Display only.")
   Component(adaptations, "Adaptation and schedule services", "Adaptations and Planning services", "Record completion; validate, compare and apply proposals; save bias; resolve schedule/FTP changes and staged return limits from recent comparable training.")
   Component(settings, "Settings services", "Settings::Update, FtpHistory and FtpMutation", "Update rider settings and edit FTP history atomically under the owner lock; after a committed change in current FTP, request a foreground refresh of confirmed exports.")
   Component(sync, "Intervals.icu reconciliation services", "SyncCalendar, RefreshSyncedWorkouts, EligibleWorkouts, ConfirmedUpserts, WorkoutSerializer, RemovePlanEvents and Synchronization", "Serializes manual sync, FTP refresh and plan-removal cleanup with an owner advisory lock; retains retry identities and completed history; manual sync exports all eligible structured workouts and cleans stale events; FTP refresh re-sends only previously confirmed exports.")
   Component(client, "Intervals.icu API client", "IntervalsIcu::Client", "Performs authenticated HTTP requests, timeouts, JSON handling and API-error mapping.")
-  Component(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, adaptations, settings and sync records.")
+  Component(models, "Domain models", "Active Record", "Enforce domain validations and persistence invariants for plans, workouts, steps, feedback, ride activities, adaptations, settings and sync records.")
 }
 
 Rel(rider, controllers, "Uses CycleFar", "HTTPS")
@@ -45,6 +47,10 @@ Rel(controllers, plan_management, "Previews/creates plans; materializes horizon 
 Rel(controllers, workouts, "Views and changes workouts")
 Rel(controllers, adaptations, "Records feedback/schedule changes and builds owned proposal comparisons")
 Rel(controllers, settings, "Updates settings")
+Rel(controllers, ride_files, "Uploads, replaces or removes a ride file through the active plan")
+Rel(ride_files, workouts, "Shares NormalizedPower with planned metrics")
+Rel(ride_files, models, "Saves WorkoutActivity beside completed history")
+Rel(models, file_storage, "Stores and purges ride files", "Active Storage")
 Rel(controllers, sync, "Starts manual sync")
 Rel(controllers, views, "Renders pages with presenter data")
 Rel(views, workouts, "Builds graph data through ProfileBuilder")
@@ -74,6 +80,7 @@ note bottom of models
   are enforced by database constraints as well as model validation.
   PostgreSQL triggers protect completed workouts, steps and feedback
   against updates/deletes, including direct SQL writes.
+  WorkoutActivity rows attach only to completed workouts.
 end note
 
 SHOW_LEGEND()
