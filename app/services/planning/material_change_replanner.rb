@@ -15,24 +15,10 @@ module Planning
 
     def apply!
       source = validate!
-      dates_by_template.each do |template, dates|
-        FuturePrescriber.new(plan: @plan, slots: template.availability_slots).replace!(
-          dates,
-          preserve_workout_ids: [ source.id ])
-      end
+      FuturePrescriber.replace_with_templates!(plan: @plan, dates: proposal_range, preserve_workout_ids: [ source.id ])
     end
 
     private
-
-    def dates_by_template
-      templates = @plan.availability_templates.includes(:availability_slots).to_a
-      proposal_range.to_a.group_by do |date|
-        template = AvailabilityTemplate.for_date(templates, date)
-        raise ArgumentError, "No availability template applies on #{date.to_fs(:long)}" unless template
-
-        template
-      end
-    end
 
     def proposal_range
       starts_on = Date.iso8601(@proposal.payload.fetch("starts_on"))

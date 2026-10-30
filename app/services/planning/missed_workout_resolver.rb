@@ -39,14 +39,7 @@ module Planning
 
     def replan_upcoming_workouts!
       plan = @workout.training_plan
-      template = active_template_for(plan, Date.current)
-      raise ArgumentError, "No availability template applies today" unless template
-
-      FuturePrescriber.new(plan: plan, slots: template.availability_slots).replace!(Date.current..[ Rules.horizon_end(Date.current), plan.ends_on ].min)
-    end
-
-    def active_template_for(plan, date)
-      AvailabilityTemplate.for_date(plan.availability_templates.includes(:availability_slots).to_a, date)
+      FuturePrescriber.replace_with_templates!(plan: plan, dates: Date.current..[ Rules.horizon_end(Date.current), plan.ends_on ].min)
     end
   end
 end
