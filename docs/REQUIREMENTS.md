@@ -1,14 +1,8 @@
 # CycleFar Functional Requirements
 
-Requirement IDs are intended to be referenced in RSpec descriptions and implementation commits. These are acceptance criteria for the application as built. Where a feature is deliberately absent, that is stated.
+Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-## Implementation summary
-
-The application has a public homepage with Sign In and Register, email/password self-registration, sign-out and password reset. Profiles, plans and sync records have required user ownership in PostgreSQL, and an automated two-rider matrix covers isolation. Controlled provisioning and SMTP are configured; live mail delivery has not been verified. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries.
-
-Feedback adaptation uses owner-scoped Current / Proposed comparisons (FBK-002) for targets from today through day 13, with comparable-family fallback and nearby hard-session reductions. The accepted global progression bias feeds later horizon generation (GEN-001), subject to duration fitting, reduced-load ceilings and the comparable-week load cap (LOAD-002). Proposal expiry and canonical-input staleness are enforced for feedback and material-change replans. Moves regenerate across phase boundaries or distances greater than seven days, preserve eligible short moves and recheck destination load. Manual completion covers executable openers and individually materialised overdue outlines, with current-FTP completion snapshots and the next-scheduled-workout late-feedback guard. Per-family progression bias is not implemented.
-
-Ordered weekly load reductions, shared recovery scheduling and staged taper budgets apply across previews, materialisation and feedback comparisons. Return ramps save stage power limits and resume from the latest comparable pre-break session (OFF-001). Structured calendar cards show canonical main-set summaries, target watt ranges and work; outlines show purpose, and event cards show supplied distance, elevation and expected duration. Manual sync reconciles all of the rider's tracked events outside the eligible calendar set, including missed/completed, past-moved, deleted and previous-plan workouts, retaining owned identities across uncertain uploads and cleanup failures (ICU-001). These notes do not replace the acceptance criteria below.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -20,7 +14,7 @@ Acceptance criteria:
 
 - User-facing application chrome and primary product references use `CycleFar`.
 - The Rails application/project identifier is `cycle_far` and application module is `CycleFar`.
-- The application is live at `cyclefar.com`, the public TLS hostname in `config/deploy.yml`; server endpoints come from the deployment environment. The AWS infrastructure templates are documented in [infra/](../infra/README.md).
+- The application is live at `cyclefar.com` (the TLS host in `config/deploy.yml`); server endpoints come from the deployment environment.
 - Core domain model/table names remain brand-neutral.
 - External ownership identifiers created by CycleFar, such as Intervals.icu `external_id`, use a stable `cyclefar-` namespace.
 
@@ -39,7 +33,7 @@ Acceptance criteria:
 - FTP changes are recorded in a lightweight FTP history table and displayed newest first in Settings.
 - Riders may edit the watts/date or delete their own readings. The most recent `effective_on` date sets current FTP; the newest entry (highest ID) wins a same-date tie. Historical edits do not change current FTP unless they change which reading is newest.
 - Deleting the newest reading falls back to the newest remaining reading. Retain at least one reading because FTP is required. A current-FTP change refreshes future metrics/targets without changing canonical percentages or completed snapshots.
-- After a committed current-FTP change, refresh previously confirmed, eligible Intervals.icu exports in the foreground. This applies to new readings, edits/date reordering and deletion fallback. Unchanged current watts and invalid mutations make no refresh request. Remote failure preserves the FTP/history/local metrics and confirmed sync metadata, with manual Sync retry guidance.
+- After any committed change to current FTP (new reading, edit, reorder or deletion fallback), refresh confirmed, eligible Intervals.icu exports in the foreground. No change in current watts, or an invalid mutation, makes no request. A remote failure keeps the FTP, history, local metrics and confirmed sync metadata, and shows Sync retry guidance.
 
 ### SET-002 Intervals.icu API key
 
@@ -91,13 +85,11 @@ For event goal:
 - group riding time, distance and elevation in a native “Additional event details (optional)” disclosure. Distance/elevation are calendar information.
 - preserve entered draft values across goal, length and disclosure toggles, validation errors and Back to edit. Inactive controls are disabled for native validation and keyboard interaction; they remain draft data. Use native controls, persistent labels and accessible field errors.
 
-For new event plans, Event discipline takes precedence over any retained non-event discipline input in preview, persisted plan/event records and later generation/replanning. Preserve Event discipline across goal changes, validation errors and preview editing; only active event mode validates/uses it. An explicit invalid event choice is rejected. Do not infer the active event choice from stale non-event input, including legacy drafts.
+Discipline rules:
 
-Non-event discipline is omitted from setup and defaults internally to Road, set in `Planning::Rules`. Event discipline is required independently of stale non-event input, including legacy session drafts, which follow the same defaulting and active-validation rules. Non-event goals, phases, broad Intervals, explicit intensity intents, Endurance/Recovery, forecasts, weekly totals and load warnings must be identical whatever discipline value is submitted or stored.
-
-Existing non-event plans retain their stored discipline through materialisation/replanning, with no backfill or workout regeneration. Non-event setup summaries, previews and calendar headers must omit discipline, including the internal default and existing stored values.
-
-Existing event plans retain their saved `TrainingPlan.discipline` for training, including legacy records whose event label differs. Do not backfill either discipline or regenerate existing/completed workouts. Changing confirmed discipline still requires creating a new plan.
+- **New event plans:** the Event discipline is used for preview, the saved plan and event, and all later generation. It survives goal changes, validation errors and preview editing, is validated only in event mode, and an invalid choice is rejected. Never infer it from stale non-event input, including legacy drafts.
+- **Non-event plans:** discipline is never asked for and defaults internally to Road (`Planning::Rules`). Goals, phases, broad Intervals, explicit intents, Endurance/Recovery, forecasts, weekly totals and load warnings must be identical whatever discipline is submitted or stored. Setup summaries, previews and calendar headers never show it.
+- **Existing plans** keep their saved `TrainingPlan.discipline` for training, including legacy event plans whose event label differs. No backfill and no regeneration of existing or completed workouts. Changing discipline requires a new plan.
 
 ### PLN-011 Weekly availability
 
@@ -125,7 +117,13 @@ or specific:
 
 Days not configured are rest days and appear empty on the calendar.
 
-The setup grid labels its final column `Session type` and its broad option `Intervals — chosen for your goal`. It explains that the rider chooses training days and lengths: broad Intervals uses goal/phase selection, while explicit VO2 Max, Threshold, Sweet Spot and Tempo retain their chosen type in normal weeks. Endurance and Recovery remain those types. Recovery-week and taper rules may shorten or replace sessions. Goals do not create extra training days or available time. Unselected days do not validate their duration or type; selected days retain the normal constraints. Each control has an accessible weekday-specific name.
+The setup grid's final column is `Session type`, with the broad option `Intervals — chosen for your goal`. It explains that:
+
+- broad Intervals uses goal/phase selection; explicit VO2 Max, Threshold, Sweet Spot and Tempo keep their type in normal weeks; Endurance and Recovery stay as chosen;
+- recovery weeks and taper may shorten or replace sessions;
+- goals never add training days or time.
+
+Unselected days aren't validated; selected days keep the normal constraints. Each control has an accessible, weekday-specific name.
 
 The app trusts the rider's choices, including back-to-back intensity days, but may display non-blocking warnings for risky schedules.
 
@@ -136,7 +134,9 @@ The rider chooses either:
 1. Continuous progression; or
 2. Hard/recovery cycle, specifying the number of hard weeks before each recovery week.
 
-The setup form labels Continuous as `Continuous progression — no scheduled recovery weeks`. It does not promise that every workout or week increases. Hard weeks before recovery appears and is enabled only for the cycle choice; that choice requires a positive whole number. Continuous ignores any inactive cycle value, while a rider's entered count survives mode toggles, validation errors and Back to edit. Scheduled recovery weeks and event taper may shorten normal sessions or change session types. Continuous still permits event taper, feedback adjustments, manual recovery and time off.
+- Continuous is labelled `Continuous progression — no scheduled recovery weeks`; the form never promises that every workout or week increases. It still allows event taper, feedback adjustments, manual recovery and time off.
+- Hard weeks before recovery is shown and enabled only for the cycle choice, and must be a positive whole number. Continuous ignores it, but the entered value survives mode toggles, validation errors and Back to edit.
+- Scheduled recovery weeks and event taper may shorten sessions or change their type.
 
 ### PLN-013 Preview
 
@@ -510,13 +510,13 @@ A `Sync to Intervals.icu` button syncs all upcoming planned structured workouts.
 - Include today and any already structured future workout, even beyond the automatic 14-day detail horizon; do not generate outlines during sync. There is no count cap or configurable sync count.
 - Exclude past, completed, missed and outline workouts, target-event dates and inclusive time-off dates. Include regular workouts and openers.
 - No automatic background syncing in V1.
-- An explicit current-FTP mutation automatically refreshes only previously confirmed exports that still satisfy the eligibility above. Never export unsynced/uncertain-only workouts, generate outlines or delete stale events in this path. Initial export and full-calendar reconciliation remain manual. No active plan or zero eligible confirmed exports requires no HTTP or API key.
+- A current-FTP change automatically refreshes only confirmed exports that are still eligible. That path never exports unsynced or uncertain workouts, generates outlines or deletes stale events; it makes no request (and needs no key) when there is nothing to refresh. First export and full reconciliation stay manual.
 - API-key auth only.
 - Use stable `external_id` values so repeated syncs upsert rather than duplicate.
 - If one of the previously synced workouts is no longer in the eligible calendar set because it was moved/deleted/replanned or marked missed/completed, remove or update the corresponding app-owned Intervals.icu calendar event as appropriate. Preserve activity history and immutable local completed workouts.
 - Never delete unrelated Intervals.icu calendar events.
 
-See `INTERVALS_ICU.md`.
+See [INTERVALS_ICU.md](INTERVALS_ICU.md).
 
 ## 15. Units and dates
 

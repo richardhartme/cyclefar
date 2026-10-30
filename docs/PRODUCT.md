@@ -8,7 +8,7 @@ CycleFar sits between a static training plan and a full virtual cycling platform
 
 ## Primary user
 
-Riders use email/password sign-in and self-registration, and the public home offers both paths. Profiles, plans and Intervals.icu sync records have required user ownership in PostgreSQL, training controller lookups are owner-scoped, and FTP-based services use the owning plan. Preview drafts and sync reconciliation are owner-scoped. Controlled account provisioning, SMTP configuration and automated two-rider coverage are in place. Operator provisioning stays disabled until live mail delivery is verified.
+Riders self-register and sign in with email and password. All their data is owned by their account (see [Independent riders](#independent-riders)).
 
 The assumed rider:
 
@@ -34,7 +34,7 @@ The rider should be able to:
 9. Update FTP and have future wattage targets change automatically.
 10. Push all upcoming structured workouts to Intervals.icu on demand.
 
-Changing current FTP also refreshes eligible future workouts that were already successfully synced to Intervals.icu. The FTP save remains valid if remote refresh fails; the rider receives manual Sync retry guidance. Initial exports and stale-event cleanup remain on demand.
+Changing FTP also refreshes future workouts already synced to Intervals.icu. If that refresh fails, the FTP change still stands and the rider is told to retry with Sync. First exports and stale-event cleanup only happen on demand.
 
 ## Training goals
 
@@ -55,9 +55,9 @@ For Prepare for an Event, the rider chooses one Event discipline during plan set
 - MTB
 - Ultra / Endurance
 
-Event Base uses a generic cycle; Event discipline selects the broad Intervals mix in Build and Speciality. Explicit weekly subtypes retain their intent subject to the normal reduced-load overrides.
+The discipline sets the broad Intervals mix in Build and Speciality; Base uses a generic cycle. Explicitly chosen weekly subtypes keep their intent, subject to the normal reduced-load overrides.
 
-Non-event goals use goal/phase rules without discipline customisation. Discipline is omitted from non-event setup and summaries. New non-event plans save an internal `road` compatibility default that does not affect training, and existing plans keep their stored values.
+Non-event goals have no discipline choice. New non-event plans store an internal `road` default that doesn't affect training.
 
 ## Product principles
 
@@ -73,11 +73,11 @@ The rider should not need to decide whether today's threshold session is 3x8, 4x
 
 The plan should not silently regenerate every time anything changes. Adaptation is targeted and visible. Proposed changes require acceptance.
 
-Feedback proposals compare each affected workout before and after at the owning rider's current FTP. Targets are restricted to the next 14 days; accepted global intensity bias is saved for eligible outlines when they later become structured. Existing structured workouts stay stable on ordinary calendar requests. Feedback and material-change proposals enforce their seven-day expiry and validate proposal-time canonical inputs before acceptance. Stale or unverifiable proposals can be dismissed without changing completed history. Per-family progression bias is not implemented; see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes).
+Feedback proposals show each affected workout before and after, at the rider's current FTP, and only target the next 14 days. An accepted intensity bias applies to later workouts as they become structured. Proposals expire after seven days and are rejected if their inputs have changed; stale ones can be dismissed. The bias is global; per-family bias is not implemented (see [ARCHITECTURE.md](ARCHITECTURE.md#completion-adaptations-and-schedule-changes)).
 
 ### Near-term specificity, long-term flexibility
 
-Automatic detail generation covers today through day 13. Later workouts normally store purpose/type/duration/phase and forecast load so future detail can reflect newer FTP and feedback. Explicit Add/Copy, retained moved structures and individual due/overdue completion are exceptions to the automatic horizon.
+Workouts get detailed steps from today through day 13. Later workouts store only type, duration, phase, purpose and forecast load, so their detail can reflect newer FTP and feedback. Add, Copy, Move and completing a due or overdue outline can create detail outside that window.
 
 ### Explain important changes
 
@@ -86,8 +86,6 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 ## V1 scope
 
 ### Included
-
-This describes the V1 scope as built.
 
 - Email/password registration, sign-in, sign-out and password reset
 - Settings with FTP and Intervals.icu API key
@@ -134,9 +132,9 @@ This describes the V1 scope as built.
 
 ## Independent riders
 
-Each `User` owns one rider profile, at most one active plan, and any number of archived plans retained as history. Training records and FTP readings follow their owning plan or profile. Each rider's Intervals.icu credentials, sync records and remote reconciliation stay within that rider's account, including sync records detached from deleted workouts. A plan preview created in one browser account cannot be viewed or confirmed after another account signs in there. Live SMTP delivery is unverified; operator provisioning is disabled by default.
+Each `User` owns one rider profile, at most one active plan and any number of archived plans. Workouts, FTP readings, Intervals.icu credentials and sync records all belong to that rider, and a plan preview can't be viewed or confirmed by another account signing in on the same browser. Operator provisioning is disabled until live mail delivery is verified (see [ACCOUNT_ACCESS.md](ACCOUNT_ACCESS.md)).
 
-There is no Google or other social sign-in, and there are no coaches, shared plans or teams. There is no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) for the acceptance and test contract.
+There is no social sign-in, no coaches, shared plans or teams, and no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) for the acceptance and test contract.
 
 ## Future-friendly seams
 
@@ -155,6 +153,6 @@ Do not implement these now, but avoid architecture that blocks them:
 ## Brand / naming
 
 - Canonical product name: **CycleFar**.
-- The application is live at `cyclefar.com`. `config/deploy.yml` configures that public TLS hostname and reads the application server and database endpoints from the deploy environment. Separate Terraform and CloudFormation templates prepare the AWS infrastructure. See [infrastructure documentation](../infra/README.md).
+- The application is live at `cyclefar.com`; see the [README](../README.md#deployment) and [infrastructure documentation](../infra/README.md).
 - User-facing copy should call the application **CycleFar**, not generic names such as “Cycling Trainer App”.
 - Do not couple persistence/domain classes to the brand name; concepts should remain `TrainingPlan`, `PlannedWorkout`, etc.

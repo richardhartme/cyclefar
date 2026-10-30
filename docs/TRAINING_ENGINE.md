@@ -2,19 +2,16 @@
 
 ## 1. Purpose
 
-This document defines a pragmatic, deterministic V1 training engine for indoor ERG-mode cycling. It is intentionally explicit so behaviour can be unit tested and later revised.
+A pragmatic, deterministic V1 training engine for indoor ERG-mode cycling, written explicitly so it can be unit tested and revised. It combines established power-training conventions with product heuristics; it doesn't claim to be the one perfect plan. Plans persist `engine_version = "v1"` so later versions can change rules deliberately.
 
-These rules are not a claim that there is one scientifically perfect training plan. They combine established power-training conventions with product heuristics suitable for a first implementation. Persist `engine_version = "v1"` so future versions can change rules deliberately.
+The application implements these rules except where noted below or in a section.
 
-These are the rules the application implements, except where a section says otherwise.
+### Where the implementation differs
 
-### Current implementation
+- Accepted progression bias is stored globally, not per family or subtype (§32), and does not drive subtype substitution (§11). Pattern detection itself uses the comparable family (§30).
+- Openers record feedback but never drive progression adaptation, because no opener RPE band is defined.
 
-Constants live in `Training::Rules` and `Planning::Rules`. The pure `Training::Progression` calculation applies accepted global intensity bias once to eligible outlines under the plan lock, clamps levels to 1–7, and respects saved recovery/taper/re-entry/load ceilings. Materialisation persists canonical steps, the fitted effective level and generation references atomically. Forecasts use explicit variations; initial endurance profiles are sampled and saved. Existing structured and completed workouts remain stable when the horizon rolls or FTP changes.
-
-Feedback proposals target regular planned structured workouts in today through day 13. They prefer the same subtype, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals when the source used that intent. Nearby reductions use two calendar days after the source date: broad Intervals for struggled completion, any intensity session for failure, always within the current horizon. Difficult easy rides can lower the next same-subtype ride's existing ranges without changing its duration or turning it into intensity. `ProposalComparison` and `FeedbackLoadLimiter` generate read-only comparisons and recheck load ceilings/caps before atomic acceptance.
-
-The accepted bias is global, although repeated-pattern detection reads the last three completed workouts with feedback in the source's comparable family (§30); per-family/subtype stored bias (§32) and bias-driven subtype substitution (§11) are not implemented. Feedback and material-change proposals enforce seven-day expiry and proposal-time canonical-input validation for both feedback and material-change proposals. Relevant prescription, schedule, load or progression changes invalidate pending proposals; FTP-only metric recalculation does not. Proposals without a verifiable baseline require dismissal. Ordinary and missed-workout moves share destination-aware regeneration (§35), preserving eligible short structures and checking destination load, including outside the detail horizon. The ordered §27 load reductions apply across previews, actual horizon materialisation and feedback comparisons/acceptance. Reduced generation choices survive outline persistence; sampled endurance profiles retain their identity and existing structured/completed workouts remain fixed on horizon requests. Late-feedback suppression checks whether the next scheduled workout after the source is completed (§33). Due/overdue executable outlines can be individually materialised for manual completion without changing other workouts. Openers record feedback without progression adaptation, since no expected opener RPE band is defined. See [ARCHITECTURE.md](ARCHITECTURE.md) for service boundaries and [UX.md](UX.md) for presentation limits.
+Constants live in `Training::Rules` and `Planning::Rules`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each rule is implemented and [UX.md](UX.md) for presentation.
 
 ## 2. Non-negotiable engine constraints
 

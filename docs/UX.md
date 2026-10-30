@@ -19,15 +19,17 @@ No History page in V1.
 
 ## Authentication and registration screens
 
-The public homepage offers **Sign In** and **Register**. Private application requests redirect to the generated sign-in page. It accepts an email address and password and links to **Forgot password?** and **Register**. The registration screen accepts an email address, password and confirmation, then signs in the new rider. The reset-request page accepts an email address and displays the same confirmation whether or not it matches a user; a delivered token link opens the password-update form. The layout shows the signed-in account and a **Sign out** control on authenticated pages; Calendar and Settings navigation are hidden on public pages. Production SMTP is configured through environment variables, with live provider delivery still to be verified.
+- The public homepage offers **Sign In** and **Register**; private pages redirect to sign-in.
+- Sign-in takes email and password and links to **Forgot password?** and **Register**.
+- Registration takes email, password and confirmation, then signs the rider in.
+- The reset request shows the same confirmation whether or not the address exists; the emailed link opens the password form.
+- Signed-in pages show the account and **Sign out**; Calendar and Settings links are hidden on public pages.
 
 ## Independent-rider account flow
 
-Riders can register through the public homepage; an authorized operator can also provision a rider once live mail delivery is verified and the provisioning flag is enabled. The application shell identifies the signed-in account and offers visible sign-out. There is no Google/social sign-in, coach, team or shared-plan UI.
+Every screen shows only the signed-in rider's profile and plan. Links to another rider's workouts, proposals or time off behave like missing records. Archived plans keep their history privately; there is no History page, social sign-in, coach, team or shared-plan UI.
 
-After sign-in, Calendar, Settings, plan setup and all workout actions show only that account's profile and plan. Each rider can have one active plan; archived plans retain private completed history without adding a History page. Foreign workout, proposal and time-off links respond like missing records, without showing another rider's details. Intervals.icu sync uses only the signed-in rider's key and owned events.
-
-A preview draft belongs to the account that created it. If rider A signs out and rider B signs in in the same browser, B starts from B's own plan form and cannot open, edit or confirm A's preview. A's Back to edit and confirmation still work when A remains signed in. Request specs exercise these paths and the two-user UI routes.
+A preview draft belongs to its creator: if another rider signs in on the same browser, they start from their own form and can't open or confirm it.
 
 ## 1. No-plan home
 
@@ -51,8 +53,8 @@ Behaviour:
 
 - explain briefly that changing FTP updates future planned targets, not completed workouts;
 - API key is password-style/masked after save;
-- FTP history appears below the settings form, newest first, with the current reading labelled. Edit opens a form for watts/date; Delete asks for confirmation and is hidden for the final reading. The newest remaining dated reading sets future targets; same-date ties use the newest entry. Saving a changed FTP adds a reading dated today.
-- A changed current FTP refreshes already-synced eligible future workouts in Intervals.icu. Settings/history success messages include the confirmed refresh count when nonzero. Remote failure keeps the save successful and shows separate guidance to check the API key and use the calendar's Sync action to retry. Unsynced workouts are exported only through manual Sync.
+- FTP history sits below the form, newest first, with the current reading labelled. Edit changes watts or date; Delete asks for confirmation and is hidden for the last reading. Saving a changed FTP adds a reading dated today; the newest reading sets future targets.
+- A changed FTP refreshes workouts already synced to Intervals.icu, and the success message gives the count. If the refresh fails, the save still succeeds and the rider is told to check the API key and retry with Sync.
 - there is no `Test connection` button.
 
 ## 3. Create-plan configuration
@@ -71,11 +73,7 @@ Radio/cards:
 
 ### Discipline
 
-For non-event goals, omit this section and any discipline summary. Explain that broad Intervals follow goal/phase rules; explicit weekly subtypes retain their intent. Never expose the internal Road compatibility default as a selected discipline.
-
-Event mode shows one Event discipline selector beside event name/date, with the helper "Shapes the workout mix as your event approaches." Fresh forms default it to Road. Switching goals preserves the Event discipline; inactive event input does not affect non-event training. Validation errors and Back to edit restore its entered value.
-
-Non-event setup omits discipline and saves an internal Road default. Event discipline is required independently of retained legacy input.
+Shown only for event goals, as a required selector beside the event name and date, with the helper "Shapes the workout mix as your event approaches." It defaults to Road and keeps its value across goal switches, validation errors and Back to edit. Non-event goals never show a discipline (the internal Road default is never exposed).
 
 - Road
 - Gravel
@@ -125,7 +123,7 @@ Session type choices:
 - Broad: Intervals — chosen for your goal / Endurance / Recovery
 - Specific: VO2 Max / Threshold / Sweet Spot / Tempo / Endurance / Recovery
 
-Explain at the grid that the rider chooses days and session lengths; the goal picks a subtype only for broad Intervals days. Endurance and Recovery stay those types, unselected days are rest, and a goal does not add training days or available time. Specific intensity choices retain their type in normal weeks, subject to recovery-week and taper overrides. Unselected days do not validate duration/type inputs.
+Explain at the grid that the goal only picks the workout type on broad Intervals days; Endurance and Recovery stay as chosen, unselected days are rest, and the goal never adds days or time. Specific intensity choices keep their type in normal weeks (recovery weeks and taper can override them). Unselected days aren't validated.
 
 Show warnings inline for patterns such as several hard days in a row, but never block submission solely on training-quality warnings.
 
@@ -172,7 +170,9 @@ Include:
 
 ### Weekly load chart
 
-A full-width TSS bar chart sits above the calendar, with one bar per week, including empty weeks. It uses the same totals as weekly summaries. Current totals include retained missed workouts. When the ordered generated-load reductions cannot keep an upcoming comparable hard week within the 8% growth target while preserving fixed workouts and scheduled duration, a non-blocking guidance panel appears above the calendar. It states how many weeks are above the target, explains that the warning is advisory, and suggests editing the week's availability or using Easier, Shorter or Change workout on an individual workout. A collapsed **Review affected weeks** table lists each week's projected and target TSS, with **Edit this week** (opens the availability form for that week) and **View in calendar** (jumps to the week) actions.
+A full-width TSS bar chart sits above the calendar, one bar per week (including empty weeks), using the same totals as the weekly summaries; missed workouts count.
+
+If load reductions can't keep an upcoming hard week within the 8% growth target, an advisory panel above the calendar says how many weeks are over and suggests editing that week's availability or using Easier, Shorter or Change workout. A collapsed **Review affected weeks** table lists projected and target TSS, with **Edit this week** (prefilled availability form) and **View in calendar** links.
 
 ### Phase bands
 
@@ -200,7 +200,7 @@ Show enough to understand it without opening:
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details;
 - under the completed badge, ridden TSS when a ride file with power is attached, and the recorded RPE.
 
-Structured cards show type and duration, repeated main-set segments with their watt ranges, the profile graph, and TSS / IF / kJ. Under/over and activation efforts retain separate ranges; ramps show both endpoint ranges. Planned targets use current FTP, while completed targets use frozen snapshots. Outline cards show purpose without detailed targets or metrics. Supplied event details use km, m and min; absent optional fields are omitted. Calendar day columns retain a readable minimum width with local horizontal scrolling.
+Main-set summaries keep under/over and activation efforts separate and show both ends of a ramp. Planned watts use current FTP; completed watts use the frozen snapshot.
 
 ### High-level workout card (>14 days)
 
@@ -249,11 +249,15 @@ Actions:
 - Missed (when relevant)
 - Remove workout (planned/missed workouts in an active plan, including outlines; asks for confirmation)
 
-Completed workouts in the active plan have a Ride file section. It uploads, replaces or removes one FIT file and shows planned against ridden duration, NP, IF, TSS and work, plus ridden average power and heart rate and the completion FTP basis. A ride without power shows `No power data`. A ride dated differently from the scheduled date shows a non-blocking warning. Removal asks for confirmation (FBK-004).
+**Ride file (FBK-004).** Completed workouts in the active plan can upload, replace or remove one FIT file. The section compares planned and ridden duration, NP, IF, TSS and work, and shows ridden average power, heart rate and the completion FTP. A ride without power shows `No power data`; a ride on a different date shows a non-blocking warning. Removal asks for confirmation.
 
-Removal returns to the calendar with the date empty and the rest of the plan unchanged. Completed workouts retain their immutable history and have no removal control. The success message explains that manual Intervals.icu sync updates the remote calendar.
+**Remove** returns to the calendar with that date empty and nothing else changed; the message explains that manual Sync updates Intervals.icu. Completed workouts can't be removed.
 
-Copy selects an empty date inside the same plan, retains canonical percentage steps and recalculates metrics at current FTP without changing the source or replanning. Openers support Change, Move and manual completion with RPE/quality. Opening a planned executable outline due today or earlier generates its canonical detail for completion without rewriting other workouts. The completed structure, FTP, watt targets, metrics and feedback remain frozen; opener feedback does not propose progression changes. Ordinary Move and missed-workout Move share destination rules: preserve eligible same-phase structures for moves of at most seven days; regenerate across phases, longer distances or changed recovery/return context using destination progression while retaining subtype, duration and saved variation. Both reject occupied dates, dates outside the active plan or its phases, time off and the target event date. Moved outlines entering the horizon gain detail; distant outlines retain forecasts only. The confirmation and calendar show non-blocking destination load warnings, including future weeks outside the detail horizon.
+**Copy** places a copy on an empty date in the same plan, recalculating metrics at current FTP without replanning.
+
+**Move** (and missed-workout Move) keeps the structure for same-phase moves of up to seven days; otherwise it regenerates for the destination, keeping type, duration and variation. Both reject occupied dates, dates outside the plan or its phases, time off and the event date, and show non-blocking load warnings, including for weeks beyond the detail window.
+
+**Openers** support Change, Move and completion with RPE and quality; their feedback never proposes progression changes. Opening an outline due today or earlier generates its detail for completion without touching other workouts. Once completed, structure, FTP, watts, metrics and feedback are frozen.
 
 ## 7. Shuffle controls
 
@@ -267,11 +271,9 @@ Options displayed as explicit choices:
 
 Shorter can be repeated down to a 30-minute minimum. Longer can be repeated without a hard maximum.
 
-Easier/Harder preserve workout type and duration and require both actual TSS and the displayed whole-number TSS to decrease/increase. They skip unsuitable ladder entries and select profiles by load, retaining existing training restrictions. When no suitable replacement remains, keep the workout unchanged and show `No lower-load option is available at this duration. Try Shorter or Change workout.` Harder uses `higher-load` and `Longer`. Same continues to rotate valid profiles.
+Easier/Harder keep type and duration, and only accept a replacement whose actual and displayed whole-number TSS both move the right way. Interval sessions step through their ladders; Endurance and Recovery switch between aerobic profiles (they have no level and power targets are never lowered continuously). For a 60-minute Endurance ride, Easier can go from alternating (45 TSS) to sustained (44) and then stops. At the limit the workout is unchanged and the rider sees `No lower-load option is available at this duration. Try Shorter or Change workout.` (Harder says `higher-load` and `Longer`). Same keeps rotating valid profiles.
 
-Interval sessions search their progression ladders; Endurance/Recovery switch among valid aerobic profiles and continue to have no progression level. Profile load differences can be small: for a normal 60-minute Endurance session, Easier can switch alternating (45 displayed TSS) to sustained (44), then reaches the limit. An available profile with the same displayed TSS does not qualify. These controls do not continuously lower aerobic power targets.
-
-A replacement preview is desirable before applying. Current buttons apply immediately and redirect to the updated detail page; there is no replacement preview.
+Buttons apply immediately and return to the updated detail page. A replacement preview would be desirable but doesn't exist.
 
 ## 8. Change-workout dialog
 
@@ -291,7 +293,7 @@ Buttons:
 - Keep rest of plan unchanged
 - Replan upcoming workouts
 
-A material Change creates a persisted proposal and shows both choices on the workout detail page. The changed workout remains fixed; acceptance atomically re-prescribes the bounded following 14-day block using the effective availability template for each date.
+The choice is saved as a proposal on the workout detail page. The changed workout stays fixed; accepting re-prescribes the following 14 days atomically, using the availability that applies on each date.
 
 ## 9. Completion flow
 
@@ -309,9 +311,9 @@ If adaptation is warranted, next show an adaptation proposal:
 - before/after summary;
 - Accept all / Reject all.
 
-Feedback proposals appear on the calendar with a reason, dated links to every affected workout, and Current / Proposed tables showing workout name, effective progression level where applicable, duration, TSS, IF and work. Estimates use the owning rider's current FTP. A proposed long-term bias shows its current/resulting values and effective change after clamping. Accepted bias affects eligible intensity outlines as they enter the next 14 days, subject to duration, reduced-load and weekly growth limits; already structured workouts remain stable. Accept all / Reject all remain beside the comparison.
+On the calendar, a feedback proposal shows its reason, links to each affected workout, and Current / Proposed tables (name, level where relevant, duration, TSS, IF, work) at the rider's current FTP. A bias change shows current and resulting values after clamping; it affects intensity outlines as they enter the next 14 days, never workouts already structured. Targets only fall within today through day 13. Viewing or refreshing a comparison never applies it.
 
-Feedback targets are bounded to today through day 13, including comparable-family fallbacks and nearby hard-session reductions where warranted. High-RPE, struggled or failed easy rides can reduce the next same-subtype easy ride within its existing power ranges. Comparisons recheck reduced-load ceilings and weekly load limits, preserving type/intent and duration. Reading or refreshing the comparison does not apply it. An unavailable comparison shows a generic explanation and Reject all, without an Accept action. Material-change replan proposals retain their separate controls. Expired, stale and legacy unverifiable proposals show dismissal guidance and omit acceptance on the calendar and material-change workout detail controls; direct acceptance is also rejected. Dismissal preserves workouts and bias. A rider can review current upcoming workouts; a fresh material replan can be proposed by changing the workout again after dismissal. Completed feedback is never rewritten to recover a proposal.
+Unavailable comparisons show a generic explanation and Reject all only. Expired, stale or unverifiable proposals (feedback or material-change) show dismissal guidance with no Accept, and direct acceptance is refused. Dismissing changes nothing; changing the workout again can produce a fresh material-change proposal. Completed feedback is never rewritten.
 
 ## 10. Awaiting-status flow
 
@@ -332,14 +334,14 @@ Leave unchanged and Replan retain the source card as `Missed`; Move keeps it pla
 
 ## 11. Availability changes
 
-A form based on the same weekly grid as setup. The grid is prefilled with the configured schedule for the week containing the chosen date (days with no slot are unchecked), so the rider adjusts minutes, intent or days rather than re-entering the week. The date defaults to today, clamped to the plan, and can be preselected from a load-guidance link; a date outside the plan returns to the form with an alert.
+The same weekly grid as setup, prefilled with the schedule for the week containing the chosen date. The date defaults to today (clamped to the plan) or comes from a load-guidance link; a date outside the plan shows an alert.
 
 Scope choice:
 
 - This week only
 - From [date] onward
 
-Previewing significant changes remains a design goal. Current submission applies the availability change transactionally and redirects to the calendar.
+Submitting applies the change and returns to the calendar. A preview of significant changes is a design goal, not implemented.
 
 ## 12. Time off
 
@@ -354,6 +356,4 @@ If reason = Illness or Recovery:
 
 - additional field for user-selected return-to-training duration (days/weeks; normalise internally to days).
 
-After save, the app confirms that time off was added and future training replanned. It does not show a per-workout change summary. Holiday, Event and Other do not use a return ramp.
-
-Illness/Recovery return workouts show their return-stage purpose. The engine applies saved stage power limits and reduced durations, then resumes intensity progression from one level below the latest comparable pre-break session. Holiday/Event/Other resume from that comparable baseline without the reduction. See [TRAINING_ENGINE.md §39](TRAINING_ENGINE.md#39-time-off) for the staged prescription rules.
+Saving confirms that time off was added and training replanned, without a per-workout summary. Illness and Recovery return workouts show their return-stage purpose, with reduced duration and power, then resume one level below the latest comparable pre-break session. Holiday, Event and Other have no return ramp and resume from that baseline. See [TRAINING_ENGINE.md §39](TRAINING_ENGINE.md#39-time-off).
