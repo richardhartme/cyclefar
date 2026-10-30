@@ -197,7 +197,8 @@ Show enough to understand it without opening:
 - power target range;
 - mini skyline/profile graph;
 - TSS / IF / kJ in compact form;
-- completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details.
+- completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details;
+- ridden TSS under the completed badge when a ride file with power is attached.
 
 Structured cards show type and duration, repeated main-set segments with their watt ranges, the profile graph, and TSS / IF / kJ. Under/over and activation efforts retain separate ranges; ramps show both endpoint ranges. Planned targets use current FTP, while completed targets use frozen snapshots. Outline cards show purpose without detailed targets or metrics. Supplied event details use km, m and min; absent optional fields are omitted. Calendar day columns retain a readable minimum width with local horizontal scrolling.
 
@@ -247,6 +248,8 @@ Actions:
 - Complete
 - Missed (when relevant)
 - Remove workout (planned/missed workouts in an active plan, including outlines; asks for confirmation)
+
+Completed workouts in the active plan have a Ride file section. It uploads, replaces or removes one FIT file and shows planned against ridden duration, NP, IF, TSS and work, plus ridden average power and heart rate and the completion FTP basis. A ride without power shows `No power data`. A ride dated differently from the scheduled date shows a non-blocking warning. Removal asks for confirmation (FBK-004).
 
 Removal returns to the calendar with the date empty and the rest of the plan unchanged. Completed workouts retain their immutable history and have no removal control. The success message explains that manual Intervals.icu sync updates the remote calendar.
 

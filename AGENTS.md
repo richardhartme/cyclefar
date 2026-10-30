@@ -182,7 +182,7 @@ A useful sample:
 
 Rails-generated authentication, self-registration and independent rider accounts have already been added. Do not extend them into coaches, teams, shared plans or social sign-in, or into:
 
-- automatic ride imports;
+- automatic ride imports (manual FIT upload to a completed workout exists; see `docs/adr/0001-ride-file-upload-for-completed-workouts.md`);
 - trainer control;
 - notifications;
 - mobile redesign;

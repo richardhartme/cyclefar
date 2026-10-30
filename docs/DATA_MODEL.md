@@ -242,6 +242,34 @@ Fields:
 
 One feedback record per completed workout.
 
+## WorkoutActivity
+
+`belongs_to :planned_workout`
+`has_one_attached :ride_file`
+
+Ridden metrics from an uploaded FIT file (FBK-004). They sit beside the completed workout's frozen snapshot without changing it.
+
+Fields:
+
+- `started_at: datetime, null: false`
+- `elapsed_seconds: integer, null: false`
+- `moving_seconds: integer, null: false` — at most `elapsed_seconds`
+- `average_power_watts: decimal, nullable`
+- `np_watts: decimal, nullable`
+- `intensity_factor: decimal, nullable`
+- `tss: decimal, nullable`
+- `work_kj: decimal, nullable`
+- `average_heart_rate_bpm: decimal, nullable`
+- timestamps
+
+Constraints:
+
+- unique `planned_workout_id`: one ride per workout;
+- power metrics are all present or all absent; metrics are non-negative;
+- a PostgreSQL trigger accepts rows only for completed workouts and rejects moving a row to another workout. Completed-child immutability triggers do not apply, so the ride can be replaced or removed.
+
+The FIT file is kept in Active Storage on the local disk service so metrics can be recalculated.
+
 ## AdaptationProposal
 
 Ephemeral persistence so a proposed multi-workout change can survive a page render without stuffing data in cookies.
@@ -304,7 +332,7 @@ This section records ownership constraints. [USR-001–USR-008](REQUIREMENTS.md#
 | `RiderProfile` | Required `user_id` foreign key and unique index. First Settings save with a valid FTP establishes the user's profile. |
 | `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
 | `TrainingPlan` | Required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'`. Archived plans remain attached to their owner with completed history. |
-| Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback` and `AdaptationProposal` inherit ownership through their plan. |
+| Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback`/`WorkoutActivity` and `AdaptationProposal` inherit ownership through their plan. |
 | `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Unique `external_id` and `planned_workout_id` indexes apply. |
 
 Application associations and validations complement these database constraints. Controller lookups and services must use the authenticated owner's profile and plan even when a foreign record ID is supplied. Pure workout calculations continue to take explicit inputs rather than reading the request context.

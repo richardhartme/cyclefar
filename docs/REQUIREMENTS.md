@@ -415,6 +415,19 @@ A rider may mark an old awaiting-status workout completed at any later date.
 
 Its feedback may trigger an adaptation proposal only if the next upcoming workout has not already been completed.
 
+### FBK-004 Ride file upload
+
+A rider may upload one FIT file to a completed workout in the active plan to see what was actually ridden. See [ADR 0001](adr/0001-ride-file-upload-for-completed-workouts.md).
+
+- Accept FIT activity files up to 10 MB with a valid header, signature and checksum. Reject anything else with a readable message and store nothing.
+- Calculate moving and elapsed time, average power, NP, IF, TSS, work and average heart rate. Use the workout's frozen completion FTP and the planned NP convention (30-second rolling window, growing for the first 29 samples). Speeds below 0.5 m/s and recording gaps over 10 seconds do not count as moving.
+- A file without power data still attaches: show duration and heart rate, with `No power data` in place of power metrics. Heart-rate-based TSS is not provided.
+- Show planned against ridden metrics on the workout detail and ridden TSS on the completed calendar card. Warn, without blocking, when the ride's local start date differs from the scheduled date.
+- Uploading again replaces the file and metrics. Removing deletes both. Keep the original file so metrics can be recalculated.
+- Ridden metrics are display only: they do not change weekly totals, load limits, feedback evaluation or adaptation proposals.
+- The completed workout's structure, snapshot, metrics and feedback never change. Rides attach only to completed workouts and never move between workouts; the database enforces both.
+- Activity import from Intervals.icu or other services, and automatic matching of rides to workouts, are not provided.
+
 ## 9. Missed workouts
 
 ### MIS-001 Resolution choices
