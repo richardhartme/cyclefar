@@ -171,6 +171,26 @@ RSpec.describe Adaptations::FeedbackEvaluator, generated_workouts: true do
     expect(plan.reload.progression_state).to eq("intensity_bias" => -1)
   end
 
+  it "FBK-002 detects a repeated pattern across the comparable intensity family" do
+    complete(ride(today - 4, subtype: :sweet_spot), quality: :struggled_completed, rpe: 7)
+    complete(ride(today - 2, subtype: :tempo), rpe: 2)
+    ride(today + 1, level: 5)
+    expect(complete(rpe: 10).payload.fetch("progression_bias")).to eq(-1)
+  end
+
+  it "FBK-002 detects a pattern from two comparable rides when fewer than three exist" do
+    complete(ride(today - 2), quality: :struggled_completed, rpe: 9)
+    ride(today + 1, level: 5)
+    expect(complete(rpe: 10).payload.fetch("progression_bias")).to eq(-1)
+  end
+
+  it "FBK-002 keeps other intensity families out of the repeated pattern" do
+    complete(ride(today - 4, subtype: :vo2_max), quality: :struggled_completed, rpe: 10)
+    complete(ride(today - 2, subtype: :vo2_max), quality: :struggled_completed, rpe: 10)
+    ride(today + 1, level: 5)
+    expect(complete(rpe: 10).payload.fetch("progression_bias")).to eq(0)
+  end
+
   it "FBK-003 blocks late feedback after another later scheduled ride is completed" do
     old = ride(today - 7)
     create(:planned_workout, :completed, training_plan: plan, plan_phase: phase, scheduled_on: today - 2)

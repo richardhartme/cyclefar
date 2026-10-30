@@ -7,7 +7,7 @@ module Planning
         workout.scheduled_on < before && workout.kind == "workout" && workout.status != "missed" && workout.progression_level
       end.sort_by(&:scheduled_on).reverse
       Training::Rules::LADDERS.keys.to_h do |subtype|
-        family = Training::Rules::COMPARABLE_FAMILIES.find { |members| members.include?(subtype.to_s) } || [ subtype.to_s ]
+        family = Training::Rules.comparable_family(subtype)
         latest = recent.find { |workout| family.include?(workout.subtype) }
         [ subtype.to_s, latest&.progression_level || 1 ]
       end
