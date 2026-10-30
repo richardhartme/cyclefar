@@ -1,0 +1,80 @@
+@startuml
+title CycleFar — Upload, replace or remove a ride file
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "RideFilesController" as Controller
+control "RideFileAttacher" as Attacher
+control "Fit::Reader" as Reader
+control "RideCalculator +\nNormalizedPower" as Calculator
+control "RideFileRemover" as Remover
+entity "WorkoutActivity" as Activity
+database "PostgreSQL" as Database
+collections "Active Storage\nlocal disk volume" as Storage
+
+== Upload or replace (FBK-004) ==
+Rider -> Controller: POST ride_file (multipart FIT file)
+Controller -> Database: load workout through the rider's active plan
+alt workout outside the active plan or owned by another rider
+  Controller --> Rider: 404
+end
+Controller -> Attacher: call(workout, file)
+Attacher -> Attacher: reject missing file or > 10 MB before reading
+Attacher -> Reader: samples(bytes)
+note right of Reader
+  Parsed outside the plan lock.
+  Checks header, .FIT signature, CRC and
+  activity file type; decodes record samples
+  (time, power, heart rate, speed).
+end note
+alt invalid, truncated, corrupt or non-activity file
+  Reader --> Attacher: InvalidFile
+  Attacher --> Controller: Rejected with readable message
+  Controller --> Rider: redirect to workout detail with alert; nothing stored
+end
+Reader --> Attacher: samples
+group transaction under plan lock
+  Attacher -> Database: lock plan; reload workout
+  alt workout not completed
+    Attacher --> Controller: Rejected
+    Controller --> Rider: redirect with alert
+  end
+  Attacher -> Calculator: call(samples, completed_ftp_watts)
+  Calculator --> Attacher: moving/elapsed time, power, NP, IF, TSS, work, heart rate
+  Attacher -> Activity: create, or replace metrics on existing record
+  Activity -> Database: save row; trigger requires completed parent, no reparenting
+  Activity -> Storage: store FIT file (blob + attachment)
+end
+opt replacing an earlier file
+  Activity -> Storage: purge previous blob through Solid Queue
+end
+Controller --> Rider: redirect to workout detail; note a date mismatch if any
+
+== View ==
+Rider -> Controller: GET workout detail or calendar
+note over Controller
+  Detail shows planned against ridden metrics.
+  Calendar cards show ridden TSS when power exists.
+end note
+
+== Remove ==
+Rider -> Controller: DELETE ride_file (confirmed)
+Controller -> Database: load workout through the rider's active plan
+Controller -> Remover: call(workout)
+group transaction under plan lock
+  Remover -> Database: lock plan; reload workout
+  Remover -> Activity: destroy (if present)
+  Activity -> Database: delete row and attachment
+end
+Activity -> Storage: purge blob through Solid Queue
+Controller --> Rider: redirect to workout detail
+
+note over Calculator, Storage
+  The completed workout's structure, snapshot, metrics and feedback
+  are never written; ridden metrics use its frozen completion FTP.
+  Ridden metrics are display only: no weekly totals, load limits,
+  feedback evaluation, adaptation or Intervals.icu sync reads them.
+end note
+@enduml

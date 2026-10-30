@@ -29,6 +29,6 @@ The rider may upload one FIT file to a completed workout. CycleFar parses the fi
 
 ## Consequences
 
-- `PRODUCT.md`, `REQUIREMENTS.md` (a new FBK requirement), `DATA_MODEL.md`, `UX.md` and the `AGENTS.md` exclusion list are updated when the feature lands, because those documents describe the application as built.
+- `REQUIREMENTS.md` (FBK-004), `PRODUCT.md`, `DATA_MODEL.md`, `ARCHITECTURE.md`, `UX.md`, `TRAINING_ENGINE.md`, the `AGENTS.md` exclusion list and the architecture diagrams describe the feature as built.
 - Specs cover the metrics calculator and parser against fixture FIT files in `spec/fixtures` (with GPS data stripped), completed-snapshot immutability, and upload/replace/remove/invalid-file/two-rider request flows.
 - Feeding actual load into weekly totals or the training engine, day-level aggregation of several rides, and Intervals.icu activity import remain future decisions.

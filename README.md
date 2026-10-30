@@ -26,6 +26,9 @@ snapshots.
   and staged taper budgets that retain the target event and opener. Weeks that
   still exceed the growth target get an advisory panel linking to a prefilled
   availability form for that week.
+- Optional FIT ride file upload on completed workouts, comparing ridden
+  duration, NP, IF, TSS and work with the plan without changing completed
+  history.
 - Completion feedback, overdue and missed-workout resolution, and explicit
   adaptation proposals with owner-scoped before/after comparisons and a
   14-day target window. Proposals enforce seven-day expiry and reject stale
@@ -45,7 +48,7 @@ the signed-in user, and an integrated two-rider test matrix exercises those
 boundaries. Riders can self-register from the public homepage. Operator
 provisioning is disabled by default and requires an explicit environment flag;
 the documented release process requires verifying live mail delivery first.
-V1 has no ride imports, trainer control, notifications or automatic calendar syncing.
+V1 has no automatic ride imports or ride matching, trainer control, notifications or automatic calendar syncing.
 
 Each rider can have one active plan. Executable workouts for today through the
 next 13 days gain detailed steps as the calendar is loaded; later workouts

@@ -157,7 +157,7 @@ resource :intervals_icu_sync, only: :create
 
 ## Persistence, dates and invariants
 
-Use transactions for multi-record mutations. Database constraints enforce one profile and at most one active plan per user, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. The SQL schema dump is `db/structure.sql`.
+Use transactions for multi-record mutations. Database constraints enforce one profile and at most one active plan per user, one workout per plan/date, valid enums and key numeric bounds. Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, including direct SQL updates/deletes. A separate trigger allows `WorkoutActivity` rows only on completed workouts and rejects moving them between workouts; they can be replaced or removed because they do not change completed history. The SQL schema dump is `db/structure.sql`.
 
 Scheduling uses `date` and `Date.current` in the configured London time zone; weeks begin Monday. Exported calendar events use local midnight without adding a time-of-day concept. Percentage steps remain canonical; watts are derived for future workouts and frozen at completion. `TrainingPlan#engine_version` records `v1` as generation metadata; it does not dispatch to a version-specific implementation. Engine classes live directly under `Training` and `Planning`. `PlannedWorkout#generation_context` retains unbiased baseline levels, automatic load/level references and ceilings separately from one-off edits.
 
@@ -169,7 +169,9 @@ The application is live at `cyclefar.com`, deployed with Kamal using `config/dep
 
 Production database connections accept `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails configures primary/cache/queue/cable databases. `config/deploy.yml` reads the web host, database host and registry user from the deploy shell and declares the runtime secrets; infrastructure provisioning does not deploy the app.
 
-Solid Cache, Solid Queue and Solid Cable use their PostgreSQL databases. Kamal sets `SOLID_QUEUE_IN_PUMA=true`, enabling the Solid Queue supervisor through Puma for queued password-reset delivery. Operator provisioning sends mail synchronously. There are no scheduled training-generation or integration-sync jobs; the recurring configuration contains only queue housekeeping. The container view groups Puma and its supervised worker as one deployment unit rather than implying a separate job server.
+Solid Cache, Solid Queue and Solid Cable use their PostgreSQL databases. Kamal sets `SOLID_QUEUE_IN_PUMA=true`, enabling the Solid Queue supervisor through Puma for queued password-reset delivery and Active Storage purges of replaced or removed ride files. Operator provisioning sends mail synchronously. There are no scheduled training-generation or integration-sync jobs; the recurring configuration contains only queue housekeeping. The container view groups Puma and its supervised worker as one deployment unit rather than implying a separate job server.
+
+Active Storage uses the local disk service at `/rails/storage`, mounted from the `cycle_far_storage` Kamal volume, to keep uploaded FIT ride files. The volume lives on the application server and is not backed up by the deployment, and database backups do not include it.
 
 ## Architecture diagrams
 
@@ -188,6 +190,8 @@ Sequence views show request order and the boundaries between in-memory previews,
 - [Change future training](diagrams/sequence-cyclefar-future-replanning.puml)
 - [Feedback proposal](diagrams/sequence-cyclefar-feedback-proposal.puml)
 - [Material Change Workout proposal](diagrams/sequence-cyclefar-material-change-proposal.puml)
+- [Make a workout Easier/Harder](diagrams/sequence-cyclefar-directional-adjustment.puml)
+- [Upload, replace or remove a ride file](diagrams/sequence-cyclefar-ride-file-upload.puml)
 - [Manual Intervals.icu reconciliation](diagrams/sequence-cyclefar-intervals-icu-sync.puml)
 
 See the [diagram guide](diagrams/README.md) for scope and rendering requirements.

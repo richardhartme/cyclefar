@@ -7,11 +7,12 @@ title CycleFar — Container Diagram
 
 LAYOUT_LEFT_RIGHT()
 
-Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, and controls manual sync.")
+Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, uploads ride files, and controls manual sync.")
 
 System_Boundary(cyclefar_boundary, "CycleFar") {
-  Container(web_application, "Web application", "Ruby 4.0.6, Rails 8.1.4, ERB, Turbo, Tailwind CSS / daisyUI", "Authenticates and serves desktop-first training workflows and manual sync; Puma supervises Solid Queue for reset mail in the Kamal deployment.")
+  Container(web_application, "Web application", "Ruby 4.0.6, Rails 8.1.4, ERB, Turbo, Tailwind CSS / daisyUI", "Authenticates and serves desktop-first training workflows, ride file uploads and manual sync; Puma supervises Solid Queue for reset mail and file purges in the Kamal deployment.")
   ContainerDb(database, "Databases", "PostgreSQL", "Primary stores user-owned training data, sessions and immutable history; cache, queue and cable databases support Solid adapters.")
+  ContainerDb(file_storage, "File storage", "Active Storage local disk, Kamal volume cycle_far_storage", "Keeps uploaded FIT ride files for completed workouts.")
 }
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
@@ -19,6 +20,7 @@ System_Ext(smtp, "SMTP provider", "Configured outbound mail service for password
 
 Rel(rider, web_application, "Registers/signs in and uses training planner", "HTTPS")
 Rel(web_application, database, "Persists sessions and training data; stores cache entries, queued jobs and cable messages", "SQL / Active Record")
+Rel(web_application, file_storage, "Stores uploaded FIT files; purges replaced files through the queue worker", "Filesystem")
 Rel(web_application, intervals_icu, "Manually exports all upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 Rel(web_application, smtp, "Delivers setup mail synchronously and reset mail through the supervised queue worker", "SMTP / STARTTLS")
 
