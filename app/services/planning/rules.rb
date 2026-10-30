@@ -19,8 +19,8 @@ module Planning
     TAPER_FINAL_STAGE_DAYS = 7
     TAPER_NO_HARD_DAYS = 2
     OPENER_MINIMUM_MINUTES = 40
-    OPENER_MAXIMUM_MINUTES = 45
-    OPENER_DEFAULT_MINUTES = 30
+    OPENER_MAXIMUM_MINUTES = Training::Rules::OPENER_DURATION_MINUTES.max
+    OPENER_DEFAULT_MINUTES = Training::Rules::OPENER_DURATION_MINUTES.min
     MOVE_STRUCTURE_WINDOW_DAYS = 7
     RETURN_RAMP_DURATION_FACTORS = [ 0.60, 0.70, 0.80, 1.0 ].freeze
     RETURN_RAMP_TARGET_BANDS = [ [ 45, 60 ].freeze, [ 55, 68 ].freeze ].freeze
@@ -39,6 +39,13 @@ module Planning
       without_base: { build: 0.60, speciality: 0.40 }.freeze
     }.freeze
     PHASE_LEVELS = { base: (1..4), build: (3..6), speciality: (4..7), taper: (1..2) }.freeze
+    # Documented aerobic step-down direction for §27 subtype reductions.
+    LOWER_INTENSITY_SUBTYPES = {
+      vo2_max: %i[threshold sweet_spot tempo],
+      over_under: %i[threshold sweet_spot tempo],
+      threshold: %i[sweet_spot tempo],
+      sweet_spot: %i[tempo]
+    }.freeze
 
     INTERVAL_CYCLES = {
       base: {

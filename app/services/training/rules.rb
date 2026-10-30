@@ -22,6 +22,7 @@ module Training
     PROGRESSION_LEVELS = (1..7).freeze
     PROGRESSION_BIAS_BOUNDS = [ -2, 2 ].freeze
     FEEDBACK_HORIZON_DAYS = 14
+    PROPOSAL_EXPIRY_DAYS = 7
     NEARBY_HARD_SESSION_DAYS = 2
     RPE_BANDS = deep_freeze(
       "recovery" => 1..3,
@@ -131,6 +132,16 @@ module Training
     ENDURANCE_BREAK_SECONDS = 60
     RECOVERY_RAMP_START = [ 45, 50 ].freeze
     RECOVERY_RAMP_END = [ 50, 55 ].freeze
+
+    # Event opener (§45): fixed activation efforts, easy filler and a normal cool-down.
+    OPENER_DURATION_MINUTES = (30..45).freeze
+    OPENER_WARM_UP = deep_freeze(seconds: 600, start: [ 45, 55 ], finish: [ 70, 70 ])
+    OPENER_ACTIVATIONS = deep_freeze(
+      [
+        { label: "Threshold activation", repetitions: 3, work_seconds: 60, target: [ 100, 108 ], recovery_seconds: 120 },
+        { label: "VO2 activation", repetitions: 3, work_seconds: 30, target: [ 108, 118 ], recovery_seconds: 90 }
+      ])
+    OPENER_FILLER_TARGET = [ 50, 65 ].freeze
 
     private_class_method :deep_freeze
   end

@@ -70,12 +70,7 @@ module Planning
     def compatible_lower_subtypes
       # Follow the documented aerobic step-down direction, restricted to
       # subtypes already valid in this goal/phase's selection cycle.
-      lower = case @definition.subtype
-      when "vo2_max", "over_under" then %i[threshold sweet_spot tempo]
-      when "threshold" then %i[sweet_spot tempo]
-      when "sweet_spot" then %i[tempo]
-      else []
-      end
+      lower = Rules::LOWER_INTENSITY_SUBTYPES.fetch(@definition.subtype.to_sym, [])
       phase = @definition.phase.to_sym
       goal = @definition.goal.to_sym
       cycles = if goal == :event && phase != :base

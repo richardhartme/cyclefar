@@ -2,7 +2,8 @@ module Workouts
   # Generates pre-event opener workouts with threshold and VO2 activation efforts.
   class OpenerGenerator
     def initialize(duration_minutes:, phase: :taper, goal: :event, discipline: :road)
-      raise ArgumentError, "opener duration must be 30 to 45 minutes" unless duration_minutes.is_a?(Integer) && duration_minutes.between?(30, 45)
+      range = Training::Rules::OPENER_DURATION_MINUTES
+      raise ArgumentError, "opener duration must be #{range.min} to #{range.max} minutes" unless duration_minutes.is_a?(Integer) && range.cover?(duration_minutes)
 
       @duration_minutes = duration_minutes
       @phase = phase.to_s
@@ -11,14 +12,14 @@ module Workouts
     end
 
     def call
+      warm_up = Training::Rules::OPENER_WARM_UP
       steps = [
-        ramp("Warm up", 600, [ 45, 55 ], [ 70, 70 ], "warm_up"),
-        *repetitions("Threshold activation", 60, [ 100, 108 ], "activation", 3, 120, [ 50, 60 ]),
-        *repetitions("VO2 activation", 30, [ 108, 118 ], "activation", 3, 90, [ 50, 60 ])
+        ramp("Warm up", warm_up[:seconds], warm_up[:start], warm_up[:finish], "warm_up"),
+        *Training::Rules::OPENER_ACTIVATIONS.flat_map { |activation| repetitions(activation) }
       ]
-      remaining = @duration_minutes * 60 - steps.sum(&:duration_seconds) - 300
-      steps << steady("Easy riding", remaining, [ 50, 65 ], "filler") if remaining.positive?
-      steps << ramp("Cool down", 300, [ 55, 60 ], [ 40, 50 ], "cool_down")
+      remaining = @duration_minutes * 60 - steps.sum(&:duration_seconds) - Training::Rules::COOL_DOWN_SECONDS
+      steps << steady("Easy riding", remaining, Training::Rules::OPENER_FILLER_TARGET, "filler") if remaining.positive?
+      steps << ramp("Cool down", Training::Rules::COOL_DOWN_SECONDS, Training::Rules::COOL_DOWN_START, Training::Rules::COOL_DOWN_END, "cool_down")
       WorkoutDefinition.new(
         engine_version: Training::Rules::ENGINE_VERSION,
         subtype: "endurance",
@@ -38,10 +39,10 @@ module Workouts
 
     private
 
-    def repetitions(label, work_seconds, work_target, group_key, count, recovery_seconds, recovery_target)
-      count.times.flat_map do |index|
-        work = steady(label, work_seconds, work_target, group_key, index + 1)
-        recovery = steady("Easy recovery", recovery_seconds, recovery_target, "recovery", index + 1)
+    def repetitions(activation)
+      activation[:repetitions].times.flat_map do |index|
+        work = steady(activation[:label], activation[:work_seconds], activation[:target], "activation", index + 1)
+        recovery = steady("Easy recovery", activation[:recovery_seconds], Training::Rules::TARGETS[:easy], "recovery", index + 1)
         [ work, recovery ]
       end
     end
