@@ -123,7 +123,7 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response.body).to include("contains an invalid training day")
   end
 
-  it "PLN-013 generates and renders an in-memory preview without persisting a plan" do
+  it "PLN-013 / FTP-001 generates and renders an in-memory preview without persisting a plan" do
     expect {
       submit_preview(plan_configuration)
     }.not_to change { [ TrainingPlan.count, PlannedWorkout.count, PlanPhase.count, TargetEvent.count, AvailabilityTemplate.count ] }
@@ -146,7 +146,7 @@ RSpec.describe "Training plan preview", type: :request do
     expect(response.body).to include("Target event:", "Taper and opener", "Event Opener")
   end
 
-  it "PLN-013 / CAL-001 confirms the preview and renders a continuous persisted calendar" do
+  it "PLN-013 / CAL-001 / FTP-001 confirms the preview and renders a continuous persisted calendar" do
     submit_preview(plan_configuration)
     expect {
       post training_plan_path
