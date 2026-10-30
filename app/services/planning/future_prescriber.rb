@@ -100,14 +100,19 @@ module Planning
         purpose: "Return-to-training stage #{stage + 1} after #{period.reason.humanize.downcase}.")
     end
 
+    # Once weekly progression has caught up with the plan, the break no longer
+    # holds the session back, so it keeps its normal prescription.
     def resume_after_break(item, period)
       return item unless item.intensity?
+
+      level = resumed_level(item, period)
+      return item if level >= biased_level(item)
 
       recalculate(
         item,
         subtype: item.subtype,
         duration_minutes: item.duration_minutes,
-        progression_level: resumed_level(item, period),
+        progression_level: level,
         purpose: "Resuming progression after #{period.reason.humanize.downcase} time off.")
     end
 
@@ -118,11 +123,14 @@ module Planning
       else
         baseline + ((item.scheduled_on - period.ends_on - 1) / 7).floor
       end
-      biased_level = Training::Progression.level(
+      [ biased_level(item), ceiling ].min
+    end
+
+    def biased_level(item)
+      Training::Progression.level(
         baseline: item.progression_level,
         bias: @plan.intensity_bias,
         maximum: item.phase == "taper" ? item.generation_context["maximum_level"] : nil)
-      [ biased_level, ceiling ].min
     end
 
     def recalculate(item, subtype:, duration_minutes:, progression_level:, purpose:, load_adjustments: {}, return_ramp_stage: nil)

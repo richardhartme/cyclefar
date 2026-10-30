@@ -27,8 +27,11 @@ RSpec.describe "FBK-002 progression during explicit replanning", generated_worko
       prescriber.replace!(today..today + 13)
       returned = plan.planned_workouts.find_by!(scheduled_on: today)
       expect(returned.progression_level).to be <= reached
+      # Saved load ceilings can reduce the resumed level further.
       expected = Training::Progression.level(
-        baseline: returned.generation_context.fetch("baseline_level"), bias: bias, maximum: reached)
+        baseline: returned.generation_context.fetch("baseline_level"),
+        bias: bias,
+        maximum: [ reached, returned.generation_context["maximum_level"] ].compact.min)
       expect(returned.progression_level).to eq(expected)
       canonical = returned.workout_steps.map { |step| Workouts::StepDefinition.from(step).to_h }
       prescriber.replace!(today..today + 13)

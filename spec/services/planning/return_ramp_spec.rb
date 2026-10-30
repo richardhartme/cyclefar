@@ -67,7 +67,7 @@ RSpec.describe "OFF-001 return prescriptions", generated_workouts: true do
     returned = plan.planned_workouts.find_by!(scheduled_on: today + 12)
     expect(returned.progression_level).to eq(3)
     expect(plan.planned_workouts.find_by!(scheduled_on: today + 16).generation_context["maximum_level"]).to eq(3)
-    expect(plan.planned_workouts.find_by!(scheduled_on: today + 23).generation_context["maximum_level"]).to eq(4)
+    expect(plan.planned_workouts.find_by!(scheduled_on: today + 23).progression_level).to eq(4)
   end
 
   it "falls back to level one when there is no comparable pre-break training" do
