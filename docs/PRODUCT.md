@@ -103,6 +103,7 @@ This describes the V1 scope as built.
 - Planned TSS, IF and work estimates
 - Weekly totals and weekly load progression
 - Manual workout completion + RPE + completion quality
+- Optional FIT ride file upload on a completed workout, showing ridden against planned metrics
 - Optional adaptation proposals
 - Workout shuffle/change/move/copy and adding a workout to an empty date
 - Persistent missed-workout calendar status and a weekly TSS chart
@@ -117,8 +118,8 @@ This describes the V1 scope as built.
 - Running, strength or multisport training
 - Controlling a smart trainer
 - Recording ride data
-- FIT/activity ingestion
-- Automatic completion detection
+- Activity import from Intervals.icu, Strava or other services (a manually uploaded FIT file per completed workout is supported)
+- Automatic completion detection or matching rides to workouts
 - Automatic notifications/reminders
 - Cadence targets
 - Heart-rate targets
