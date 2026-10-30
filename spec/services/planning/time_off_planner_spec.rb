@@ -81,6 +81,18 @@ RSpec.describe Planning::TimeOffPlanner, type: :service do
     expect(plan.ends_on).to eq(Date.current + 70)
   end
 
+  it "keeps the normal prescription once holiday progression has caught up with the plan" do
+    create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: starts_on - 7, subtype: :threshold, intent: :intervals, progression_level: 3)
+    period = described_class.new(plan: plan).add!(starts_on: starts_on, ends_on: ends_on, reason: :holiday)
+    later = -> { plan.planned_workouts.workout.planned.where("scheduled_on > ?", ends_on + 28).order(:scheduled_on).pluck(:scheduled_on, :name, :purpose, :variation_key, :progression_level) }
+    with_holiday = later.call
+    described_class.new(plan: plan).remove!(period)
+
+    expect(with_holiday).not_to be_empty
+    expect(with_holiday.map(&:third).grep(/\AResuming progression/)).to be_empty
+    expect(with_holiday).to eq(later.call)
+  end
+
   it "collapses a short return ramp without scheduling more than one workout per date" do
     period = described_class.new(plan: plan).add!(starts_on: starts_on, ends_on: ends_on, reason: :recovery, return_ramp_days: 2)
     return_date = ends_on + 2
