@@ -5,6 +5,7 @@ class PlannedWorkout < ApplicationRecord
   belongs_to :plan_phase, optional: true
   has_many :workout_steps, -> { order(:position) }, dependent: :destroy, autosave: true
   has_one :workout_feedback, dependent: :destroy, autosave: true
+  has_one :workout_activity, dependent: :destroy
   has_one :intervals_icu_sync, dependent: :nullify
 
   enum :kind, %w[workout opener].index_by(&:itself), validate: true
