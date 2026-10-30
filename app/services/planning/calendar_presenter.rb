@@ -7,7 +7,7 @@ module Planning
       @plan = plan
       @starts_on = plan&.starts_on || starts_on
       @ends_on = plan&.ends_on || ends_on
-      @workouts_by_date = plan ? plan.planned_workouts.includes(:workout_steps, :plan_phase, :workout_activity).order(:scheduled_on).group_by(&:scheduled_on) : {}
+      @workouts_by_date = plan ? plan.planned_workouts.includes(:workout_steps, :plan_phase, :workout_activity, :workout_feedback).order(:scheduled_on).group_by(&:scheduled_on) : {}
       @time_off_by_date = plan ? plan.time_off_periods.flat_map { |period| (period.starts_on..period.ends_on).map { |date| [ date, period ] } }.to_h : {}
     end
 

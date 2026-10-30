@@ -198,7 +198,7 @@ Show enough to understand it without opening:
 - mini skyline/profile graph;
 - TSS / IF / kJ in compact form;
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details;
-- ridden TSS under the completed badge when a ride file with power is attached.
+- under the completed badge, ridden TSS when a ride file with power is attached, and the recorded RPE.
 
 Structured cards show type and duration, repeated main-set segments with their watt ranges, the profile graph, and TSS / IF / kJ. Under/over and activation efforts retain separate ranges; ramps show both endpoint ranges. Planned targets use current FTP, while completed targets use frozen snapshots. Outline cards show purpose without detailed targets or metrics. Supplied event details use km, m and min; absent optional fields are omitted. Calendar day columns retain a readable minimum width with local horizontal scrolling.
 

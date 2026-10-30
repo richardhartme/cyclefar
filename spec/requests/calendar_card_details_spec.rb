@@ -90,7 +90,7 @@ RSpec.describe "Calendar card details", type: :request, generated_workouts: true
 
     get root_path
     historical_card = workout_card(completed).text
-    expect(historical_card).to include("Completed", "#{completed.estimated_work_kj.round} kJ")
+    expect(historical_card).to include("Completed", "#{completed.estimated_work_kj.round} kJ", "RPE 2")
     get planned_workout_path(completed)
     historical_steps = Nokogiri::HTML(response.body).at_css("ol").text
     expect(historical_steps).to include("117–130 W")

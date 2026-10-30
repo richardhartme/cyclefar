@@ -257,7 +257,7 @@ A full-width TSS chart above the calendar shows one bar per plan week, using the
 
 ### CAL-004 Completed/overdue states
 
-- Completed workouts remain visible with a clear completed indicator.
+- Completed workouts remain visible with a clear completed indicator and the recorded RPE.
 - A planned workout whose date is in the past remains visible and actionable as `Awaiting status`.
 - It is not automatically marked missed.
 - Workouts explicitly resolved as missed remain visible with a `Missed` indicator (see MIS-001); moving a workout keeps it planned on the destination date.

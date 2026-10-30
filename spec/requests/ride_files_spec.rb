@@ -38,7 +38,7 @@ RSpec.describe "Ride files", type: :request do
 
     get root_path
     card = Nokogiri::HTML(response.body).css("article").find { |article| article.text.include?("Tempo ride") }
-    expect(card.text).to include("Ridden: 62 TSS")
+    expect(card.text).to include("Ridden: 62 TSS", "RPE #{workout.workout_feedback.rpe}")
   end
 
   it "FBK-004 replaces and removes a ride file without changing completed history" do
@@ -52,6 +52,7 @@ RSpec.describe "Ride files", type: :request do
 
     get root_path
     expect(response.body).not_to include("Ridden:")
+    expect(response.body).to include("RPE #{workout.workout_feedback.rpe}")
 
     delete planned_workout_ride_file_path(workout)
     expect(response).to have_http_status(:see_other)
