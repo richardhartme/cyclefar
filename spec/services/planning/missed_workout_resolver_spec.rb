@@ -47,4 +47,12 @@ RSpec.describe Planning::MissedWorkoutResolver, type: :service do
     expect(plan.planned_workouts.where(scheduled_on: next_week + 1)).not_to exist
     expect(plan.planned_workouts.find_by!(scheduled_on: next_week + 3)).to have_attributes(intent: "endurance", duration_minutes: 45)
   end
+
+  it "WKO-001 refuses to mark a future workout missed" do
+    future_workout = create(:planned_workout, training_plan: plan, plan_phase: phase, scheduled_on: Date.current + 1)
+
+    expect { described_class.new(future_workout).resolve!(mode: :leave_unchanged) }
+      .to raise_error(ArgumentError, "Only past or current workouts can be marked missed")
+    expect(future_workout.reload).to be_planned
+  end
 end

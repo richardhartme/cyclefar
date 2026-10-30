@@ -59,7 +59,7 @@ RSpec.describe "CYF-6 proposal freshness", type: :service, generated_workouts: t
         "step edits" => ->(target) { target.workout_steps.first.update!(label: "Changed cue") },
         "a move within the horizon" => ->(target) { target.update!(scheduled_on: target.scheduled_on + 1) },
         "a move outside the horizon" => ->(target) { target.update!(scheduled_on: target.scheduled_on + 20) },
-        "a missed target" => ->(target) { Planning::MissedWorkoutResolver.new(target).resolve!(mode: :leave_unchanged) },
+        "a missed target" => ->(target) { target.update!(status: :missed) },
         "a completed target" => ->(target) { Adaptations::CompletionRecorder.new(workout: target, rpe: 8, completion_quality: :as_planned).call },
         "a deleted target" => ->(target) { Workouts::Remover.new(target).call }
       }.each do |description, change|

@@ -16,6 +16,8 @@ RSpec.describe Workouts::Mover, type: :service, generated_workouts: true do
   shared_examples "destination-aware moves" do
     def move(workout, date)
       if self.class.metadata[:move_path] == :missed
+        # A workout can only be marked missed once its date has arrived.
+        travel_to(workout.scheduled_on) if workout.scheduled_on > Date.current
         Planning::MissedWorkoutResolver.new(workout).resolve!(mode: :move, destination: date.iso8601)
       else
         described_class.new(workout).move_to!(destination: date)
