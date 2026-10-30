@@ -3,6 +3,21 @@ module Planning
   class FuturePrescriber
     attr_reader :slots
 
+    # Re-prescribes +dates+ with the availability template that applies on each date.
+    def self.replace_with_templates!(plan:, dates:, preserve_workout_ids: [])
+      templates = plan.availability_templates.includes(:availability_slots).to_a
+      future_dates = dates.select { |date| date >= Date.current && date.between?(plan.starts_on, plan.ends_on) }
+      dates_by_template = future_dates.group_by do |date|
+        template = AvailabilityTemplate.for_date(templates, date)
+        raise ArgumentError, "No availability template applies on #{date.to_fs(:long)}" unless template
+
+        template
+      end
+      dates_by_template.each do |template, template_dates|
+        new(plan: plan, slots: template.availability_slots).replace!(template_dates, preserve_workout_ids: preserve_workout_ids)
+      end
+    end
+
     def initialize(plan:, slots:)
       @plan = plan
       @slots = slots.map do |slot|

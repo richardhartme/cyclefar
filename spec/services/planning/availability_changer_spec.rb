@@ -61,6 +61,19 @@ RSpec.describe Planning::AvailabilityChanger, type: :service do
     expect(plan.plan_phases).to contain_exactly(phase)
   end
 
+  it "SCH-001 keeps a later one-week override when availability changes from an earlier date" do
+    override_week = next_week + 14
+    override = create(:availability_template, training_plan: plan, source: :one_week_override, effective_from: override_week, effective_until: override_week + 6)
+    create(:availability_slot, availability_template: override, weekday: 6, duration_minutes: 45, intent: :endurance)
+    phase
+
+    described_class.new(plan: plan, slots: slots, effective_from: next_week, scope: :from_date).apply!
+
+    expect(plan.planned_workouts.where(scheduled_on: next_week + 1)).to exist
+    expect(plan.planned_workouts.where(scheduled_on: override_week + 1)).not_to exist
+    expect(plan.planned_workouts.find_by!(scheduled_on: override_week + 5)).to have_attributes(intent: "endurance", duration_minutes: 45)
+  end
+
   it "rejects an empty training week" do
     expect do
       described_class.new(plan: plan, slots: [], effective_from: next_week, scope: :one_week).apply!

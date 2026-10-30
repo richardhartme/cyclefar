@@ -35,4 +35,16 @@ RSpec.describe Planning::MissedWorkoutResolver, type: :service do
     next_available_date += 7 if next_available_date < Date.current
     expect(plan.planned_workouts.where(scheduled_on: next_available_date).count).to eq(1)
   end
+
+  it "MIS-001 replans each upcoming date with the availability that applies on it" do
+    phase
+    next_week = Date.current.beginning_of_week + 7
+    override = create(:availability_template, training_plan: plan, source: :one_week_override, effective_from: next_week, effective_until: next_week + 6)
+    create(:availability_slot, availability_template: override, weekday: 4, duration_minutes: 45, intent: :endurance)
+
+    described_class.new(workout).resolve!(mode: :replan)
+
+    expect(plan.planned_workouts.where(scheduled_on: next_week + 1)).not_to exist
+    expect(plan.planned_workouts.find_by!(scheduled_on: next_week + 3)).to have_attributes(intent: "endurance", duration_minutes: 45)
+  end
 end

@@ -41,8 +41,9 @@ module Planning
       @scope == "one_week" ? @effective_from.beginning_of_week..(@effective_from.beginning_of_week + 6) : @effective_from..@plan.ends_on
     end
 
+    # Later one-week overrides and from-date changes keep their own slots.
     def re_prescribe!(range)
-      FuturePrescriber.new(plan: @plan, slots: normalized_slots).replace!(range)
+      FuturePrescriber.replace_with_templates!(plan: @plan, dates: range)
     end
 
     def normalized_slots

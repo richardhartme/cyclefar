@@ -26,18 +26,7 @@ module Planning
     private
 
     def re_prescribe!(starts_on)
-      templates = @plan.availability_templates.includes(:availability_slots).to_a
-      dates = ([ starts_on, @plan.starts_on, Date.current ].max..@plan.ends_on).to_a
-      dates_by_template = dates.group_by do |date|
-        template = AvailabilityTemplate.for_date(templates, date)
-        raise ArgumentError, "No availability template applies on #{date.to_fs(:long)}" unless template
-
-        template
-      end
-
-      dates_by_template.each do |template, scheduled_dates|
-        FuturePrescriber.new(plan: @plan, slots: template.availability_slots).replace!(scheduled_dates)
-      end
+      FuturePrescriber.replace_with_templates!(plan: @plan, dates: [ starts_on, @plan.starts_on, Date.current ].max..@plan.ends_on)
     end
   end
 end
