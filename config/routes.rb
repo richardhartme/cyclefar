@@ -20,6 +20,7 @@ Rails.application.routes.draw do
       post :complete
       post :miss
     end
+    resource :ride_file, only: [ :create, :destroy ]
   end
   resources :adaptation_proposals, only: [] do
     member do

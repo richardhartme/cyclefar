@@ -34,6 +34,11 @@
         <% end %>
       </ol>
 
+      <% if @workout.completed? && @workout.training_plan.active? %>
+        <div class="divider my-0"></div>
+        <%= render "ride_file", workout: @workout %>
+      <% end %>
+
       <% if @workout.planned? && @workout.workout? %>
         <div class="divider my-0"></div>
         <h2 class="text-xl font-semibold">Adjust workout</h2>

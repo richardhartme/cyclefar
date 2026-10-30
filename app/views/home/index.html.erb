@@ -146,6 +146,9 @@
 
                     <% if workout.completed? %>
                       <p class="badge badge-success badge-sm mt-1">Completed</p>
+                      <% if workout.workout_activity&.power? %>
+                        <p class="text-sm tabular-nums">Ridden: <%= workout.workout_activity.tss.round %> TSS</p>
+                      <% end %>
                     <% elsif workout.missed? %>
                       <p class="badge badge-neutral badge-sm mt-1">Missed</p>
                     <% elsif workout.scheduled_on < Date.current %>
