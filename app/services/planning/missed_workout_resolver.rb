@@ -10,6 +10,7 @@ module Planning
       @workout.training_plan.with_lock do
         @workout.reload
         raise ArgumentError, "Only planned workouts can be resolved as missed" unless @workout.planned?
+        raise ArgumentError, "Only past or current workouts can be marked missed" if @workout.scheduled_on > Date.current
 
         resolve_under_lock!(mode: mode, destination: destination)
       end
