@@ -8,11 +8,12 @@ RSpec.describe "Planned workouts", type: :request, generated_workouts: true do
   let(:phase) { create(:plan_phase, training_plan: plan, ends_on: plan.ends_on) }
   let(:workout) { create(:planned_workout, :structured, training_plan: plan, plan_phase: phase, scheduled_on: plan.starts_on + 1) }
 
-  it "WKO-001 renders detail without an individual-step editing endpoint" do
+  it "WKO-001 / WKO-003 renders detail without an individual-step editing endpoint" do
     get planned_workout_path(workout)
     expect(response).to have_http_status(:ok), flash[:alert]
     expect(response.body).to include(workout.name, "Steps", "Adjust workout", "Opener", "Move workout", "Copy workout")
     expect { Rails.application.routes.recognize_path("/planned_workouts/#{workout.id}", method: :patch) }.to raise_error(ActionController::RoutingError)
+    expect(Rails.application.routes.routes.map { |route| route.path.spec.to_s }.grep(/step/)).to be_empty
   end
 
   it "WKO-001 renders the workout detail as a navigable page" do
