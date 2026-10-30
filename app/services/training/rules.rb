@@ -40,6 +40,10 @@ module Training
     SAME_TSS_TOLERANCE = 0.05
     SAME_IF_TOLERANCE = 0.03
     NP_WINDOW_SECONDS = 30
+    # Ridden FIT samples below this speed, or after a longer recording gap,
+    # do not count towards moving time.
+    RIDE_MOVING_SPEED_MPS = 0.5
+    RIDE_PAUSE_GAP_SECONDS = 10
 
     ZONES = deep_freeze(recovery: 0..55, endurance: 56..75, tempo: 76..90, threshold: 91..105, vo2_max: 106..120)
     TARGETS = deep_freeze(
