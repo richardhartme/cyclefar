@@ -141,9 +141,10 @@ note bottom of directional
 end note
 
 note bottom of schedule_changes
-  AvailabilityChanger uses submitted slots for its affected range.
-  TimeOffPlanner selects the effective template for each future date.
-  Missed replan uses today's effective template for its whole block.
+  AvailabilityChanger, TimeOffPlanner and missed replan select
+  the effective template for each future date, so one-week
+  overrides and later changes keep their own slots.
+  Only past or current workouts can be resolved as missed.
 end note
 
 note bottom of return_rules
