@@ -1,0 +1,49 @@
+<section aria-labelledby="ride-file-title" class="space-y-4">
+  <h2 id="ride-file-title" class="text-xl font-semibold">Ride file</h2>
+
+  <% if (activity = workout.workout_activity) %>
+    <p>
+      <strong><%= activity.ride_file.filename %></strong>, ridden on <%= activity.ridden_on.to_fs(:long) %>.
+      Calculated at your completion FTP of <%= workout.completed_ftp_watts %> W.
+    </p>
+    <% if activity.date_mismatch? %>
+      <div role="note" class="alert alert-warning alert-soft">This ride is dated <%= activity.ridden_on.to_fs(:long) %>, but the workout was scheduled for <%= workout.scheduled_on.to_fs(:long) %>.</div>
+    <% end %>
+
+    <div class="overflow-x-auto">
+      <table class="table" aria-label="Planned and ridden metrics">
+        <thead>
+          <tr><th scope="col">Metric</th><th scope="col">Planned</th><th scope="col">Ridden</th></tr>
+        </thead>
+        <tbody class="tabular-nums">
+          <tr><th scope="row">Duration</th><td><%= ride_duration(workout.duration_minutes * 60) %></td><td><%= ride_duration(activity.moving_seconds) %> moving · <%= ride_duration(activity.elapsed_seconds) %> elapsed</td></tr>
+          <% if activity.power? %>
+            <tr><th scope="row">Average power</th><td>—</td><td><%= activity.average_power_watts.round %> W</td></tr>
+            <tr><th scope="row">NP</th><td><%= workout.estimated_np_watts.round %> W</td><td><%= activity.np_watts.round %> W</td></tr>
+            <tr><th scope="row">IF</th><td><%= format("%.2f", workout.estimated_if) %></td><td><%= format("%.2f", activity.intensity_factor) %></td></tr>
+            <tr><th scope="row">TSS</th><td><%= workout.estimated_tss.round %></td><td><%= activity.tss.round %></td></tr>
+            <tr><th scope="row">Work</th><td><%= workout.estimated_work_kj.round %> kJ</td><td><%= activity.work_kj.round %> kJ</td></tr>
+          <% else %>
+            <tr><th scope="row">TSS</th><td><%= workout.estimated_tss.round %></td><td>No power data</td></tr>
+          <% end %>
+          <tr><th scope="row">Average heart rate</th><td>—</td><td><%= activity.average_heart_rate_bpm ? "#{activity.average_heart_rate_bpm.round} bpm" : "Not recorded" %></td></tr>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>Upload the FIT file from your bike computer or trainer app to compare what you rode with the plan.</p>
+  <% end %>
+
+  <div class="flex flex-wrap items-end gap-4">
+    <%= form_with url: planned_workout_ride_file_path(workout), method: :post, multipart: true, class: "fieldset" do %>
+      <%= label_tag :ride_file, activity ? "Replace with another FIT file" : "FIT file", class: "fieldset-label font-semibold" %>
+      <%= file_field_tag :ride_file, accept: ".fit", required: true, class: "file-input w-full" %>
+      <p class="fieldset-label">Up to 10 MB.</p>
+      <div class="mt-2"><%= submit_tag activity ? "Replace ride file" : "Upload ride file", class: "btn btn-primary" %></div>
+    <% end %>
+
+    <% if activity %>
+      <%= button_to "Remove ride file", planned_workout_ride_file_path(workout), method: :delete, class: "btn btn-outline btn-error", form: { data: { turbo_confirm: "Remove this ride file? The completed workout and your feedback stay unchanged." } } %>
+    <% end %>
+  </div>
+</section>
