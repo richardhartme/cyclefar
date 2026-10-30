@@ -126,6 +126,28 @@ FactoryBot.define do
     completion_quality { :as_planned }
   end
 
+  factory :workout_activity do
+    planned_workout { association :planned_workout, :completed, strategy: :create }
+    started_at { planned_workout.scheduled_on.in_time_zone.change(hour: 7) }
+    elapsed_seconds { 3660 }
+    moving_seconds { 3600 }
+    average_power_watts { 165 }
+    np_watts { 172 }
+    intensity_factor { 0.66154 }
+    tss { 43.7633 }
+    work_kj { 594 }
+    average_heart_rate_bpm { 138 }
+    after(:build) { |activity| activity.ride_file.attach(io: StringIO.new("ride"), filename: "ride.fit") }
+
+    trait :without_power do
+      average_power_watts { nil }
+      np_watts { nil }
+      intensity_factor { nil }
+      tss { nil }
+      work_kj { nil }
+    end
+  end
+
   factory :adaptation_proposal do
     training_plan
     reason { "Recent workout was harder than expected" }

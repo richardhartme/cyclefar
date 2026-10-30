@@ -57,9 +57,130 @@ END;
 $$;
 
 
+--
+-- Name: require_completed_workout_activity_parent(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.require_completed_workout_activity_parent() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  parent_status text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.planned_workout_id != OLD.planned_workout_id THEN
+    RAISE EXCEPTION 'Ride files cannot move between workouts' USING ERRCODE = '23514';
+  END IF;
+  SELECT status INTO parent_status FROM planned_workouts WHERE id = NEW.planned_workout_id FOR SHARE;
+  IF parent_status IS DISTINCT FROM 'completed' THEN
+    RAISE EXCEPTION 'Ride files attach only to completed workouts' USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: active_storage_attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_attachments (
+    id bigint NOT NULL,
+    name character varying NOT NULL,
+    record_type character varying NOT NULL,
+    record_id bigint NOT NULL,
+    blob_id bigint NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_attachments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_attachments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_attachments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_attachments_id_seq OWNED BY public.active_storage_attachments.id;
+
+
+--
+-- Name: active_storage_blobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_blobs (
+    id bigint NOT NULL,
+    key character varying NOT NULL,
+    filename character varying NOT NULL,
+    content_type character varying,
+    metadata text,
+    service_name character varying NOT NULL,
+    byte_size bigint NOT NULL,
+    checksum character varying,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_blobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_blobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_blobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage_blobs.id;
+
+
+--
+-- Name: active_storage_variant_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_variant_records (
+    id bigint NOT NULL,
+    blob_id bigint NOT NULL,
+    variation_digest character varying NOT NULL
+);
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_variant_records_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.active_storage_variant_records.id;
+
 
 --
 -- Name: adaptation_proposals; Type: TABLE; Schema: public; Owner: -
@@ -595,6 +716,49 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: workout_activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workout_activities (
+    id bigint NOT NULL,
+    planned_workout_id bigint NOT NULL,
+    started_at timestamp(6) without time zone NOT NULL,
+    elapsed_seconds integer NOT NULL,
+    moving_seconds integer NOT NULL,
+    average_power_watts numeric(12,4),
+    np_watts numeric(12,4),
+    intensity_factor numeric(8,5),
+    tss numeric(12,4),
+    work_kj numeric(14,4),
+    average_heart_rate_bpm numeric(6,2),
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    CONSTRAINT workout_activities_durations CHECK (((elapsed_seconds >= 0) AND (moving_seconds >= 0) AND (moving_seconds <= elapsed_seconds))),
+    CONSTRAINT workout_activities_nonnegative_metrics CHECK (((average_power_watts >= (0)::numeric) AND (np_watts >= (0)::numeric) AND (intensity_factor >= (0)::numeric) AND (tss >= (0)::numeric) AND (work_kj >= (0)::numeric) AND (average_heart_rate_bpm > (0)::numeric))),
+    CONSTRAINT workout_activities_power_metrics_together CHECK ((((average_power_watts IS NULL) AND (np_watts IS NULL) AND (intensity_factor IS NULL) AND (tss IS NULL) AND (work_kj IS NULL)) OR ((average_power_watts IS NOT NULL) AND (np_watts IS NOT NULL) AND (intensity_factor IS NOT NULL) AND (tss IS NOT NULL) AND (work_kj IS NOT NULL))))
+);
+
+
+--
+-- Name: workout_activities_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.workout_activities_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: workout_activities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.workout_activities_id_seq OWNED BY public.workout_activities.id;
+
+
+--
 -- Name: workout_feedbacks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -673,6 +837,27 @@ CREATE SEQUENCE public.workout_steps_id_seq
 --
 
 ALTER SEQUENCE public.workout_steps_id_seq OWNED BY public.workout_steps.id;
+
+
+--
+-- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments ALTER COLUMN id SET DEFAULT nextval('public.active_storage_attachments_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_blobs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_blobs ALTER COLUMN id SET DEFAULT nextval('public.active_storage_blobs_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_variant_records id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAULT nextval('public.active_storage_variant_records_id_seq'::regclass);
 
 
 --
@@ -767,6 +952,13 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Name: workout_activities id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workout_activities ALTER COLUMN id SET DEFAULT nextval('public.workout_activities_id_seq'::regclass);
+
+
+--
 -- Name: workout_feedbacks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -778,6 +970,30 @@ ALTER TABLE ONLY public.workout_feedbacks ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.workout_steps ALTER COLUMN id SET DEFAULT nextval('public.workout_steps_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_attachments active_storage_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT active_storage_attachments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_blobs active_storage_blobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_blobs
+    ADD CONSTRAINT active_storage_blobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_variant_records active_storage_variant_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
 
 
 --
@@ -901,6 +1117,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: workout_activities workout_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workout_activities
+    ADD CONSTRAINT workout_activities_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: workout_feedbacks workout_feedbacks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -921,6 +1145,34 @@ ALTER TABLE ONLY public.workout_steps
 --
 
 CREATE UNIQUE INDEX idx_on_availability_template_id_weekday_62ef633d01 ON public.availability_slots USING btree (availability_template_id, weekday);
+
+
+--
+-- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_active_storage_attachments_on_blob_id ON public.active_storage_attachments USING btree (blob_id);
+
+
+--
+-- Name: index_active_storage_attachments_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_attachments_uniqueness ON public.active_storage_attachments USING btree (record_type, record_id, name, blob_id);
+
+
+--
+-- Name: index_active_storage_blobs_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_blobs USING btree (key);
+
+
+--
+-- Name: index_active_storage_variant_records_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
 
 
 --
@@ -1050,6 +1302,13 @@ CREATE UNIQUE INDEX index_users_on_email_address ON public.users USING btree (em
 
 
 --
+-- Name: index_workout_activities_on_planned_workout_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_workout_activities_on_planned_workout_id ON public.workout_activities USING btree (planned_workout_id);
+
+
+--
 -- Name: index_workout_feedbacks_on_planned_workout_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1106,6 +1365,13 @@ CREATE TRIGGER protect_completed_workout_steps BEFORE INSERT OR DELETE OR UPDATE
 
 
 --
+-- Name: workout_activities require_completed_workout_activity_parent; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER require_completed_workout_activity_parent BEFORE INSERT OR UPDATE ON public.workout_activities FOR EACH ROW EXECUTE FUNCTION public.require_completed_workout_activity_parent();
+
+
+--
 -- Name: workout_steps fk_rails_00361ce4c5; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1154,6 +1420,14 @@ ALTER TABLE ONLY public.planned_workouts
 
 
 --
+-- Name: workout_activities fk_rails_5eb9995215; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workout_activities
+    ADD CONSTRAINT fk_rails_5eb9995215 FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id);
+
+
+--
 -- Name: plan_phases fk_rails_6237434079; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1186,6 +1460,14 @@ ALTER TABLE ONLY public.intervals_icu_syncs
 
 
 --
+-- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
 -- Name: adaptation_proposals fk_rails_99bb4455b5; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1199,6 +1481,14 @@ ALTER TABLE ONLY public.adaptation_proposals
 
 ALTER TABLE ONLY public.ftp_readings
     ADD CONSTRAINT fk_rails_a29c9e67df FOREIGN KEY (rider_profile_id) REFERENCES public.rider_profiles(id);
+
+
+--
+-- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
 
 
 --
@@ -1240,6 +1530,8 @@ ALTER TABLE ONLY public.planned_workouts
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261030133000'),
+('20261030132254'),
 ('20261006130000'),
 ('20261006120000'),
 ('20261002110000'),
