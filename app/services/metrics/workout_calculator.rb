@@ -10,24 +10,19 @@ module Metrics
     end
 
     def call
-      window_size = Training::Rules::NP_WINDOW_SECONDS
-      window = Array.new(window_size, 0.0)
-      window_sum = power_sum = fourth_power_sum = 0.0
+      normalized_power = NormalizedPower.new
+      power_sum = 0.0
       count = 0
       @steps.each do |step|
         step.duration_seconds.times do |second|
           power = @ftp_watts * step.representative_pct_at(second) / 100.0
-          slot = count % window_size
-          window_sum += power - window[slot]
-          window[slot] = power
+          # The rolling window carries across step boundaries.
+          normalized_power << power
           count += 1
           power_sum += power
-          # Use a growing window for the first 29 samples, then a rolling 30s
-          # window across all step boundaries (TRAINING_ENGINE.md section 25).
-          fourth_power_sum += (window_sum / [ count, window_size ].min)**4
         end
       end
-      np = (fourth_power_sum / count)**0.25
+      np = normalized_power.watts
       intensity = np / @ftp_watts
       Result.new(
         duration_seconds: count,
