@@ -23,6 +23,13 @@ module CalendarHelper
     Training::Rules::SUBTYPE_NAMES.fetch(workout.subtype.to_sym)
   end
 
+  def weekly_duration(minutes)
+    hours, remainder = minutes.to_i.divmod(60)
+    return "#{remainder} min" if hours.zero?
+
+    "#{hours} h #{format("%02d", remainder)} min"
+  end
+
   def workout_main_set_entries(workout)
     steps = workout.workout_steps.select { |step| %w[main activation].include?(step.group_key) }
     # Older canonical structures can lack grouping metadata. Exclude known

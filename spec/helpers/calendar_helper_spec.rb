@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe CalendarHelper, type: :helper do
+  describe "#weekly_duration" do
+    it "shows weekly totals in hours and minutes" do
+      expect(helper.weekly_duration(330)).to eq("5 h 30 min")
+      expect(helper.weekly_duration(120)).to eq("2 h 00 min")
+      expect(helper.weekly_duration(65)).to eq("1 h 05 min")
+      expect(helper.weekly_duration(45)).to eq("45 min")
+      expect(helper.weekly_duration(0)).to eq("0 min")
+    end
+  end
+
   describe "workout profile zone colours" do
     it "maps FTP-target boundaries to the graph palette" do
       expect(helper.send(:profile_zone_color, segment_at(55))).to eq("#94A3B8")
