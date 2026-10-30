@@ -9,6 +9,11 @@ module Training
       value.freeze
     end
 
+    # Subtypes comparable with +subtype+ (§30): its broad intensity family, or itself.
+    def self.comparable_family(subtype)
+      COMPARABLE_FAMILIES.find { |members| members.include?(subtype.to_s) } || [ subtype.to_s ]
+    end
+
     def self.reduced_duration(duration, factor)
       [ (duration * factor).round, MINIMUM_DURATION_MINUTES ].max
     end

@@ -102,16 +102,20 @@ module Adaptations
     def progression_bias
       return 0 unless intensity?
 
-      recent = @workout.training_plan.planned_workouts.completed.where(kind: "workout", subtype: @workout.subtype)
+      # §32: 2 of the last 3 comparable (§30 family) rides with feedback, each
+      # judged against its own subtype's RPE band.
+      recent = @workout.training_plan.planned_workouts.completed.joins(:workout_feedback)
+        .where(kind: "workout", subtype: Training::Rules.comparable_family(@workout.subtype))
         .order(scheduled_on: :desc, id: :desc).limit(3).includes(:workout_feedback).to_a
-      return 0 unless recent.size == 3 && recent.all?(&:workout_feedback)
 
-      band = RPE_BANDS.fetch(@workout.subtype)
       hard = recent.count do |item|
         feedback = item.workout_feedback
-        feedback.struggled_completed? || feedback.could_not_complete? || feedback.rpe > band.end
+        feedback.struggled_completed? || feedback.could_not_complete? || feedback.rpe > RPE_BANDS.fetch(item.subtype).end
       end
-      easy = recent.count { |item| item.workout_feedback.as_planned? && item.workout_feedback.rpe <= band.begin - 2 }
+      easy = recent.count do |item|
+        feedback = item.workout_feedback
+        feedback.as_planned? && feedback.rpe <= RPE_BANDS.fetch(item.subtype).begin - 2
+      end
       hard >= 2 ? -1 : easy >= 2 ? 1 : 0
     end
 
