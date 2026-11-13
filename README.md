@@ -17,10 +17,12 @@ the calendar practical as workouts are completed, missed or changed.
 - FTP history: future targets follow FTP changes, while completed workouts keep their
   original watts.
 - Optional FIT file upload to compare a completed ride with the plan.
+- Manual Garmin Connect import for one rider per deployment (accepted in
+  [ADR 0002](docs/adr/0002-garmin-connect-activity-import.md), being built).
 - Manual sync to Intervals.icu, touching only events CycleFar created.
 - Self-registered rider accounts; all data is scoped to the signed-in rider.
 
-V1 has no automatic ride imports, trainer control, notifications or automatic calendar sync.
+V1 has no automatic or background ride imports, trainer control, notifications or automatic calendar sync.
 See the [product overview](docs/PRODUCT.md) and [training-engine rules](docs/TRAINING_ENGINE.md)
 for how plans are built and adapted.
 
@@ -63,6 +65,27 @@ structured workouts with stable `cyclefar-workout-<id>` IDs and removes only Cyc
 events that no longer belong. It never imports rides or touches other events. See the
 [integration guide](docs/INTERVALS_ICU.md).
 
+## Garmin Connect
+
+Garmin import is being built ([ADR 0002](docs/adr/0002-garmin-connect-activity-import.md));
+this is how a self-hoster will enable it. It uses Garmin's self-service Personal API, which
+only reads the key owner's own data, so each deployment enables it for one rider:
+
+1. Set `GARMIN_RIDER_EMAIL` to that rider's CycleFar email address in the app's environment
+   (locally in your shell; for Kamal, in `.env.deploy`, which `config/deploy.yml` will pass
+   through once #55 adds it). Without it, nobody sees any Garmin controls.
+2. Create a Personal API key in the
+   [Garmin Connect Developer Program](https://developer.garmin.com/gc-developer-program/).
+3. Sign in as that rider and save the key and its expiry date in **Settings**. Garmin
+   doesn't tell CycleFar when the key expires, so Settings warns from 14 days before the
+   date you enter.
+4. Use **Import from Garmin** on the calendar. The first import covers the active plan
+   from its start date; later ones start 7 days before the previous import.
+
+The key is encrypted like the Intervals.icu key, so the same encryption-key warnings apply.
+Imported ride files sit on the same storage volume as uploaded FIT files. Specs never call
+the live Garmin API. See the [integration guide](docs/GARMIN_CONNECT.md).
+
 ## Validation
 
 ```sh
@@ -71,7 +94,8 @@ bin/ci
 
 This runs setup, then `rspec`, `zeitwerk:check`, the plan-form Node test, RuboCop,
 bundler-audit, importmap audit and Brakeman. System specs need Chrome and the Node test
-needs Node.js; the app itself needs neither. Specs never call the live Intervals.icu API.
+needs Node.js; the app itself needs neither. Specs never call the live Intervals.icu or
+Garmin Connect APIs.
 
 ## Deployment
 
@@ -96,6 +120,7 @@ validates. AWS infrastructure is provisioned separately with
    | `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Production encryption keys |
    | `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` | |
    | `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | |
+   | `GARMIN_RIDER_EMAIL` | Optional; the one rider who may import from Garmin Connect |
 
 3. From a commit whose CI has passed, with Docker running:
 
@@ -107,7 +132,7 @@ validates. AWS infrastructure is provisioned separately with
 Kamal expects the database on port `5432` with user `cyclefar`, and SMTP on port `587`.
 For your own domain, change `proxy.host` and `CYCLEFAR_APP_HOST` in `config/deploy.yml`.
 
-Never replace the production encryption keys while Intervals.icu API keys are stored.
+Never replace the production encryption keys while Intervals.icu or Garmin API keys are stored.
 For a new install, generate them once with `bin/rails db:encryption:init`. Mail and
 account provisioning are covered in the [account access guide](docs/ACCOUNT_ACCESS.md).
 
@@ -121,7 +146,8 @@ port `80` (Thruster); for example, Coolify can use an HTTP check on `localhost:8
 - [Training-engine rules](docs/TRAINING_ENGINE.md)
 - [Architecture](docs/ARCHITECTURE.md), [data model](docs/DATA_MODEL.md) and [diagrams](docs/diagrams/README.md)
 - [UX guide](docs/UX.md)
-- [Intervals.icu integration](docs/INTERVALS_ICU.md)
+- [Intervals.icu integration](docs/INTERVALS_ICU.md) and [Garmin Connect integration](docs/GARMIN_CONNECT.md)
+- [Architecture decisions](docs/adr/)
 - [Account access and production mail](docs/ACCOUNT_ACCESS.md)
 - [External references](docs/SOURCES.md)
 

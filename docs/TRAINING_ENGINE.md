@@ -10,6 +10,7 @@ The application implements these rules except where noted below or in a section.
 
 - Accepted progression bias is stored globally, not per family or subtype (§32), and does not drive subtype substitution (§11). Pattern detection itself uses the comparable family (§30).
 - Openers record feedback but never drive progression adaptation, because no opener RPE band is defined.
+- Ridden activities, whether uploaded or imported from Garmin Connect, are display only and never feed the engine (§26, [ADR 0002](adr/0002-garmin-connect-activity-import.md)).
 
 Constants live in `Training::Rules` and `Planning::Rules`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each rule is implemented and [UX.md](UX.md) for presentation.
 
@@ -675,6 +676,15 @@ Round for UI:
 - work: nearest whole kJ.
 
 Internally keep sufficient precision.
+
+### Ridden figures
+
+Ridden figures for a cycling activity use the same formulas and `Metrics::NormalizedPower` over the recorded one-second samples, with a different FTP:
+
+- a ride linked to a completed workout uses that workout's frozen `completed_ftp_watts`;
+- an unlinked ride (ADR 0002, not yet built) uses the FTP in force on its local date: the newest FTP reading on or before it, highest ID on a tie, or the earliest reading for a ride before the first.
+
+Garmin's own TSS and IF are never used. Ridden figures and imported activities have **no engine effect** in Stage 1: weekly totals, the §27 cap, feedback evaluation (§29–§32), adaptation proposals, missed handling and statuses ignore them. Actual load feeding planning is Garmin Stage 2 and needs its own ADR.
 
 ### Outline workouts >14 days
 
