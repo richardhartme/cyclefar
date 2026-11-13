@@ -96,7 +96,7 @@ For each listed activity, under an owner-scoped advisory lock:
 2. **Merge** a new Garmin activity into an uploaded activity whose UTC start is within 60 seconds: add the Garmin id, name, type and summary. The upload keeps its source, file and link.
 3. **Download** the file for a cycling activity without one, then calculate its figures (see [ADR 0002](adr/0002-garmin-connect-activity-import.md#figures)). If the download or parse fails, keep the activity without a file and try again on the next import.
 4. **Delete** Garmin activities stored for the window that the complete listing no longer returns. A Garmin-only record is destroyed, along with its link and file. A merged upload only loses its Garmin id and summary. If listing fails partway, delete nothing.
-5. **Auto-link** rides to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)).
+5. **Auto-link** the rides this import created to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)). Activities from earlier imports are left alone, so a ride the rider unlinked stays unlinked.
 
 Hold no database transaction or row lock across HTTP. Commit each activity's changes in a short transaction, so a failure keeps what was already committed and a re-run is safe.
 
@@ -123,4 +123,5 @@ Never call the real API in specs. Stub HTTP with WebMock. Fixtures are redacted 
 - sport mapping, including the cycling parent and unknown keys;
 - every error type, and that the key never appears in errors or logs;
 - the import window, upsert, refresh, merge within and outside 60 seconds, deletions of Garmin-only and merged records, partial failure and re-run;
+- auto-link considering only newly created activities, so an unlinked ride stays unlinked after re-import;
 - two-rider isolation, and that completed workouts never change.

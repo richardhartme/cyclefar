@@ -421,7 +421,7 @@ A ride is a rider-owned `Activity` that may link to one completed workout, showi
 
 - **Ownership.** An activity belongs to its rider, not to a workout or plan, and survives plan archival or deletion. Archived plans keep their completed workouts' links.
 - **Links.** An activity links to at most one workout and a workout has at most one activity. A link points only at a completed workout of the same rider. The database enforces all three. The link records whether it was made automatically or by the rider.
-- **Upload.** Any rider may upload one FIT file to a completed workout in the active plan. It creates a linked activity with source `upload` and sport `cycling`. Accept FIT activity files up to 10 MB with a valid header, signature and checksum. Reject anything else with a readable message and store nothing. Uploading again replaces the file and figures. Removing deletes the activity and its file.
+- **Upload.** Any rider may upload one FIT file to a completed workout in the active plan. It creates a linked activity with source `upload` and sport `cycling`. Accept FIT activity files up to 10 MB with a valid header, signature and checksum. Reject anything else with a readable message and store nothing. Uploading again replaces the file and figures. Removing deletes the activity and its file. Uploading to a workout that already has a Garmin ride linked is rejected with `Unlink the Garmin ride first.`; uploads that match an existing activity follow GAR-005.
 - **Figures.** For cycling, calculate moving and elapsed time, average power, NP, IF, TSS, work and average heart rate from the stored file, using the planned NP convention (30-second rolling window, growing for the first 29 samples). Speeds below 0.5 m/s and recording gaps over 10 seconds do not count as moving.
   - A linked ride uses the workout's frozen completion FTP.
   - An unlinked ride uses the FTP in force on its local date: the newest FTP reading on or before it (highest ID on a tie), or the earliest reading for a ride before the first.
@@ -630,8 +630,10 @@ An `Import from Garmin` button sits in the calendar header next to `Sync to Inte
 
 ### GAR-005 Duplicate rides
 
-- A Garmin activity whose start is within 60 seconds of an uploaded activity's start is merged into it, not stored twice.
-- The uploaded activity gains the Garmin id, name, type and summary, and keeps its source, file and link.
+Two activities of the same rider whose UTC starts are within 60 seconds are the same ride, whichever arrives first.
+
+- **Garmin after upload.** An imported Garmin activity matching an uploaded activity is merged into it. The upload gains the Garmin id, name, type and summary, and keeps its source, file and link.
+- **Upload after Garmin.** An uploaded file matching an unlinked activity links that activity to the workout instead of creating a second record. The activity keeps its stored file, or takes the uploaded one if it has none, and the rider is told the existing ride was linked. If the matching activity is linked to another workout, the upload is rejected with guidance to use `Change ride`.
 - Activities more than 60 seconds apart stay separate.
 
 ### GAR-006 Sport mapping
@@ -643,15 +645,22 @@ An `Import from Garmin` button sits in the calendar header next to `Sync to Inte
 
 ### GAR-007 Automatic linking
 
-- When a workout is completed, and after each import, a completed workout with no link and exactly one unlinked cycling activity on its scheduled date is linked automatically.
+A completed workout with no link and exactly one unlinked cycling activity on its scheduled date is linked automatically, at two moments only:
+
+- **on completion**, considering the unlinked cycling activities on that workout's date;
+- **after an import**, considering only the activities that import created.
+
+An activity the rider has unlinked is therefore never linked automatically again: it is not new to any later import, and its workout was already completed.
+
 - Auto-link never replaces an existing link, whether chosen by the rider or made by uploading a file.
 - Two rides on one day stay separate: with several candidates nothing is linked automatically.
 
 ### GAR-008 Choose ride and relinking
 
 - For the Garmin rider, a completed workout with no link and none or several candidates shows `Choose ride`.
-- The picker lists cycling activities within 3 days either side of the scheduled date, newest first: unlinked rides, plus rides linked to other completed workouts, marked as such.
-- Choosing a ride linked elsewhere moves it in one transaction; the other workout is left without a ride.
+- The picker lists cycling activities within 3 days either side of the scheduled date, newest first: unlinked rides, plus rides linked to other completed workouts in the active plan, labelled with that workout's name and date. Rides linked to archived plans' workouts are not offered.
+- Choosing a ride linked elsewhere asks for confirmation, then moves it in one transaction; the other workout is left without a ride.
+- A workout with a Garmin ride linked offers `Change ride` and `Unlink`, not Upload (FBK-004).
 - Any link can be removed. Removing an uploaded activity deletes it and its file (FBK-004); removing a Garmin link keeps the activity unlinked.
 - Ridden figures recalculate on every change (FBK-004).
 

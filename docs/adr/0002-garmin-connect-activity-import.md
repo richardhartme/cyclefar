@@ -41,7 +41,7 @@ CycleFar imports the rider's Garmin Connect activities on demand, shows them on 
 - It records its source (`garmin` or `upload`), the Garmin activity id (bigint, unique per rider), a mapped `sport` plus the raw Garmin type key, the name, the start time in UTC and the local date it started on, durations, distance, figures, Garmin's raw summary (`jsonb`) and, for cycling only, the original FIT file.
 - It **links to at most one completed workout**, and a workout has at most one activity. The database enforces both, and that a link points at a completed workout of the same rider. The link records whether it was made automatically or by the rider.
 - **Relinking replaces ADR 0001's "never move" rule.** A ride can move from one completed workout to another in one transaction. The completed workout's structure, snapshot, metrics and feedback are still never written.
-- Archiving a plan keeps its completed workouts and their links as history.
+- Archiving a plan keeps its completed workouts and their links as history. Nothing nulls a link on archive: completed workouts are immutable history, and the next plan's import window starts at its own start date, so archived rides are never touched.
 
 ### Times and dates
 
@@ -70,7 +70,7 @@ The adapter maps Garmin types to the domain `sport` enum: `cycling`, `running`, 
 - **Window.** The first import runs from the active plan's start date to today. Later imports run from 7 days before the last successful import to today. The last import time is stored on the rider. Activities outside the window are never touched.
 - **Upsert.** Activities are keyed by Garmin activity id. A changed summary refreshes the stored fields.
 - **Files.** The original file is downloaded only for cycling activities that don't have one yet. A stored file is never downloaded again. If a download or parse fails, the activity is kept without a file, shows its summary duration and heart rate, and the next import tries again.
-- **Duplicates.** A Garmin activity starting within 60 seconds of an uploaded activity is merged into it: the uploaded record gains the Garmin id, name, type and summary, and keeps its source, link and file.
+- **Duplicates.** Two activities starting within 60 seconds of each other are one ride, whichever arrives first. An imported Garmin activity matching an upload is merged into it: the upload gains the Garmin id, name, type and summary, and keeps its source, link and file. An uploaded file matching an unlinked activity links that activity instead of creating a second record, keeping its stored file or taking the upload if it has none. A match already linked to another workout rejects the upload with guidance to use Change ride.
 - **Deletions.** After a complete listing, a Garmin activity that is stored for the window but no longer returned is treated as deleted. A Garmin-only record is removed, with its link and file. A merged record keeps its file and link and only loses the Garmin id and summary. A failed or partial listing deletes nothing.
 - **Concurrency.** An owner-scoped advisory lock stops two imports racing. No database transaction is held across HTTP. A failure keeps what was committed before it and is safe to re-run.
 - **Result.** A flash reports the counts imported, updated and removed, or readable guidance for a bad or expired key, rate limiting (respecting `Retry-After` if Garmin sends it) and Garmin being unavailable.
@@ -78,8 +78,9 @@ The adapter maps Garmin types to the domain `sport` enum: `cycling`, `running`, 
 ### Matching
 
 - Only `cycling` activities are candidates.
-- **Auto-link.** When a workout is completed, and after each import, a completed workout with no link and exactly one unlinked cycling activity on its scheduled date is linked automatically. Auto-link never replaces an existing link.
-- **Choose ride.** A completed workout with no link and none or several candidates shows "Choose ride". The picker lists cycling activities within 3 days either side of the scheduled date, newest first: unlinked rides, plus rides linked to other completed workouts, marked as such. Choosing a linked ride relinks it in one transaction.
+- **Auto-link.** A completed workout with no link and exactly one unlinked cycling activity on its scheduled date is linked automatically, at two moments only: on completion, and after an import for the activities that import created. A ride the rider unlinked is never new to a later import, so it is never auto-linked again, with no extra state to store. Auto-link never replaces an existing link.
+- **Choose ride.** A completed workout with no link and none or several candidates shows "Choose ride". The picker lists cycling activities within 3 days either side of the scheduled date, newest first: unlinked rides, plus rides linked to other completed workouts in the active plan, labelled with that workout. Choosing a linked ride asks for confirmation, then relinks it in one transaction. Rides linked in archived plans are history and are not offered.
+- **Upload over a Garmin link.** A workout with a Garmin ride linked offers Change ride and Unlink instead of Upload; a direct upload is rejected with "Unlink the Garmin ride first."
 - **Unlink** is available on any link. For an uploaded activity it removes the activity and its file, as ADR 0001's remove does.
 - **Ride found.** A `planned` workout with an unlinked cycling activity on its date shows "Ride found — mark this workout completed?". It opens the normal completion form (RPE and quality) with that ride preselected, and links it on completion. **Nothing completes automatically.**
 - Two rides on one day stay separate. A workout links at most one; the other shows as its own calendar entry.
