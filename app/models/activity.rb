@@ -6,6 +6,8 @@ class Activity < ApplicationRecord
   POWER_METRICS = %i[average_power_watts np_watts intensity_factor tss work_kj].freeze
   MAXIMUM_FILE_SIZE = 10.megabytes
   SPORTS = %w[cycling running walking strength yoga swimming other].freeze
+  # Two activities of one rider starting this close together are the same ride (GAR-005).
+  DUPLICATE_WINDOW = 60.seconds
 
   belongs_to :user
   belongs_to :planned_workout, optional: true
