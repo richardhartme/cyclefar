@@ -1,6 +1,6 @@
 # CycleFar Application Architecture
 
-This maps the implemented application. [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define the behaviour it implements.
+This maps the implemented application, plus the accepted but unbuilt Garmin Connect import, marked as such. [REQUIREMENTS.md](REQUIREMENTS.md) and [TRAINING_ENGINE.md](TRAINING_ENGINE.md) define the behaviour it implements.
 
 ## Application identity and stack
 
@@ -9,6 +9,7 @@ This maps the implemented application. [REQUIREMENTS.md](REQUIREMENTS.md) and [T
 - Stimulus handles presentation only (for example, the plan form's goal-dependent fields). No training calculation runs in JavaScript.
 - Rails-generated authentication gates private requests.
 - Intervals.icu export is manual; an FTP change refreshes already-exported workouts in the foreground. There are no background sync or generation jobs.
+- Garmin Connect import ([ADR 0002](adr/0002-garmin-connect-activity-import.md)) is accepted but not yet built; see [Garmin Connect import](#garmin-connect-import-adr-0002-not-yet-built) for the intended shape.
 
 Services live under `app/services/`:
 
@@ -22,6 +23,7 @@ app/services/
   accounts/      # controlled operator provisioning and password setup delivery
   settings/      # transactional profile and FTP changes
   intervals_icu/ # serializer, HTTP client and calendar reconciliation
+  garmin_connect/ # (ADR 0002, not yet built) Personal API client, activity import and linking
 ```
 
 Avoid repository layers, command buses, event sourcing, GraphQL and front-end SPAs.
@@ -45,6 +47,7 @@ There is no singleton profile or global active plan; everything resolves from `C
 - Future watts come from `TrainingPlan#ftp_watts_for_planning`; completed snapshots keep their recorded FTP. Pure `Training` and `Planning` calculations never read request-global state.
 - The session-backed preview draft is bound to its creator and cleared on account change; confirmation checks the owner.
 - `IntervalsIcu::SyncCalendar` receives the rider's profile, plan and owner-scoped sync records. `IntervalsIcuSync.user_id` attributes detached records after a workout is deleted, so cleanup can't touch another rider's records.
+- *(ADR 0002, not yet built.)* Activities are resolved through `Current.user`, and a database trigger only lets an activity link to a completed workout in one of the same user's plans. Garmin routes return 404 unless `Current.user` is the `GARMIN_RIDER_EMAIL` rider.
 
 Database foreign keys require ownership of profiles, plans and sync records, with per-user indexes for one profile and one active plan. Request specs cover a two-rider matrix. See [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) and [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders).
 
@@ -126,6 +129,18 @@ The `plan-configuration` Stimulus controller fetches the end date, disables inac
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the request contract. Specs stub HTTP.
 
+## Garmin Connect import (ADR 0002, not yet built)
+
+The intended Stage 1 shape, built in #53–#58. See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the API contract and [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect) for behaviour.
+
+- **Model.** #53 renames `WorkoutActivity` to the rider-owned `Activity`, linked to at most one completed workout. `Workouts::RideFileAttacher` and `Workouts::RideFileRemover` create and delete a linked `upload` activity. Ridden figures use the frozen completion FTP when linked and the FTP reading on the ride's local date when unlinked, recalculated from the stored file on link, unlink and relink.
+- **Enablement.** A small check compares `Current.user.email_address` with `GARMIN_RIDER_EMAIL` and gates the Settings fields, the import button and the Garmin routes.
+- **Client.** `GarminConnect::Client` exchanges the Personal API key for a token once per import, lists activities by date range with paging, and downloads and unzips the original `.fit`. It maps Garmin types to `sport`, raises typed errors (rejected key, rate limited, unavailable, invalid file), and never puts the key or token in errors or logs. Short timeouts, no retries.
+- **Import.** `GarminConnect::ImportActivities` takes an owner-scoped advisory lock like `IntervalsIcu::Synchronization`, works out the window, upserts and merges activities, downloads missing ride files, removes activities Garmin no longer returns, then runs auto-linking. Each activity commits in its own short transaction; no transaction is held across HTTP.
+- **Matching.** A linking service applies GAR-007 and GAR-008 under the plan lock: auto-link one candidate, list candidates for `Choose ride`, relink in one transaction, and unlink. `Adaptations::CompletionRecorder` links a preselected ride from the `Ride found` prompt after recording completion, and calls auto-linking otherwise.
+- **Calendar.** `Planning::CalendarPresenter` adds unlinked activities in the active plan's range to each date. Weekly summaries and the TSS chart stay planned-only.
+- **No engine effect.** No `Training`, `Planning` load, `Adaptations` evaluation or status code reads activities.
+
 ## Routes and UI boundaries
 
 The authoritative routes are in [`config/routes.rb`](../config/routes.rb):
@@ -169,12 +184,12 @@ resource :intervals_icu_sync, only: :create
 
 - Multi-record mutations use transactions. Domain operations are explicit services, not model callbacks.
 - Database constraints enforce one profile and one active plan per user, one workout per plan and date, valid enums and key numeric bounds.
-- Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, even against direct SQL. Another trigger allows `WorkoutActivity` only on completed workouts and forbids moving it; it can be replaced or removed. The schema dump is `db/structure.sql`.
+- Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, even against direct SQL. Another trigger allows `WorkoutActivity` only on completed workouts and forbids moving it; it can be replaced or removed. ADR 0002 replaces that trigger so an `Activity` may relink between the same rider's completed workouts. The schema dump is `db/structure.sql`.
 - Scheduling uses `date` and `Date.current` in the London time zone; weeks start Monday. Exported events use local midnight.
 - Percentage steps are canonical; watts are derived for future workouts and frozen at completion.
 - `TrainingPlan#engine_version` records `v1` as metadata only; engine classes live directly under `Training` and `Planning`.
 - `PlannedWorkout#generation_context` keeps unbiased baselines, automatic load and level references and ceilings apart from one-off edits.
-- API keys use Active Record Encryption and filtered parameters. Passwords use `has_secure_password`; database sessions are identified by signed, permanent, HttpOnly, SameSite=Lax cookies. Client errors are generic, never echoing external responses or secrets.
+- API keys (Intervals.icu, and Garmin under ADR 0002) use Active Record Encryption and filtered parameters. Passwords use `has_secure_password`; database sessions are identified by signed, permanent, HttpOnly, SameSite=Lax cookies. Client errors are generic, never echoing external responses or secrets.
 
 ## Deployment
 
@@ -182,7 +197,8 @@ The app is live at `cyclefar.com`, deployed with Kamal (`config/deploy.yml`). [T
 
 - Production reads `DB_HOST`, `DB_PORT`, `DB_USERNAME` and `DB_PASSWORD`. Rails uses primary, cache, queue and cable databases.
 - Solid Cache, Queue and Cable run on PostgreSQL. `SOLID_QUEUE_IN_PUMA=true` runs the queue supervisor inside Puma for password-reset mail and ride-file purges. Operator provisioning mails synchronously. The only recurring job is queue housekeeping.
-- Active Storage uses local disk at `/rails/storage` on the `cycle_far_storage` Kamal volume. The deployment doesn't back it up, and database backups don't include it.
+- Active Storage uses local disk at `/rails/storage` on the `cycle_far_storage` Kamal volume. The deployment doesn't back it up, and database backups don't include it. Under ADR 0002 it also holds imported Garmin ride files.
+- `GARMIN_RIDER_EMAIL` (optional) names the one rider who may use Garmin import (ADR 0002).
 
 ## Architecture diagrams
 

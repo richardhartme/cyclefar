@@ -23,6 +23,13 @@ Important implementation note: the public API can evolve. At implementation time
 
 The documentation review on 2026-10-02 checked the official upload guide and public OpenAPI schema for athlete `0`, bulk upsert/delete and event field names/types. This is documentation verification, not a live authenticated sync test; see [INTERVALS_ICU.md](INTERVALS_ICU.md) for metric-unit and query-flag caveats.
 
+## Garmin Connect
+
+- Garmin Connect Developer Program: https://developer.garmin.com/gc-developer-program/
+- Personal API swagger: https://developer.garmin.com/gc-developer-program/personal/swagger-docs/
+
+The token, activity list and file download endpoints were run against a real account on 2026-11-13 (#51). See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the observed shapes.
+
 ## Infrastructure
 
 - AWS public IPv4 pricing: https://aws.amazon.com/vpc/pricing/ — both in-use and idle Elastic IPs incur public IPv4 charges, checked on 2026-10-02.

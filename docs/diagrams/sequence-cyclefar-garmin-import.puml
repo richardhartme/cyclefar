@@ -1,0 +1,92 @@
+@startuml
+title CycleFar — Import from Garmin and link rides (ADR 0002, not yet built)
+
+autonumber
+hide footbox
+
+actor Rider
+boundary "GarminImportsController" as Controller
+control "GarminConnect::\nImportActivities" as Import
+control "GarminConnect::Client" as Client
+control "Fit::Reader +\nRideCalculator" as Calculator
+control "Ride linking" as Linker
+entity "Activity" as Activity
+database "PostgreSQL" as Database
+collections "Active Storage\nlocal disk volume" as Storage
+participant "Garmin Connect\nPersonal API" as Garmin
+
+== Import (GAR-003 to GAR-006) ==
+Rider -> Controller: POST import
+alt not the GARMIN_RIDER_EMAIL rider
+  Controller --> Rider: 404
+end
+Controller -> Database: load the rider's profile and active plan
+Controller -> Import: call(profile, plan)
+Import -> Database: take owner advisory lock
+Import -> Import: window = plan start (first import)\nor last import − 7 days, to today
+Import -> Client: new(decrypted key)
+Client -> Garmin: POST personal-api-key/token (ApiKey)
+alt 401/403, 429, timeout or 5xx
+  Garmin --> Client: error
+  Client --> Import: typed error (no key in message)
+  Import --> Controller: Failed
+  Controller --> Rider: calendar with guidance; nothing changed
+end
+Garmin --> Client: text/plain JWT (24 h), kept in memory only
+loop each page until a short page
+  Client -> Garmin: GET activities/search/activities\n(startDate, endDate, start, limit; Bearer)
+  Garmin --> Client: summaries
+end
+Client --> Import: summaries mapped to sport, UTC start, local date
+loop each summary
+  group short transaction
+    Import -> Activity: upsert by garmin_activity_id, or merge\ninto an upload starting within 60 s
+    Activity -> Database: save summary fields
+  end
+  opt cycling and no stored file
+    Import -> Client: download(activityId)
+    Client -> Garmin: GET download-service/files/activity/{id}
+    Garmin --> Client: zip with one .fit
+    Client --> Import: .fit bytes
+    Import -> Calculator: samples and figures at the FTP on the ride date\n(or the frozen completion FTP if linked)
+    group short transaction
+      Import -> Activity: save figures
+      Activity -> Storage: store FIT file
+    end
+    note right: A failed download or parse keeps the\nactivity without a file; next import retries.
+  end
+end
+group short transaction
+  Import -> Database: Garmin activities in the window but not listed
+  Import -> Activity: destroy Garmin-only records;\nmerged uploads lose only the Garmin id and summary
+end
+note right of Import
+  Only after a complete listing.
+  Nothing outside the window is touched.
+end note
+Import -> Linker: auto-link
+Import -> Database: save last import time; release lock
+Controller --> Rider: calendar with "Imported N, updated N, removed N"
+
+== Link (GAR-007 to GAR-009) ==
+group transaction under plan lock
+  Linker -> Database: completed workouts with no link
+  Linker -> Activity: link when exactly one unlinked cycling\nactivity falls on the scheduled date
+  note right: Never replaces an existing link.\nTrigger: completed workout, same rider.
+end
+Rider -> Controller: Choose ride (picker: ±3 days, newest first)
+Controller -> Linker: link(workout, activity)
+group transaction under plan lock
+  Linker -> Activity: unlink from any other workout, link here,\nrecalculate figures at the frozen FTP
+end
+Rider -> Controller: Ride found -> completion form with the ride preselected
+note over Controller
+  Completion stays manual: CompletionRecorder records
+  RPE and quality, then links the preselected ride.
+end note
+
+note over Calculator, Storage
+  Completed workouts are never written. Activities feed no weekly
+  totals, load limits, feedback evaluation, proposals or statuses.
+end note
+@enduml

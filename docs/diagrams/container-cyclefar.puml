@@ -17,11 +17,13 @@ System_Boundary(cyclefar_boundary, "CycleFar") {
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 System_Ext(smtp, "SMTP provider", "Configured outbound mail service for password setup and reset links; live delivery remains unverified.")
+System_Ext(garmin, "Garmin Connect", "Personal API for the Garmin rider's own activities. Planned: ADR 0002, not yet built.")
 
 Rel(rider, web_application, "Registers/signs in and uses training planner", "HTTPS")
 Rel(web_application, database, "Persists sessions and training data; stores cache entries, queued jobs and cable messages", "SQL / Active Record")
 Rel(web_application, file_storage, "Stores uploaded FIT files; purges replaced files through the queue worker", "Filesystem")
 Rel(web_application, intervals_icu, "Manually exports all upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
+Rel(web_application, garmin, "Imports activities and ride files in the foreground on request (planned)", "HTTPS / JSON, zip")
 Rel(web_application, smtp, "Delivers setup mail synchronously and reset mail through the supervised queue worker", "SMTP / STARTTLS")
 
 note bottom of web_application

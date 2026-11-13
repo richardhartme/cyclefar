@@ -1,6 +1,6 @@
 # CycleFar UX Specification
 
-This document describes the interaction design as implemented. Controls not described here do not exist.
+This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect import, which is accepted but not yet built.
 
 ## Branding
 
@@ -56,6 +56,13 @@ Behaviour:
 - FTP history sits below the form, newest first, with the current reading labelled. Edit changes watts or date; Delete asks for confirmation and is hidden for the last reading. Saving a changed FTP adds a reading dated today; the newest reading sets future targets.
 - A changed FTP refreshes workouts already synced to Intervals.icu, and the success message gives the count. If the refresh fails, the save still succeeds and the rider is told to check the API key and retry with Sync.
 - there is no `Test connection` button.
+
+**Garmin Connect** *(ADR 0002)*, shown only to the `GARMIN_RIDER_EMAIL` rider:
+
+- Garmin Personal API key, masked after save like the Intervals.icu key, with a short note on where to create one;
+- Key expiry date, required with a key, with a note that Garmin doesn't show it to CycleFar;
+- a warning when the key expires in 14 days or fewer, and an alert once it has expired, telling the rider to create a new key;
+- clearing the key hides the import button and keeps imported activities.
 
 ## 3. Create-plan configuration
 
@@ -164,6 +171,7 @@ Include:
 - plan goal summary; discipline only for event plans, including when displaying existing plans;
 - current FTP;
 - `Sync all structured workouts to Intervals.icu`;
+- `Import from Garmin` *(ADR 0002)*, next to sync, only for the Garmin rider with a saved key, with the expiry warning beside it when it applies. It returns to the calendar with `Imported N, updated N, removed N`, or guidance for a rejected or expired key, rate limiting or Garmin being unavailable;
 - `Change availability`;
 - `Add time off`;
 - destructive `Delete plan` in a secondary menu/action area; it is labelled `Archive plan` once the plan has completed workouts, which are retained.
@@ -198,7 +206,8 @@ Show enough to understand it without opening:
 - mini skyline/profile graph;
 - TSS / IF / kJ in compact form;
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details;
-- under the completed badge, ridden TSS when a ride file with power is attached, and the recorded RPE.
+- under the completed badge, ridden TSS when a ride with power is linked, and the recorded RPE;
+- *(ADR 0002)* for the Garmin rider, `Choose ride` on a completed card with no linked ride, and `Ride found — mark this workout completed?` on a planned card with an unlinked ride on its date.
 
 Main-set summaries keep under/over and activation efforts separate and show both ends of a ramp. Planned watts use current FTP; completed watts use the frozen snapshot.
 
@@ -223,6 +232,13 @@ Event:
 Time off:
 
 - marks affected dates, using the optional name as the heading; unnamed Event time off is labelled `Time off`. Named non-event periods also display their reason.
+
+Activities *(ADR 0002)*:
+
+- unlinked activities sit as compact secondary entries under the day's card, or alone on a rest day: sport, name, duration and, for rides with power, TSS;
+- a linked ride never appears as a separate entry; its figures are on the workout card;
+- activities show only within the active plan's calendar range;
+- an entry opens a read-only activity detail view: name, date, sport, source label (`Garmin Connect` or `Uploaded FIT`), and ridden figures for cycling or duration, distance and heart rate for other sports. An unlinked ride says its figures use the FTP on the ride date.
 
 Empty date headings offer Add Workout. The form accepts type (including Opener) and duration. The service rejects occupied dates, dates outside the plan, target-event dates and time-off dates.
 
@@ -250,6 +266,13 @@ Actions:
 - Remove workout (planned/missed workouts in an active plan, including outlines; asks for confirmation)
 
 **Ride file (FBK-004).** Completed workouts in the active plan can upload, replace or remove one FIT file. The section compares planned and ridden duration, NP, IF, TSS and work, and shows ridden average power, heart rate and the completion FTP. A ride without power shows `No power data`; a ride on a different date shows a non-blocking warning. Removal asks for confirmation.
+
+*(ADR 0002)* The ride section shows the source label. For the Garmin rider it also offers:
+
+- **Choose ride** when no ride is linked, or **Change ride** when one is: a picker of rides within 3 days either side of the scheduled date, newest first, with rides already linked to another workout marked. Choosing one links it, moving it from its other workout if needed;
+- **Unlink** on a Garmin ride, which leaves the activity on the calendar as an unlinked entry. Removing an uploaded file still deletes it.
+
+**Ride found** *(ADR 0002)* on a planned workout opens the normal completion form with the found ride preselected; completing links it. Nothing completes on its own.
 
 **Remove** returns to the calendar with that date empty and nothing else changed; the message explains that manual Sync updates Intervals.icu. Completed workouts can't be removed.
 
@@ -302,7 +325,7 @@ A compact form:
 - RPE 1–10
 - Completion quality: Completed as planned / Struggled but completed / Could not complete
 
-Submit marks the workout complete and freezes it.
+Submit marks the workout complete and freezes it. *(ADR 0002)* When opened from `Ride found`, the form names the preselected ride and links it on submit. Otherwise, a single unlinked Garmin ride on the workout's date is linked automatically after completion.
 
 If adaptation is warranted, next show an adaptation proposal:
 

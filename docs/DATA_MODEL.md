@@ -1,6 +1,6 @@
 # CycleFar — Rails Data Model
 
-The implemented persistence shape. [`db/structure.sql`](../db/structure.sql) is authoritative; [REQUIREMENTS.md](REQUIREMENTS.md) defines intended behaviour. Enums use string values. JSONB holds progression state, proposal payloads and completion snapshots.
+The implemented persistence shape, plus the accepted Garmin changes marked *(ADR 0002, not yet built)*. [`db/structure.sql`](../db/structure.sql) is authoritative for what exists; [REQUIREMENTS.md](REQUIREMENTS.md) defines intended behaviour. Enums use string values. JSONB holds progression state, proposal payloads and completion snapshots.
 
 ## User and Session
 
@@ -16,6 +16,12 @@ Fields:
 - `intervals_icu_api_key: string` — encrypted with Active Record Encryption
 - `user_id: bigint, null: false` — unique foreign key to `User`
 - timestamps
+
+Garmin fields *(ADR 0002, not yet built)*, used only for the `GARMIN_RIDER_EMAIL` rider:
+
+- `garmin_api_key: string, nullable` — Personal API key, encrypted with Active Record Encryption
+- `garmin_api_key_expires_on: date, nullable` — entered by the rider, because Garmin doesn't return it; required when a key is saved
+- `garmin_last_imported_at: datetime, nullable` — start of the next import window (minus 7 days)
 
 Validations:
 
@@ -245,7 +251,7 @@ One feedback record per completed workout.
 `belongs_to :planned_workout`
 `has_one_attached :ride_file`
 
-Ridden metrics from an uploaded FIT file (FBK-004). They sit beside the completed workout's frozen snapshot without changing it.
+The current ride record from FBK-004's FIT upload ([ADR 0001](adr/0001-ride-file-upload-for-completed-workouts.md)). It sits beside the completed workout's frozen snapshot without changing it. #53 replaces it with [`Activity`](#activity).
 
 Fields:
 
@@ -267,6 +273,40 @@ Constraints:
 - a PostgreSQL trigger accepts rows only for completed workouts and rejects moving a row to another workout. Completed-child immutability triggers do not apply, so the ride can be replaced or removed.
 
 The FIT file is kept in Active Storage on the local disk service so metrics can be recalculated.
+
+## Activity
+
+*(ADR 0002, not yet built.)* Replaces `WorkoutActivity` by renaming its table. A rider-owned record of something the rider did, from a FIT upload or a Garmin Connect import (FBK-004, GAR-*). It survives plan archival and deletion.
+
+`belongs_to :user`
+`belongs_to :planned_workout, optional: true`
+`has_one_attached :ride_file` — cycling only
+
+Fields, in addition to `WorkoutActivity`'s timing and figure columns:
+
+- `user_id: bigint, null: false` — owner
+- `source: enum, null: false` — `upload`, `garmin`
+- `garmin_activity_id: bigint, nullable` — Garmin's `activityId` (around 2.5 × 10¹⁰)
+- `sport: enum, null: false` — `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `other`
+- `external_type: string, nullable` — the raw Garmin `activityType.typeKey`
+- `name: string, nullable`
+- `started_on: date, null: false` — the local date the activity started, used for matching and the calendar (Garmin's `startTimeLocal`; for uploads, the start in the application time zone)
+- `distance_metres: decimal, nullable`
+- `summary: jsonb, null: false, default: {}` — Garmin's raw summary for Stages 2 and 3
+- `planned_workout_id: bigint, nullable` — the linked completed workout
+- `link_origin: enum, nullable` — `automatic`, `rider`; present exactly when linked
+
+Backfill existing rows as `source: upload`, `sport: cycling`, `user_id` from the workout's plan, `started_on` from `started_at`, and `link_origin: rider`.
+
+Constraints:
+
+- unique `planned_workout_id` where present: one activity per workout;
+- unique `[user_id, garmin_activity_id]` where `garmin_activity_id` is present;
+- a trigger replacing `require_completed_workout_activity_parent`: a non-null `planned_workout_id` must point at a completed workout whose plan belongs to the same `user_id`. Relinking to another such workout is allowed;
+- `WorkoutActivity`'s duration, power-together and non-negative checks stay;
+- the workout foreign key nullifies on delete, so the activity outlives its workout.
+
+Ridden figures for cycling come from the stored file at the linked workout's frozen `completed_ftp_watts`, or, when unlinked, at the FTP reading in force on `started_on`. They are recalculated on link, unlink, relink and FTP-history changes. Writing an activity never writes its workout. Archived plans keep their completed workouts' links.
 
 ## AdaptationProposal
 
@@ -331,6 +371,7 @@ This section records ownership constraints. [USR-001–USR-008](REQUIREMENTS.md#
 | `FtpReading` | Keep required `rider_profile_id`; owner is the profile's user. |
 | `TrainingPlan` | Required `user_id` foreign key and unique partial index on `user_id` where `status = 'active'`. Archived plans remain attached to their owner with completed history. |
 | Plan children | `TargetEvent`, `PlanPhase`, `AvailabilityTemplate`/`AvailabilitySlot`, `TimeOffPeriod`, `PlannedWorkout`/`WorkoutStep`/`WorkoutFeedback`/`WorkoutActivity` and `AdaptationProposal` inherit ownership through their plan. |
+| `Activity` *(ADR 0002, not yet built)* | Required `user_id` foreign key; a link must point at a completed workout in one of the same user's plans (trigger). Garmin ids are unique per user. |
 | `IntervalsIcuSync` | Required `user_id` foreign key in addition to the nullable `planned_workout_id`; the direct owner survives workout deletion. Unique `external_id` and `planned_workout_id` indexes apply. |
 
 Controllers and services must resolve records through the signed-in owner's profile and plan, even when given a foreign ID. Pure calculations take explicit inputs, never request context. Two-rider specs cover ownership, scoping, preview and sync.

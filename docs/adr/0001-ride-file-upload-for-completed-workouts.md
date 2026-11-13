@@ -1,7 +1,7 @@
 # 1. Ride file upload for completed workouts
 
 Date: 2026-10-30
-Status: Accepted
+Status: Accepted. Partly superseded by [ADR 0002](0002-garmin-connect-activity-import.md) on the activity source, the `WorkoutActivity` model and the rule that rides never move between workouts. The upload, validation, parser and figure rules below still apply.
 
 ## Context
 

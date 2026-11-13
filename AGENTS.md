@@ -15,6 +15,7 @@ Read these files in order:
 5. `docs/ARCHITECTURE.md`
 6. `docs/UX.md`
 7. `docs/INTERVALS_ICU.md`
+8. `docs/GARMIN_CONNECT.md` when touching activities or Garmin import
 
 If documents appear to conflict, use this precedence:
 
@@ -123,6 +124,17 @@ Write model/service specs proving this invariant before building later replannin
 - Never delete or overwrite unrelated calendar events.
 - Verify the current external API contract while implementing the adapter; if it has changed, adapt the adapter rather than the domain model.
 
+## Garmin Connect integration
+
+Stage 1 of `docs/adr/0002-garmin-connect-activity-import.md`: manual, display-only import for the one `GARMIN_RIDER_EMAIL` rider.
+
+- Keep HTTP code isolated under `GarminConnect::`.
+- Keep the Personal API key and its token out of logs, exceptions and rendered output; hold the token in memory for one import only.
+- Stub HTTP in specs, with redacted fixtures (GPS and personal data stripped).
+- Keep import a foreground request the rider starts; completion stays manual.
+- Leave the training engine untouched: activities feed no totals, load limits, feedback, proposals or statuses.
+- `Activity` is rider-owned and links only to a completed workout of the same rider; writing an activity never writes its workout.
+
 ## Testing standard
 
 Every behaviour in `REQUIREMENTS.md` with an ID should have meaningful automated coverage at the most appropriate level.
@@ -132,7 +144,7 @@ Priorities:
 1. training-engine unit specs;
 2. model invariant specs;
 3. service/replanning specs;
-4. Intervals.icu adapter specs;
+4. Intervals.icu and Garmin Connect adapter specs;
 5. request/system specs for critical user flows.
 
 Critical system/request flows:
@@ -145,7 +157,8 @@ Critical system/request flows:
 - change availability;
 - add illness time off + return ramp;
 - update FTP and verify completed/future behaviour;
-- manual Intervals.icu sync with stubbed API.
+- manual Intervals.icu sync with stubbed API;
+- manual Garmin import with stubbed API -> auto-link / Choose ride / Ride found.
 
 Avoid brittle tests that assert Tailwind class strings. Test semantic content/actions.
 
@@ -182,7 +195,9 @@ A useful sample:
 
 Rails-generated authentication, self-registration and independent rider accounts have already been added. Do not extend them into coaches, teams, shared plans or social sign-in, or into:
 
-- automatic ride imports (manual FIT upload to a completed workout exists; see `docs/adr/0001-ride-file-upload-for-completed-workouts.md`);
+- automatic ride imports or background polling (manual FIT upload and the rider-started Garmin import are allowed; see `docs/adr/0001-ride-file-upload-for-completed-workouts.md` and `docs/adr/0002-garmin-connect-activity-import.md`);
+- Garmin Stage 2 (actual load in planning) and Stage 3 (per-activity insights), each awaiting its own ADR;
+- Garmin for more than one rider per deployment, Garmin business tiers, webhooks, OAuth or workout push to Garmin;
 - trainer control;
 - notifications;
 - mobile redesign;

@@ -13,11 +13,13 @@ System(cyclefar, "CycleFar", "A cycling training planner with public registratio
 
 System_Ext(intervals_icu, "Intervals.icu", "External training-calendar service that stores CycleFar-owned workout events.")
 System_Ext(smtp, "SMTP provider", "Delivers account setup and password-reset links.")
+System_Ext(garmin, "Garmin Connect", "Personal API holding the Garmin rider's own activities and original files. Planned: ADR 0002, not yet built.")
 
 Rel(rider, cyclefar, "Registers or signs in; creates and manages plans; completes workouts and uploads FIT ride files; reviews adaptations", "Web browser")
 Rel(cyclefar, intervals_icu, "Manually exports all upcoming executable structured workouts; reconciles tracked CycleFar-owned events", "HTTPS / JSON")
 Rel(cyclefar, smtp, "Sends password setup and reset links", "SMTP / STARTTLS")
 Rel(smtp, rider, "Delivers account setup and password-reset links", "Email")
+Rel(cyclefar, garmin, "On the Garmin rider's request, lists activities and downloads ride files (planned)", "HTTPS / JSON, zip")
 
 note bottom of cyclefar
   Automated two-rider isolation coverage exists.

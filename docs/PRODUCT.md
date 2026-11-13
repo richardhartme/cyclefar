@@ -33,6 +33,7 @@ The rider should be able to:
 8. Plan holidays, illness and recovery into the schedule.
 9. Update FTP and have future wattage targets change automatically.
 10. Push all upcoming structured workouts to Intervals.icu on demand.
+11. See what was actually ridden against the plan, from an uploaded FIT file or, for a deployment's Garmin rider, a Garmin Connect import.
 
 Changing FTP also refreshes future workouts already synced to Intervals.icu. If that refresh fails, the FTP change still stands and the rider is told to retry with Sync. First exports and stale-event cleanup only happen on demand.
 
@@ -88,7 +89,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 ### Included
 
 - Email/password registration, sign-in, sign-out and password reset
-- Settings with FTP and Intervals.icu API key
+- Settings with FTP, Intervals.icu API key and, for the Garmin rider, a Garmin Connect Personal API key
 - One active training plan
 - One target event maximum
 - Plan creation + preview + confirmation
@@ -102,6 +103,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Weekly totals and weekly load progression
 - Manual workout completion + RPE + completion quality
 - Optional FIT ride file upload on a completed workout, showing ridden against planned metrics
+- Manual Garmin Connect import for one rider per deployment: activities on the calendar, rides linked to completed workouts, display only ([ADR 0002](adr/0002-garmin-connect-activity-import.md); accepted, not yet built)
 - Optional adaptation proposals
 - Workout shuffle/change/move/copy and adding a workout to an empty date
 - Persistent missed-workout calendar status and a weekly TSS chart
@@ -116,8 +118,11 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Running, strength or multisport training
 - Controlling a smart trainer
 - Recording ride data
-- Activity import from Intervals.icu, Strava or other services (a manually uploaded FIT file per completed workout is supported)
-- Automatic completion detection or matching rides to workouts
+- Activity import from Intervals.icu, Strava or other services (FIT upload and manual Garmin Connect import are supported)
+- Automatic or background activity import
+- Automatic completion detection (a found ride only prompts the rider to complete the workout)
+- Actual ridden load affecting weekly totals, load limits or adaptation
+- Activity insights or analytics
 - Automatic notifications/reminders
 - Cadence targets
 - Heart-rate targets
@@ -132,17 +137,19 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 
 ## Independent riders
 
-Each `User` owns one rider profile, at most one active plan and any number of archived plans. Workouts, FTP readings, Intervals.icu credentials and sync records all belong to that rider, and a plan preview can't be viewed or confirmed by another account signing in on the same browser. Operator provisioning is disabled until live mail delivery is verified (see [ACCOUNT_ACCESS.md](ACCOUNT_ACCESS.md)).
+Each `User` owns one rider profile, at most one active plan and any number of archived plans. Workouts, FTP readings, activities, Intervals.icu and Garmin credentials and sync records all belong to that rider, and a plan preview can't be viewed or confirmed by another account signing in on the same browser. Operator provisioning is disabled until live mail delivery is verified (see [ACCOUNT_ACCESS.md](ACCOUNT_ACCESS.md)).
 
-There is no social sign-in, no coaches, shared plans or teams, and no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) for the acceptance and test contract.
+Garmin Connect import is enabled for only one rider per deployment, chosen by the `GARMIN_RIDER_EMAIL` environment variable. There is no social sign-in, no coaches, shared plans or teams, and no separate History screen. See [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders) for the acceptance and test contract.
 
 ## Future-friendly seams
 
 Do not implement these now, but avoid architecture that blocks them:
 
 - importing training history/current volume;
+- background Garmin import;
+- actual ridden load feeding weekly totals, load limits and replanning (Garmin Stage 2, needs its own ADR);
+- deterministic, rule-based insights per activity, with no LLM (Garmin Stage 3, needs its own ADR);
 - experience level and age as planning inputs;
-- automatic activity completion from Intervals.icu;
 - AI assistance layered above deterministic rules;
 - mobile-first UI;
 - trainer execution;

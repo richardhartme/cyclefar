@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) and the rider-owned `Activity` in FBK-004 are accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md) but not yet built (#53–#58); until then rides are ADR 0001's per-workout `WorkoutActivity`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -378,7 +378,7 @@ The rider may remove a planned or missed workout from an active plan on a past, 
 
 ### FBK-001 Manual completion
 
-Completion is always manual in V1.
+Completion is always manual in V1, including when a ride is found for the workout (GAR-009).
 
 When marking completed, collect:
 
@@ -415,18 +415,25 @@ A rider may mark an old awaiting-status workout completed at any later date.
 
 Its feedback may trigger an adaptation proposal only if the next upcoming workout has not already been completed.
 
-### FBK-004 Ride file upload
+### FBK-004 Ridden activities
 
-A rider may upload one FIT file to a completed workout in the active plan to see what was actually ridden. See [ADR 0001](adr/0001-ride-file-upload-for-completed-workouts.md).
+A ride is a rider-owned `Activity` that may link to one completed workout, showing what was actually ridden against the plan. It comes from a FIT file the rider uploads, or from a Garmin Connect import (GAR-003). See [ADR 0001](adr/0001-ride-file-upload-for-completed-workouts.md) and [ADR 0002](adr/0002-garmin-connect-activity-import.md).
 
-- Accept FIT activity files up to 10 MB with a valid header, signature and checksum. Reject anything else with a readable message and store nothing.
-- Calculate moving and elapsed time, average power, NP, IF, TSS, work and average heart rate. Use the workout's frozen completion FTP and the planned NP convention (30-second rolling window, growing for the first 29 samples). Speeds below 0.5 m/s and recording gaps over 10 seconds do not count as moving.
-- A file without power data still attaches: show duration and heart rate, with `No power data` in place of power metrics. Heart-rate-based TSS is not provided.
-- Show planned against ridden metrics on the workout detail and ridden TSS on the completed calendar card. Warn, without blocking, when the ride's local start date differs from the scheduled date.
-- Uploading again replaces the file and metrics. Removing deletes both. Keep the original file so metrics can be recalculated.
-- Ridden metrics are display only: they do not change weekly totals, load limits, feedback evaluation or adaptation proposals.
-- The completed workout's structure, snapshot, metrics and feedback never change. Rides attach only to completed workouts and never move between workouts; the database enforces both.
-- Activity import from Intervals.icu or other services, and automatic matching of rides to workouts, are not provided.
+- **Ownership.** An activity belongs to its rider, not to a workout or plan, and survives plan archival or deletion. Archived plans keep their completed workouts' links.
+- **Links.** An activity links to at most one workout and a workout has at most one activity. A link points only at a completed workout of the same rider. The database enforces all three. The link records whether it was made automatically or by the rider.
+- **Upload.** Any rider may upload one FIT file to a completed workout in the active plan. It creates a linked activity with source `upload` and sport `cycling`. Accept FIT activity files up to 10 MB with a valid header, signature and checksum. Reject anything else with a readable message and store nothing. Uploading again replaces the file and figures. Removing deletes the activity and its file.
+- **Figures.** For cycling, calculate moving and elapsed time, average power, NP, IF, TSS, work and average heart rate from the stored file, using the planned NP convention (30-second rolling window, growing for the first 29 samples). Speeds below 0.5 m/s and recording gaps over 10 seconds do not count as moving.
+  - A linked ride uses the workout's frozen completion FTP.
+  - An unlinked ride uses the FTP in force on its local date: the newest FTP reading on or before it (highest ID on a tie), or the earliest reading for a ride before the first.
+  - Recalculate on link, unlink and relink, and when FTP history changes the reading that applies.
+- A file without power data still attaches: show duration and heart rate, with `No power data` in place of power figures. Heart-rate-based TSS is not provided.
+- Show planned against ridden figures on the workout detail and ridden TSS on the completed calendar card. Warn, without blocking, when the ride's local start date differs from the scheduled date.
+- Keep the original file so figures can be recalculated.
+- **Relinking.** A ride may move from one completed workout to another in one transaction (GAR-008).
+- Ridden figures are display only: they do not change weekly totals, load limits, feedback evaluation or adaptation proposals (GAR-013).
+- The completed workout's structure, snapshot, metrics and feedback never change through upload, link, unlink, relink or recalculation.
+- Activity import from Intervals.icu or Strava is not provided.
+- **As built today:** until #53 lands, a ride is ADR 0001's `WorkoutActivity`, attached to one completed workout. It never moves between workouts and is deleted with its file on removal; the database enforces both.
 
 ## 9. Missed workouts
 
@@ -581,3 +588,104 @@ Automated coverage target: stubbed HTTP two-user adapter/service specs with dist
 - Owner schema, controller and service scoping, preview isolation, sync scoping and provisioning must work together. Verify Settings, calendar, plan creation/archive, workout actions, feedback/adaptation, missed workouts, schedule/time off, FTP lifecycle, archived history and Intervals.icu sync with two users.
 
 Automated coverage target: end-to-end two-user regression matrix with foreign-ID attempts, full RSpec suite, Zeitwerk check and configured lint/security checks.
+
+## 17. Garmin Connect
+
+Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). Not yet built (#53–#58).
+
+### GAR-001 Garmin enablement
+
+- Garmin features exist only for the one user whose email matches the `GARMIN_RIDER_EMAIL` environment variable.
+- When the variable is unset or doesn't match, no Garmin UI is shown, and Garmin routes return the same 404 as a missing record.
+- FIT upload (FBK-004) stays available to every rider.
+
+### GAR-002 Personal API key
+
+Settings, for the Garmin rider only, take an optional Garmin Connect Personal API key and its expiry date.
+
+- Store the key encrypted with Active Record Encryption. Never log it, echo it or show it after saving; show it masked.
+- Garmin doesn't return the key's expiry, so the rider enters the date.
+- Warn in Settings and next to the import button when the expiry is 14 days or fewer away, and once it has passed.
+- Clearing the key hides the import button and keeps imported activities.
+- Each import exchanges the key for a short-lived token held in memory only, never stored.
+
+### GAR-003 Manual import and window
+
+An `Import from Garmin` button sits in the calendar header next to `Sync to Intervals.icu`. It is shown only to the Garmin rider, with an active plan and a saved key.
+
+- The import runs in the foreground request. There is no background or scheduled import.
+- **Window:** the first import runs from the active plan's start date to today. Later imports run from 7 days before the last successful import to today. Store the last import time on the rider.
+- Upsert activities by Garmin activity id. Download the original file only for cycling activities without one; never download a stored file again. If a download or parse fails, keep the activity without a file and try again next time.
+- Activities outside the window are never touched.
+- A flash reports `Imported N, updated N, removed N`. A failure keeps what was already committed, is safe to re-run and shows readable guidance for a bad or expired key, rate limiting and Garmin being unavailable.
+- An owner-scoped lock stops two imports racing. No database transaction is held across HTTP.
+
+### GAR-004 Edited and deleted activities
+
+- A changed Garmin summary refreshes the stored fields on the next import that covers its date.
+- After a complete listing, a stored Garmin activity in the window that Garmin no longer returns is treated as deleted:
+  - a Garmin-only activity is removed, with its link and file;
+  - an activity merged with an upload (GAR-005) keeps its file and link and only loses its Garmin id and summary.
+- A failed or partial listing deletes nothing.
+
+### GAR-005 Duplicate rides
+
+- A Garmin activity whose start is within 60 seconds of an uploaded activity's start is merged into it, not stored twice.
+- The uploaded activity gains the Garmin id, name, type and summary, and keeps its source, file and link.
+- Activities more than 60 seconds apart stay separate.
+
+### GAR-006 Sport mapping
+
+- Each activity has a `sport`: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming` or `other`, plus the raw Garmin type key.
+- An activity is `cycling` when its Garmin type's parent is cycling (`parentTypeId` 2) or the type itself is cycling. Road, indoor, virtual, gravel and MTB rides are all cycling.
+- Unknown types map to `other`.
+- Only cycling activities store a file, calculate ridden figures or take part in matching. Other sports show duration, distance and heart rate from the summary.
+
+### GAR-007 Automatic linking
+
+- When a workout is completed, and after each import, a completed workout with no link and exactly one unlinked cycling activity on its scheduled date is linked automatically.
+- Auto-link never replaces an existing link, whether chosen by the rider or made by uploading a file.
+- Two rides on one day stay separate: with several candidates nothing is linked automatically.
+
+### GAR-008 Choose ride and relinking
+
+- For the Garmin rider, a completed workout with no link and none or several candidates shows `Choose ride`.
+- The picker lists cycling activities within 3 days either side of the scheduled date, newest first: unlinked rides, plus rides linked to other completed workouts, marked as such.
+- Choosing a ride linked elsewhere moves it in one transaction; the other workout is left without a ride.
+- Any link can be removed. Removing an uploaded activity deletes it and its file (FBK-004); removing a Garmin link keeps the activity unlinked.
+- Ridden figures recalculate on every change (FBK-004).
+
+### GAR-009 Ride found
+
+- A `planned` workout with an unlinked cycling activity on its date shows `Ride found — mark this workout completed?`.
+- It opens the normal completion form (RPE and completion quality) with that ride preselected. Completing the workout links the ride.
+- Nothing completes automatically, and the prompt never marks a workout missed.
+
+### GAR-010 Calendar and activity detail
+
+- Unlinked activities appear as compact secondary entries under the day's card, including on rest days. Each shows sport, name, duration and, when power is present, TSS.
+- A linked ride appears only on its workout card, as ridden figures (FBK-004), never as a second entry.
+- Only dates inside the active plan's calendar range show activities.
+- Selecting an entry opens a read-only detail view. Cycling shows its ridden figures; other sports show duration, distance and heart rate. An unlinked ride says its figures use the FTP on the ride date.
+
+### GAR-011 Source label
+
+Every activity shows a plain source label: `Garmin Connect` for source `garmin` and `Uploaded FIT` for source `upload`. A merged upload keeps `Uploaded FIT`.
+
+### GAR-012 Owner scoping
+
+- Activities belong to one rider. Resolve every activity, link, picker and import action through `Current.user`; foreign and missing IDs get the same 404 (USR-004).
+- An activity and a workout can be linked only when both belong to the same rider; the database enforces it.
+- Garmin activity ids are unique per rider.
+- Imports use only the Garmin rider's key and never read or change another rider's activities.
+
+### GAR-013 No engine effect
+
+In Stage 1, activities and ridden figures do not change:
+
+- weekly totals or the TSS chart, which stay planned-only;
+- load limits and warnings;
+- feedback evaluation or adaptation proposals;
+- missed-workout handling or workout statuses.
+
+Load-aware planning (Stage 2) and per-activity insights (Stage 3) are not provided and need their own ADRs.
