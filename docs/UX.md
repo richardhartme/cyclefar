@@ -269,7 +269,8 @@ Actions:
 
 *(ADR 0002)* The ride section shows the source label. For the Garmin rider it also offers:
 
-- **Choose ride** when no ride is linked, or **Change ride** when one is: a picker of rides within 3 days either side of the scheduled date, newest first, with rides already linked to another workout marked. Choosing one links it, moving it from its other workout if needed;
+- **Choose ride** when no ride is linked, or **Change ride** when one is: a picker of rides within 3 days either side of the scheduled date, newest first. Rides already linked to another workout in the active plan show that workout's name and date; choosing one asks for confirmation, then moves it;
+- with a Garmin ride linked, Upload is replaced by Change ride and Unlink. An upload that matches an existing ride (within 60 seconds) links that ride and says so;
 - **Unlink** on a Garmin ride, which leaves the activity on the calendar as an unlinked entry. Removing an uploaded file still deletes it.
 
 **Ride found** *(ADR 0002)* on a planned workout opens the normal completion form with the found ride preselected; completing links it. Nothing completes on its own.

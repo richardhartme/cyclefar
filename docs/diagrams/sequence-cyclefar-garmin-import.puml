@@ -64,7 +64,7 @@ note right of Import
   Only after a complete listing.
   Nothing outside the window is touched.
 end note
-Import -> Linker: auto-link
+Import -> Linker: auto-link the activities this import created
 Import -> Database: save last import time; release lock
 Controller --> Rider: calendar with "Imported N, updated N, removed N"
 
