@@ -1,9 +1,9 @@
 <section aria-labelledby="ride-file-title" class="space-y-4">
   <h2 id="ride-file-title" class="text-xl font-semibold">Ride file</h2>
 
-  <% if (activity = workout.workout_activity) %>
+  <% if (activity = workout.activity) %>
     <p>
-      <strong><%= activity.ride_file.filename %></strong>, ridden on <%= activity.ridden_on.to_fs(:long) %>.
+      <% if activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
       Calculated at your completion FTP of <%= workout.completed_ftp_watts %> W.
     </p>
     <% if activity.date_mismatch? %>

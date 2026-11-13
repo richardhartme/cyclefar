@@ -32,6 +32,7 @@ module Settings
       latest = @profile.ftp_readings.newest_first.first!
       @profile.update!(ftp_watts: latest.ftp_watts) if @profile.ftp_watts != latest.ftp_watts
       Planning::FtpRecalculator.new(profile: @profile).call if previous_ftp != latest.ftp_watts
+      Activities::FtpRefresh.new(@profile.user).call
     end
 
     private

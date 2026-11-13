@@ -49,7 +49,7 @@ Rel(controllers, adaptations, "Records feedback/schedule changes and builds owne
 Rel(controllers, settings, "Updates settings")
 Rel(controllers, ride_files, "Uploads, replaces or removes a ride file through the active plan")
 Rel(ride_files, workouts, "Shares NormalizedPower with planned metrics")
-Rel(ride_files, models, "Saves WorkoutActivity beside completed history")
+Rel(ride_files, models, "Saves the rider's Activity beside completed history")
 Rel(models, file_storage, "Stores and purges ride files", "Active Storage")
 Rel(controllers, sync, "Starts manual sync")
 Rel(controllers, views, "Renders pages with presenter data")
@@ -80,7 +80,7 @@ note bottom of models
   are enforced by database constraints as well as model validation.
   PostgreSQL triggers protect completed workouts, steps and feedback
   against updates/deletes, including direct SQL writes.
-  WorkoutActivity rows attach only to completed workouts.
+  Activity rows link only to completed workouts of the same rider.
 end note
 
 SHOW_LEGEND()

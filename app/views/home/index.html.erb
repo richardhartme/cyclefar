@@ -146,7 +146,7 @@
 
                     <% if workout.completed? %>
                       <p class="badge badge-success badge-sm mt-1">Completed</p>
-                      <% ridden = ("Ridden: #{workout.workout_activity.tss.round} TSS" if workout.workout_activity&.power?) %>
+                      <% ridden = ("Ridden: #{workout.activity.tss.round} TSS" if workout.activity&.power?) %>
                       <% rpe = ("RPE #{workout.workout_feedback.rpe}" if workout.workout_feedback) %>
                       <% if ridden || rpe %>
                         <p class="flex flex-wrap gap-x-2 text-sm tabular-nums">

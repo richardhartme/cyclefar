@@ -58,21 +58,33 @@ $$;
 
 
 --
--- Name: require_completed_workout_activity_parent(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: require_completed_activity_link(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.require_completed_workout_activity_parent() RETURNS trigger
+CREATE FUNCTION public.require_completed_activity_link() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
   parent_status text;
+  parent_user_id bigint;
 BEGIN
-  IF TG_OP = 'UPDATE' AND NEW.planned_workout_id != OLD.planned_workout_id THEN
-    RAISE EXCEPTION 'Ride files cannot move between workouts' USING ERRCODE = '23514';
+  IF NEW.planned_workout_id IS NULL THEN
+    NEW.link_origin := NULL;
+    RETURN NEW;
   END IF;
-  SELECT status INTO parent_status FROM planned_workouts WHERE id = NEW.planned_workout_id FOR SHARE;
+  IF TG_OP = 'UPDATE' AND NEW.planned_workout_id = OLD.planned_workout_id AND NEW.user_id = OLD.user_id THEN
+    RETURN NEW;
+  END IF;
+  SELECT planned_workouts.status, training_plans.user_id INTO parent_status, parent_user_id
+  FROM planned_workouts
+  JOIN training_plans ON training_plans.id = planned_workouts.training_plan_id
+  WHERE planned_workouts.id = NEW.planned_workout_id
+  FOR SHARE OF planned_workouts;
   IF parent_status IS DISTINCT FROM 'completed' THEN
-    RAISE EXCEPTION 'Ride files attach only to completed workouts' USING ERRCODE = '23514';
+    RAISE EXCEPTION 'Activities link only to completed workouts' USING ERRCODE = '23514';
+  END IF;
+  IF parent_user_id IS DISTINCT FROM NEW.user_id THEN
+    RAISE EXCEPTION 'Activities link only to the same rider''s workouts' USING ERRCODE = '23514';
   END IF;
   RETURN NEW;
 END;
@@ -180,6 +192,64 @@ CREATE SEQUENCE public.active_storage_variant_records_id_seq
 --
 
 ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.active_storage_variant_records.id;
+
+
+--
+-- Name: activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activities (
+    id bigint CONSTRAINT workout_activities_id_not_null NOT NULL,
+    planned_workout_id bigint,
+    started_at timestamp(6) without time zone CONSTRAINT workout_activities_started_at_not_null NOT NULL,
+    elapsed_seconds integer CONSTRAINT workout_activities_elapsed_seconds_not_null NOT NULL,
+    moving_seconds integer CONSTRAINT workout_activities_moving_seconds_not_null NOT NULL,
+    average_power_watts numeric(12,4),
+    np_watts numeric(12,4),
+    intensity_factor numeric(8,5),
+    tss numeric(12,4),
+    work_kj numeric(14,4),
+    average_heart_rate_bpm numeric(6,2),
+    created_at timestamp(6) without time zone CONSTRAINT workout_activities_created_at_not_null NOT NULL,
+    updated_at timestamp(6) without time zone CONSTRAINT workout_activities_updated_at_not_null NOT NULL,
+    user_id bigint NOT NULL,
+    source character varying NOT NULL,
+    garmin_activity_id bigint,
+    sport character varying NOT NULL,
+    external_type character varying,
+    name character varying,
+    started_on date NOT NULL,
+    distance_metres numeric(12,2),
+    summary jsonb DEFAULT '{}'::jsonb NOT NULL,
+    link_origin character varying,
+    figures_ftp_watts integer,
+    CONSTRAINT activities_durations CHECK (((elapsed_seconds >= 0) AND (moving_seconds >= 0) AND (moving_seconds <= elapsed_seconds))),
+    CONSTRAINT activities_link_origin CHECK ((((planned_workout_id IS NULL) = (link_origin IS NULL)) AND ((link_origin IS NULL) OR ((link_origin)::text = ANY ((ARRAY['automatic'::character varying, 'rider'::character varying])::text[]))))),
+    CONSTRAINT activities_nonnegative_details CHECK (((distance_metres >= (0)::numeric) AND (figures_ftp_watts > 0))),
+    CONSTRAINT activities_nonnegative_metrics CHECK (((average_power_watts >= (0)::numeric) AND (np_watts >= (0)::numeric) AND (intensity_factor >= (0)::numeric) AND (tss >= (0)::numeric) AND (work_kj >= (0)::numeric) AND (average_heart_rate_bpm > (0)::numeric))),
+    CONSTRAINT activities_power_metrics_together CHECK ((((average_power_watts IS NULL) AND (np_watts IS NULL) AND (intensity_factor IS NULL) AND (tss IS NULL) AND (work_kj IS NULL)) OR ((average_power_watts IS NOT NULL) AND (np_watts IS NOT NULL) AND (intensity_factor IS NOT NULL) AND (tss IS NOT NULL) AND (work_kj IS NOT NULL)))),
+    CONSTRAINT activities_source CHECK (((source)::text = ANY ((ARRAY['upload'::character varying, 'garmin'::character varying])::text[]))),
+    CONSTRAINT activities_sport CHECK (((sport)::text = ANY ((ARRAY['cycling'::character varying, 'running'::character varying, 'walking'::character varying, 'strength'::character varying, 'yoga'::character varying, 'swimming'::character varying, 'other'::character varying])::text[])))
+);
+
+
+--
+-- Name: activities_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.activities_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: activities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.activities_id_seq OWNED BY public.activities.id;
 
 
 --
@@ -716,49 +786,6 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: workout_activities; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.workout_activities (
-    id bigint NOT NULL,
-    planned_workout_id bigint NOT NULL,
-    started_at timestamp(6) without time zone NOT NULL,
-    elapsed_seconds integer NOT NULL,
-    moving_seconds integer NOT NULL,
-    average_power_watts numeric(12,4),
-    np_watts numeric(12,4),
-    intensity_factor numeric(8,5),
-    tss numeric(12,4),
-    work_kj numeric(14,4),
-    average_heart_rate_bpm numeric(6,2),
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT workout_activities_durations CHECK (((elapsed_seconds >= 0) AND (moving_seconds >= 0) AND (moving_seconds <= elapsed_seconds))),
-    CONSTRAINT workout_activities_nonnegative_metrics CHECK (((average_power_watts >= (0)::numeric) AND (np_watts >= (0)::numeric) AND (intensity_factor >= (0)::numeric) AND (tss >= (0)::numeric) AND (work_kj >= (0)::numeric) AND (average_heart_rate_bpm > (0)::numeric))),
-    CONSTRAINT workout_activities_power_metrics_together CHECK ((((average_power_watts IS NULL) AND (np_watts IS NULL) AND (intensity_factor IS NULL) AND (tss IS NULL) AND (work_kj IS NULL)) OR ((average_power_watts IS NOT NULL) AND (np_watts IS NOT NULL) AND (intensity_factor IS NOT NULL) AND (tss IS NOT NULL) AND (work_kj IS NOT NULL))))
-);
-
-
---
--- Name: workout_activities_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.workout_activities_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: workout_activities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.workout_activities_id_seq OWNED BY public.workout_activities.id;
-
-
---
 -- Name: workout_feedbacks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -861,6 +888,13 @@ ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAU
 
 
 --
+-- Name: activities id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities ALTER COLUMN id SET DEFAULT nextval('public.activities_id_seq'::regclass);
+
+
+--
 -- Name: adaptation_proposals id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -952,13 +986,6 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
--- Name: workout_activities id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.workout_activities ALTER COLUMN id SET DEFAULT nextval('public.workout_activities_id_seq'::regclass);
-
-
---
 -- Name: workout_feedbacks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -994,6 +1021,14 @@ ALTER TABLE ONLY public.active_storage_blobs
 
 ALTER TABLE ONLY public.active_storage_variant_records
     ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: activities activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT activities_pkey PRIMARY KEY (id);
 
 
 --
@@ -1117,14 +1152,6 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: workout_activities workout_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.workout_activities
-    ADD CONSTRAINT workout_activities_pkey PRIMARY KEY (id);
-
-
---
 -- Name: workout_feedbacks workout_feedbacks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1173,6 +1200,27 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_activities_on_planned_workout_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_activities_on_planned_workout_id ON public.activities USING btree (planned_workout_id);
+
+
+--
+-- Name: index_activities_on_user_id_and_garmin_activity_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_activities_on_user_id_and_garmin_activity_id ON public.activities USING btree (user_id, garmin_activity_id) WHERE (garmin_activity_id IS NOT NULL);
+
+
+--
+-- Name: index_activities_on_user_id_and_started_on; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_activities_on_user_id_and_started_on ON public.activities USING btree (user_id, started_on);
 
 
 --
@@ -1302,13 +1350,6 @@ CREATE UNIQUE INDEX index_users_on_email_address ON public.users USING btree (em
 
 
 --
--- Name: index_workout_activities_on_planned_workout_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_workout_activities_on_planned_workout_id ON public.workout_activities USING btree (planned_workout_id);
-
-
---
 -- Name: index_workout_feedbacks_on_planned_workout_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1365,10 +1406,10 @@ CREATE TRIGGER protect_completed_workout_steps BEFORE INSERT OR DELETE OR UPDATE
 
 
 --
--- Name: workout_activities require_completed_workout_activity_parent; Type: TRIGGER; Schema: public; Owner: -
+-- Name: activities require_completed_activity_link; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER require_completed_workout_activity_parent BEFORE INSERT OR UPDATE ON public.workout_activities FOR EACH ROW EXECUTE FUNCTION public.require_completed_workout_activity_parent();
+CREATE TRIGGER require_completed_activity_link BEFORE INSERT OR UPDATE ON public.activities FOR EACH ROW EXECUTE FUNCTION public.require_completed_activity_link();
 
 
 --
@@ -1420,14 +1461,6 @@ ALTER TABLE ONLY public.planned_workouts
 
 
 --
--- Name: workout_activities fk_rails_5eb9995215; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.workout_activities
-    ADD CONSTRAINT fk_rails_5eb9995215 FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id);
-
-
---
 -- Name: plan_phases fk_rails_6237434079; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1449,6 +1482,14 @@ ALTER TABLE ONLY public.sessions
 
 ALTER TABLE ONLY public.availability_slots
     ADD CONSTRAINT fk_rails_7bf4b89dc8 FOREIGN KEY (availability_template_id) REFERENCES public.availability_templates(id);
+
+
+--
+-- Name: activities fk_rails_7e11bb717f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT fk_rails_7e11bb717f FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -1524,12 +1565,21 @@ ALTER TABLE ONLY public.planned_workouts
 
 
 --
+-- Name: activities fk_rails_fbb867df2a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activities
+    ADD CONSTRAINT fk_rails_fbb867df2a FOREIGN KEY (planned_workout_id) REFERENCES public.planned_workouts(id) ON DELETE SET NULL;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261113175339'),
 ('20261030133000'),
 ('20261030132254'),
 ('20261006130000'),

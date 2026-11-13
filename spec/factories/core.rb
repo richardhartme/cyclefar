@@ -126,9 +126,14 @@ FactoryBot.define do
     completion_quality { :as_planned }
   end
 
-  factory :workout_activity do
+  factory :activity do
     planned_workout { association :planned_workout, :completed, strategy: :create }
-    started_at { planned_workout.scheduled_on.in_time_zone.change(hour: 7) }
+    user { planned_workout&.training_plan&.user || association(:user) }
+    source { :upload }
+    sport { :cycling }
+    link_origin { planned_workout ? :rider : nil }
+    started_at { (planned_workout&.scheduled_on || Date.new(2026, 9, 10)).in_time_zone.change(hour: 7) }
+    started_on { started_at.in_time_zone.to_date }
     elapsed_seconds { 3660 }
     moving_seconds { 3600 }
     average_power_watts { 165 }
@@ -137,7 +142,11 @@ FactoryBot.define do
     tss { 43.7633 }
     work_kj { 594 }
     average_heart_rate_bpm { 138 }
-    after(:build) { |activity| activity.ride_file.attach(io: StringIO.new("ride"), filename: "ride.fit") }
+    after(:build) { |activity| activity.ride_file.attach(io: StringIO.new("ride"), filename: "ride.fit") if activity.cycling? }
+
+    trait :unlinked do
+      planned_workout { nil }
+    end
 
     trait :without_power do
       average_power_watts { nil }
