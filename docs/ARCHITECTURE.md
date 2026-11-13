@@ -5,7 +5,7 @@ This maps the implemented application. [REQUIREMENTS.md](REQUIREMENTS.md) and [T
 ## Application identity and stack
 
 - Module `CycleFar`, project `cycle_far`; domain classes stay brand-neutral.
-- Ruby 4.0.6, Rails 8.1.4, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS with daisyUI, import maps and plain Ruby domain services.
+- Ruby 4.0.6, Rails 8.1.4.1, PostgreSQL, server-rendered ERB, Turbo, Tailwind CSS with daisyUI, import maps and plain Ruby domain services.
 - Stimulus handles presentation only (for example, the plan form's goal-dependent fields). No training calculation runs in JavaScript.
 - Rails-generated authentication gates private requests.
 - Intervals.icu export is manual; an FTP change refreshes already-exported workouts in the foreground. There are no background sync or generation jobs.

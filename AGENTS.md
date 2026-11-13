@@ -39,7 +39,7 @@ Do not silently invent major product behaviour. If a small implementation detail
 Use:
 
 - Ruby 4.0.6 initially
-- Rails 8.1.3.1 initially; currently pinned to 8.1.4 in `Gemfile` / `Gemfile.lock`
+- Rails 8.1.3.1 initially; currently pinned to 8.1.4.1 in `Gemfile` / `Gemfile.lock`
 - PostgreSQL
 - Hotwire/Turbo
 - Stimulus
