@@ -2,8 +2,9 @@ class RideFilesController < ApplicationController
   before_action :load_workout
 
   def create
-    activity = Workouts::RideFileAttacher.new(workout: @workout, file: params[:ride_file]).call
-    notice = "Ride file added."
+    attacher = Workouts::RideFileAttacher.new(workout: @workout, file: params[:ride_file])
+    activity = attacher.call
+    notice = attacher.linked_existing? ? "This ride was already in CycleFar, so it is now linked to this workout." : "Ride file added."
     notice += " It was ridden on #{activity.ridden_on.to_fs(:long)}, not the scheduled date." if activity.date_mismatch?
     redirect_to planned_workout_path(@workout), status: :see_other, notice: notice
   rescue Workouts::RideFileAttacher::Rejected, ActiveRecord::RecordInvalid => error

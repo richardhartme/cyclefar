@@ -10,7 +10,7 @@ control "RideFileAttacher" as Attacher
 control "Fit::Reader" as Reader
 control "RideCalculator +\nNormalizedPower" as Calculator
 control "RideFileRemover" as Remover
-entity "WorkoutActivity" as Activity
+entity "Activity" as Activity
 database "PostgreSQL" as Database
 collections "Active Storage\nlocal disk volume" as Storage
 
@@ -37,14 +37,21 @@ end
 Reader --> Attacher: samples
 group transaction under plan lock
   Attacher -> Database: lock plan; reload workout
-  alt workout not completed
+  alt workout not completed, or a Garmin ride is linked
     Attacher --> Controller: Rejected
     Controller --> Rider: redirect with alert
   end
+  opt no ride linked yet: rider's activity starting within 60 s (GAR-005)
+    alt linked to another workout
+      Attacher --> Controller: Rejected; use Change ride
+      Controller --> Rider: redirect with alert
+    end
+    Attacher -> Activity: link it to this workout (keeps any stored file)
+  end
   Attacher -> Calculator: call(samples, completed_ftp_watts)
   Calculator --> Attacher: moving/elapsed time, power, NP, IF, TSS, work, heart rate
-  Attacher -> Activity: create, or replace metrics on existing record
-  Activity -> Database: save row; trigger requires completed parent, no reparenting
+  Attacher -> Activity: create a linked upload, or replace metrics on the linked one
+  Activity -> Database: save row; trigger requires a completed workout of the same rider
   Activity -> Storage: store FIT file (blob + attachment)
 end
 opt replacing an earlier file
@@ -65,8 +72,8 @@ Controller -> Database: load workout through the rider's active plan
 Controller -> Remover: call(workout)
 group transaction under plan lock
   Remover -> Database: lock plan; reload workout
-  Remover -> Activity: destroy (if present)
-  Activity -> Database: delete row and attachment
+  Remover -> Activity: destroy an upload (if present); unlink a Garmin ride
+  Activity -> Database: delete row and attachment, or clear the link
 end
 Activity -> Storage: purge blob through Solid Queue
 Controller --> Rider: redirect to workout detail

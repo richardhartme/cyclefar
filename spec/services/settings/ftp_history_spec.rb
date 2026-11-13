@@ -91,3 +91,46 @@ RSpec.describe Settings::FtpHistory do
     expect(profile.reload.ftp_watts).to eq(280)
   end
 end
+
+RSpec.describe Settings::FtpHistory, "ridden figures" do
+  let(:user) { create(:user) }
+  let(:profile) { create(:rider_profile, user: user, ftp_watts: 300) }
+  let!(:august) { create(:ftp_reading, rider_profile: profile, ftp_watts: 250, effective_on: Date.new(2026, 8, 1)) }
+  let!(:latest) { create(:ftp_reading, rider_profile: profile, ftp_watts: 300, effective_on: Date.current - 2) }
+  subject(:history) { described_class.new(profile: profile) }
+
+  # outdoor_ride.fit starts on 25 August 2026.
+  def ride(**attributes)
+    activity = create(:activity, user: user, **attributes)
+    activity.ride_file.attach(io: file_fixture("fit/outdoor_ride.fit").open, filename: "outdoor_ride.fit")
+    Activities::Linker.new(activity).recalculate!
+  end
+
+  it "FBK-004 recalculates unlinked rides when the reading in force on their date changes" do
+    unlinked = ride(planned_workout: nil)
+    expect(unlinked.figures_ftp_watts).to eq(250)
+
+    history.update!(reading_id: august.id, attributes: { ftp_watts: 240 })
+
+    expect(unlinked.reload.figures_ftp_watts).to eq(240)
+    expect(unlinked.intensity_factor.to_f).to be_within(1e-3).of(227.4 / 240)
+  end
+
+  it "FBK-004 leaves linked rides at the workout's completion FTP" do
+    plan = create(:training_plan, user: user)
+    linked = ride(planned_workout: create(:planned_workout, :completed, training_plan: plan))
+    before = linked.reload.attributes
+
+    history.update!(reading_id: august.id, attributes: { ftp_watts: 240 })
+
+    expect(linked.reload.attributes).to eq(before)
+  end
+
+  it "FBK-004 does not touch another rider's rides" do
+    other = create(:activity, :unlinked, figures_ftp_watts: 999)
+
+    history.update!(reading_id: august.id, attributes: { ftp_watts: 240 })
+
+    expect(other.reload.figures_ftp_watts).to eq(999)
+  end
+end

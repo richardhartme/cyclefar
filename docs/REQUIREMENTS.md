@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) and the rider-owned `Activity` in FBK-004 are accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md) but not yet built (#53–#58); until then rides are ADR 0001's per-workout `WorkoutActivity`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md) but not yet built (#54–#58). The rider-owned `Activity` in FBK-004 is built, but until then the only way to create one is a FIT upload, so every ride is linked to a completed workout. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -433,7 +433,7 @@ A ride is a rider-owned `Activity` that may link to one completed workout, showi
 - Ridden figures are display only: they do not change weekly totals, load limits, feedback evaluation or adaptation proposals (GAR-013).
 - The completed workout's structure, snapshot, metrics and feedback never change through upload, link, unlink, relink or recalculation.
 - Activity import from Intervals.icu or Strava is not provided.
-- **As built today:** until #53 lands, a ride is ADR 0001's `WorkoutActivity`, attached to one completed workout. It never moves between workouts and is deleted with its file on removal; the database enforces both.
+- **As built today:** links are made only by uploading, and `Change ride`, `Unlink` and automatic linking arrive with Garmin import (#57).
 
 ## 9. Missed workouts
 

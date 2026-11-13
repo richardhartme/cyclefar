@@ -57,8 +57,36 @@ RSpec.describe "Ride files", type: :request do
     delete planned_workout_ride_file_path(workout)
     expect(response).to have_http_status(:see_other)
     expect(flash[:notice]).to eq("Ride file removed.")
-    expect(workout.reload.workout_activity).to be_nil
+    expect(workout.reload.activity).to be_nil
     expect(workout.attributes).to eq(before)
+  end
+
+  it "FBK-004 stores the upload as the rider's own activity, which outlives the plan's archival" do
+    post planned_workout_ride_file_path(workout), params: { ride_file: upload("outdoor_ride") }
+
+    activity = user.activities.sole
+    expect(activity).to have_attributes(planned_workout: workout, source: "upload", sport: "cycling", link_origin: "rider")
+
+    delete training_plan_path
+    expect(plan.reload).to be_archived
+    expect(activity.reload.planned_workout).to eq(workout)
+  end
+
+  it "GAR-005 links the rider's existing matching activity and says so" do
+    create(:rider_profile, user: user)
+    existing = create(
+      :activity,
+      :unlinked,
+      user: user,
+      source: :garmin,
+      garmin_activity_id: 25_000_000_001,
+      started_at: Time.utc(2026, 8, 25, 9, 30, 40)).tap { |activity| activity.ride_file.purge }
+
+    post planned_workout_ride_file_path(workout), params: { ride_file: upload("outdoor_ride") }
+
+    expect(flash[:notice]).to start_with("This ride was already in CycleFar, so it is now linked to this workout.")
+    expect(existing.reload.planned_workout).to eq(workout)
+    expect(Activity.count).to eq(1)
   end
 
   it "FBK-004 rejects files that are not FIT activities" do
@@ -68,7 +96,7 @@ RSpec.describe "Ride files", type: :request do
 
     expect(response).to redirect_to(planned_workout_path(workout))
     expect(flash[:alert]).to eq("Not a FIT file")
-    expect(WorkoutActivity.count).to eq(0)
+    expect(Activity.count).to eq(0)
   end
 
   it "FBK-004 offers ride files only on completed workouts" do
@@ -79,7 +107,7 @@ RSpec.describe "Ride files", type: :request do
 
     post planned_workout_ride_file_path(planned), params: { ride_file: upload("outdoor_ride") }
     expect(flash[:alert]).to eq("Only completed workouts accept ride files")
-    expect(WorkoutActivity.count).to eq(0)
+    expect(Activity.count).to eq(0)
   end
 
   it "FBK-004 keeps ride files to the rider's active plan" do
@@ -97,6 +125,6 @@ RSpec.describe "Ride files", type: :request do
       delete planned_workout_ride_file_path(target)
       expect(response).to have_http_status(:not_found)
     end
-    expect(WorkoutActivity.count).to eq(0)
+    expect(Activity.count).to eq(0)
   end
 end

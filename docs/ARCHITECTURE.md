@@ -47,7 +47,7 @@ There is no singleton profile or global active plan; everything resolves from `C
 - Future watts come from `TrainingPlan#ftp_watts_for_planning`; completed snapshots keep their recorded FTP. Pure `Training` and `Planning` calculations never read request-global state.
 - The session-backed preview draft is bound to its creator and cleared on account change; confirmation checks the owner.
 - `IntervalsIcu::SyncCalendar` receives the rider's profile, plan and owner-scoped sync records. `IntervalsIcuSync.user_id` attributes detached records after a workout is deleted, so cleanup can't touch another rider's records.
-- *(ADR 0002, not yet built.)* Activities are resolved through `Current.user`, and a database trigger only lets an activity link to a completed workout in one of the same user's plans. Garmin routes return 404 unless `Current.user` is the `GARMIN_RIDER_EMAIL` rider.
+- Activities belong to a user, and the `require_completed_activity_link` trigger only lets an activity link to a completed workout in one of the same user's plans. *(ADR 0002, not yet built.)* Garmin routes return 404 unless `Current.user` is the `GARMIN_RIDER_EMAIL` rider.
 
 Database foreign keys require ownership of profiles, plans and sync records, with per-user indexes for one profile and one active plan. Request specs cover a two-rider matrix. See [DATA_MODEL.md](DATA_MODEL.md#ownership-schema) and [REQUIREMENTS.md](REQUIREMENTS.md#16-independent-riders).
 
@@ -102,7 +102,7 @@ The `plan-configuration` Stimulus controller fetches the end date, disables inac
 ## Completion, adaptations and schedule changes
 
 - **Completion.** `Adaptations::CompletionRecorder` saves feedback and immutable FTP, target and metric snapshots in a transaction, then saves any proposal from `FeedbackEvaluator`. It accepts structured regular workouts and openers, and structures a due or overdue outline in the same transaction. Openers record RPE and quality but drive no adaptation (no opener RPE band is defined).
-- **Ride files (FBK-004).** `Workouts::RideFileAttacher` decodes the FIT file with the in-house `Fit::Reader` outside the plan lock, then under the lock calculates ridden metrics with `Metrics::RideCalculator` at the frozen completion FTP and creates or replaces the `WorkoutActivity` and its file. `RideFileRemover` deletes both. Ridden and planned NP share `Metrics::NormalizedPower`. Ridden metrics feed nothing else.
+- **Ride files (FBK-004).** `Workouts::RideFileAttacher` decodes the FIT file with the in-house `Fit::Reader` outside the plan lock, then under the lock creates or replaces a linked `upload` `Activity` and its file, with ridden metrics from `Metrics::RideCalculator` at the frozen completion FTP. A file starting within 60 s of one of the rider's existing activities links that activity instead (GAR-005), and a workout with a Garmin ride linked rejects uploads. `RideFileRemover` deletes an upload and its file, or unlinks a Garmin ride. `Activities::Linker` links, unlinks and relinks, recalculating figures through `Activities::Figures` in the same transaction; `Activities::FtpRefresh` recalculates unlinked rides when FTP history changes. Ridden and planned NP share `Metrics::NormalizedPower`. Ridden metrics feed nothing else.
 - **Feedback.** `Adaptations::FeedbackEvaluator` reads persisted feedback and upcoming workouts (it is not pure).
   - It targets regular structured workouts from today through day 13: same subtype first, then the Tempo/Sweet Spot/Threshold or VO2/Over-under family, then broad Intervals if the source was broad Intervals.
   - Struggled feedback also reduces nearby broad Intervals; failed feedback can reduce any nearby intensity session ("nearby" means within two days after the source, inside the horizon).
@@ -133,7 +133,7 @@ See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the request contract. Specs stub HT
 
 The intended Stage 1 shape, built in #53–#58. See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the API contract and [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect) for behaviour.
 
-- **Model.** #53 renames `WorkoutActivity` to the rider-owned `Activity`, linked to at most one completed workout. `Workouts::RideFileAttacher` and `Workouts::RideFileRemover` create and delete a linked `upload` activity. Ridden figures use the frozen completion FTP when linked and the FTP reading on the ride's local date when unlinked, recalculated from the stored file on link, unlink and relink.
+- **Model (built).** The rider-owned `Activity`, linked to at most one completed workout; see [Ride files](#completion-adaptations-and-schedule-changes) above.
 - **Enablement.** A small check compares `Current.user.email_address` with `GARMIN_RIDER_EMAIL` and gates the Settings fields, the import button and the Garmin routes.
 - **Client.** `GarminConnect::Client` exchanges the Personal API key for a token once per import, lists activities by date range with paging, and downloads and unzips the original `.fit`. It maps Garmin types to `sport`, raises typed errors (rejected key, rate limited, unavailable, invalid file), and never puts the key or token in errors or logs. Short timeouts, no retries.
 - **Import.** `GarminConnect::ImportActivities` takes an owner-scoped advisory lock like `IntervalsIcu::Synchronization`, works out the window, upserts and merges activities, downloads missing ride files, removes activities Garmin no longer returns, then auto-links only the activities it created. Each activity commits in its own short transaction; no transaction is held across HTTP.
@@ -185,7 +185,7 @@ resource :intervals_icu_sync, only: :create
 
 - Multi-record mutations use transactions. Domain operations are explicit services, not model callbacks.
 - Database constraints enforce one profile and one active plan per user, one workout per plan and date, valid enums and key numeric bounds.
-- Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, even against direct SQL. Another trigger allows `WorkoutActivity` only on completed workouts and forbids moving it; it can be replaced or removed. ADR 0002 replaces that trigger so an `Activity` may relink between the same rider's completed workouts. The schema dump is `db/structure.sql`.
+- Model guards and PostgreSQL triggers protect completed workouts, steps and feedback, even against direct SQL. Another trigger lets an `Activity` link only to a completed workout of the same rider; it may be relinked, replaced or removed. The schema dump is `db/structure.sql`.
 - Scheduling uses `date` and `Date.current` in the London time zone; weeks start Monday. Exported events use local midnight.
 - Percentage steps are canonical; watts are derived for future workouts and frozen at completion.
 - `TrainingPlan#engine_version` records `v1` as metadata only; engine classes live directly under `Training` and `Planning`.
