@@ -4,7 +4,7 @@
   <% if (activity = workout.activity) %>
     <p>
       <% if activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
-      Calculated at your completion FTP of <%= workout.completed_ftp_watts %> W.
+      <% if activity.figures_ftp_watts %>Calculated at your completion FTP of <%= activity.figures_ftp_watts %> W.<% end %>
     </p>
     <% if activity.date_mismatch? %>
       <div role="note" class="alert alert-warning alert-soft">This ride is dated <%= activity.ridden_on.to_fs(:long) %>, but the workout was scheduled for <%= workout.scheduled_on.to_fs(:long) %>.</div>

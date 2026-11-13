@@ -7,7 +7,6 @@ module Workouts
     class Rejected < StandardError; end
 
     CONTENT_TYPE = "application/vnd.ant.fit".freeze
-    DUPLICATE_WINDOW = 60.seconds
 
     def initialize(workout:, file:)
       @workout = workout
@@ -55,14 +54,20 @@ module Workouts
       Activity.new(user: user, planned_workout: @workout, link_origin: :rider, source: :upload, sport: :cycling)
     end
 
+    # The closest cycling activity within the duplicate window, unlinked
+    # ones first. Links it to this workout, or rejects the upload when the
+    # ride is linked elsewhere.
     def matching_activity(started_at)
-      match = user.activities.where(started_at: (started_at - DUPLICATE_WINDOW)..(started_at + DUPLICATE_WINDOW))
-        .min_by { |activity| (activity.started_at - started_at).abs }
+      window = (started_at - Activity::DUPLICATE_WINDOW)..(started_at + Activity::DUPLICATE_WINDOW)
+      match = user.activities.cycling.where(started_at: window)
+        .min_by { |activity| [ activity.linked? ? 1 : 0, (activity.started_at - started_at).abs ] }
       return unless match
 
       match.lock!
       if (other = match.planned_workout)
-        raise Rejected, "This ride is already linked to #{other.name} on #{other.scheduled_on.to_fs(:long)}. Use Change ride to move it."
+        linked_to = "This ride is already linked to #{other.name} on #{other.scheduled_on.to_fs(:long)}"
+        raise Rejected, "#{linked_to} in an archived plan." if other.training_plan.archived?
+        raise Rejected, "#{linked_to}. Use Change ride to move it."
       end
 
       @linked_existing = true

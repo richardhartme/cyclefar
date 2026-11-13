@@ -109,6 +109,32 @@ RSpec.describe Workouts::RideFileAttacher, type: :service do
       expect(existing.reload.planned_workout).to be_nil
     end
 
+    it "matches only cycling activities" do
+      walk = garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 30, 22), sport: :walking)
+
+      activity = described_class.new(workout: workout, file: upload("outdoor_ride")).call
+
+      expect(activity).not_to eq(walk)
+      expect(walk.reload.planned_workout).to be_nil
+    end
+
+    it "prefers an unlinked match over a closer ride linked elsewhere" do
+      other = create(:planned_workout, :completed, training_plan: workout.training_plan, scheduled_on: workout.scheduled_on + 1)
+      garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 30, 22)).then { |ride| Activities::Linker.new(ride).link!(other, origin: :automatic) }
+      unlinked = garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 31, 0), garmin_activity_id: 25_000_000_002)
+
+      expect(described_class.new(workout: workout, file: upload("outdoor_ride")).call).to eq(unlinked)
+    end
+
+    it "rejects an upload matching a ride kept with an archived plan, without offering Change ride" do
+      archived = create(:training_plan, :archived, user: user, starts_on: workout.training_plan.starts_on - 100, ends_on: workout.training_plan.starts_on - 30)
+      old = create(:planned_workout, :completed, training_plan: archived, scheduled_on: archived.starts_on + 1, name: "Old ride")
+      garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 30, 22)).then { |ride| Activities::Linker.new(ride).link!(old, origin: :automatic) }
+
+      expect { described_class.new(workout: workout, file: upload("outdoor_ride")).call }
+        .to raise_error(described_class::Rejected, "This ride is already linked to Old ride on #{old.scheduled_on.to_fs(:long)} in an archived plan.")
+    end
+
     it "ignores another rider's activity" do
       someone_elses = create(:activity, :unlinked, source: :garmin, garmin_activity_id: 1, started_at: Time.utc(2026, 8, 25, 9, 30, 22))
 
