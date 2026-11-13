@@ -10,7 +10,7 @@ LAYOUT_LEFT_RIGHT()
 Person(rider, "Rider", "Creates and manages a cycling training plan, records workout feedback, uploads ride files, and controls manual sync.")
 
 System_Boundary(cyclefar_boundary, "CycleFar") {
-  Container(web_application, "Web application", "Ruby 4.0.6, Rails 8.1.4, ERB, Turbo, Tailwind CSS / daisyUI", "Authenticates and serves desktop-first training workflows, ride file uploads and manual sync; Puma supervises Solid Queue for reset mail and file purges in the Kamal deployment.")
+  Container(web_application, "Web application", "Ruby 4.0.6, Rails 8.1.4.1, ERB, Turbo, Tailwind CSS / daisyUI", "Authenticates and serves desktop-first training workflows, ride file uploads and manual sync; Puma supervises Solid Queue for reset mail and file purges in the Kamal deployment.")
   ContainerDb(database, "Databases", "PostgreSQL", "Primary stores user-owned training data, sessions and immutable history; cache, queue and cable databases support Solid adapters.")
   ContainerDb(file_storage, "File storage", "Active Storage local disk, Kamal volume cycle_far_storage", "Keeps uploaded FIT ride files for completed workouts.")
 }
