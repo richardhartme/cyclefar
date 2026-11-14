@@ -4,7 +4,7 @@
 
 When the Garmin rider asks, import their Garmin Connect activities for the active plan's dates, show them on the calendar and link rides to completed workouts. This is Stage 1 of [ADR 0002](adr/0002-garmin-connect-activity-import.md): display only, with no effect on the training engine. The requirements are [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect).
 
-**Status:** accepted. The rider-owned `Activity` model is built; the client, import, matching and calendar display are not yet built (#54–#58).
+**Status:** accepted. The rider-owned `Activity` model and the `GarminConnect::Client` adapter are built; enablement, import, matching and calendar display are not yet built (#55–#58).
 
 Import is manual. There is no background polling, recurring job, webhook, OAuth, business-tier access or workout push to Garmin.
 
@@ -44,7 +44,7 @@ Never expose the key or token in logs, exceptions, rendered HTML, flash messages
 GET /activitylist-service/activities/search/activities?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&start=0&limit=<page size>
 ```
 
-Returns a JSON array of activity summaries. Page with `start` (offset) and `limit`, and stop at the first page shorter than `limit`. The page size is a client constant.
+Returns a JSON array of activity summaries. Page with `start` (offset) and `limit`, and stop at the first page shorter than `limit`. The page size is a client constant. A listing still going after the client's page cap, or holding a summary without a usable id, type or start time, is a remote failure, so a partial listing is never returned.
 
 Fields CycleFar uses:
 
@@ -70,7 +70,7 @@ Third-party uploads appear in the list. Zwift rides, for example, arrive as `vir
 GET /download-service/files/activity/{activityId}
 ```
 
-Returns `application/x-zip-compressed` containing one `.fit` file. The client unzips it and hands the `.fit` bytes to `Fit::Reader`. A zip that doesn't hold exactly one `.fit`, or a file `Fit::Reader` rejects, is an invalid file.
+Returns `application/x-zip-compressed` containing one `.fit` file. The client unzips it and returns the `.fit` bytes for `Fit::Reader`. A zip that doesn't hold exactly one `.fit`, a `.fit` over the 10 MB upload limit, or a file `Fit::Reader` rejects, is an invalid file.
 
 Download only for cycling activities that have no stored file. Never download a stored file again.
 
@@ -111,7 +111,7 @@ The flash reports `Imported N, updated N, removed N`.
 | Timeout, connection error or `5xx` | "Garmin Connect is unavailable. Try again later." |
 | Invalid file | Keep the activity without a file; not a whole-import failure. |
 
-The client raises typed errors for each case. Messages never echo Garmin's response body, the key or the token. Use short connect and read timeouts and no retries inside the request.
+`GarminConnect::Client` raises `AuthenticationError`, `RateLimitedError` (with `retry_after` in seconds), `RemoteError` and `InvalidFileError`, all under `GarminConnect::Client::Error`. Each message is the guidance above. Messages never echo Garmin's response body, the key or the token, and the errors carry no cause. Connect and read timeouts are 5 and 10 seconds, with no retries inside the request.
 
 ## Testing
 

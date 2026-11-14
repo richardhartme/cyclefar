@@ -44,6 +44,9 @@ gem "image_processing", "~> 2.2"
 # ImageProcessing 2 makes backends optional; Active Storage uses Vips.
 gem "ruby-vips", "~> 2.0", require: false
 
+# Unzips the original activity files Garmin Connect downloads (docs/GARMIN_CONNECT.md).
+gem "rubyzip", "~> 3.7", require: "zip"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -71,4 +74,6 @@ group :test do
   # Browser-driven system specs for critical Turbo/Stimulus flows.
   gem "capybara"
   gem "selenium-webdriver"
+  # Stubs Garmin Connect HTTP; specs never reach the real API.
+  gem "webmock", require: false
 end
