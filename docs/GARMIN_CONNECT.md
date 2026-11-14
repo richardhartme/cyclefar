@@ -76,10 +76,10 @@ Download only for cycling activities that have no stored file. Never download a 
 
 ## Sport mapping
 
-The adapter maps each summary to the domain `sport` enum: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `other`.
+The adapter maps each summary to the domain `sport` enum: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `rowing`, `other`.
 
 - `cycling`: `activityType.parentTypeId == 2`, or the type itself is cycling. Don't list fixed type ids. The spike confirmed `virtual_ride` (parent 2); road, indoor, gravel and MTB rides are expected to share the cycling parent, so check them in fixtures as they are seen.
-- Other sports map by `typeKey`: `strength_training` to `strength` and `yoga` to `yoga` were seen in the spike. Running, walking and swimming keys are mapped when first confirmed against a real payload.
+- Other sports map by `typeKey`: `strength_training` to `strength` and `yoga` to `yoga` were seen in the spike; `indoor_rowing` and `rowing` map to `rowing`. Running, walking and swimming keys are mapped when first confirmed against a real payload.
 - Anything else is `other`. The raw `typeKey` is always stored as `external_type`.
 
 ## Import window

@@ -6,7 +6,9 @@ module GarminConnect
     CYCLING_TYPE_ID = 2
     TYPE_KEYS = {
       "strength_training" => "strength",
-      "yoga" => "yoga"
+      "yoga" => "yoga",
+      "indoor_rowing" => "rowing",
+      "rowing" => "rowing"
     }.freeze
 
     def self.sport_for(activity_type)
