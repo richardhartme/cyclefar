@@ -294,7 +294,7 @@ RSpec.describe GarminConnect::ImportActivities, type: :service do
 
       expect(import).to have_attributes(updated_count: 1)
       changed = user.activities.find_by!(garmin_activity_id: 1)
-      expect(changed).to have_attributes(sport: "other", tss: nil, figures_ftp_watts: nil, started_at: Time.utc(2026, 10, 28, 11, 10), elapsed_seconds: 2712)
+      expect(changed).to have_attributes(sport: "rowing", tss: nil, figures_ftp_watts: nil, started_at: Time.utc(2026, 10, 28, 11, 10), elapsed_seconds: 2712)
       expect(changed.ride_file).not_to be_attached
     end
   end

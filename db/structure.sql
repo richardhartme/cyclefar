@@ -229,7 +229,7 @@ CREATE TABLE public.activities (
     CONSTRAINT activities_nonnegative_metrics CHECK (((average_power_watts >= (0)::numeric) AND (np_watts >= (0)::numeric) AND (intensity_factor >= (0)::numeric) AND (tss >= (0)::numeric) AND (work_kj >= (0)::numeric) AND (average_heart_rate_bpm > (0)::numeric))),
     CONSTRAINT activities_power_metrics_together CHECK ((((average_power_watts IS NULL) AND (np_watts IS NULL) AND (intensity_factor IS NULL) AND (tss IS NULL) AND (work_kj IS NULL)) OR ((average_power_watts IS NOT NULL) AND (np_watts IS NOT NULL) AND (intensity_factor IS NOT NULL) AND (tss IS NOT NULL) AND (work_kj IS NOT NULL)))),
     CONSTRAINT activities_source CHECK (((source)::text = ANY ((ARRAY['upload'::character varying, 'garmin'::character varying])::text[]))),
-    CONSTRAINT activities_sport CHECK (((sport)::text = ANY ((ARRAY['cycling'::character varying, 'running'::character varying, 'walking'::character varying, 'strength'::character varying, 'yoga'::character varying, 'swimming'::character varying, 'other'::character varying])::text[])))
+    CONSTRAINT activities_sport CHECK (((sport)::text = ANY ((ARRAY['cycling'::character varying, 'running'::character varying, 'walking'::character varying, 'strength'::character varying, 'yoga'::character varying, 'swimming'::character varying, 'rowing'::character varying, 'other'::character varying])::text[])))
 );
 
 
@@ -1583,6 +1583,7 @@ ALTER TABLE ONLY public.activities
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261114170000'),
 ('20261114150000'),
 ('20261114120000'),
 ('20261113175339'),

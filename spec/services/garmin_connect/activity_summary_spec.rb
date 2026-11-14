@@ -89,6 +89,11 @@ RSpec.describe GarminConnect::ActivitySummary do
       expect(payloads.drop(1).map { |payload| described_class.from_payload(payload).sport }).to eq(%w[yoga strength])
     end
 
+    it "maps indoor and on-water rowing to rowing and keeps the raw key" do
+      expect(summary_for("indoor_rowing", type_id: 61, parent_type_id: 29)).to have_attributes(sport: "rowing", external_type: "indoor_rowing")
+      expect(summary_for("rowing", type_id: 39, parent_type_id: 228)).to have_attributes(sport: "rowing", external_type: "rowing")
+    end
+
     it "maps only to sports the Activity model accepts" do
       expect(Activity::SPORTS).to include("cycling", "other", *GarminConnect::SportMapping::TYPE_KEYS.values)
     end

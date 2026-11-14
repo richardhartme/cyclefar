@@ -50,10 +50,10 @@ CycleFar imports the rider's Garmin Connect activities on demand, shows them on 
 
 ### Sport mapping
 
-The adapter maps Garmin types to the domain `sport` enum: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `other`.
+The adapter maps Garmin types to the domain `sport` enum: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `rowing`, `other`.
 
 - **Cycling** is any activity whose `activityType.parentTypeId` is 2, or whose own type is cycling. It doesn't depend on fixed type ids, so road, indoor, virtual, gravel and MTB rides all count.
-- Other sports map by type key (for example `strength_training` to `strength`, `yoga` to `yoga`). Unknown keys map to `other`. The raw key is always stored.
+- Other sports map by type key (for example `strength_training` to `strength`, `yoga` to `yoga`, `indoor_rowing` and `rowing` to `rowing`). Unknown keys map to `other`. The raw key is always stored.
 
 ### Figures
 

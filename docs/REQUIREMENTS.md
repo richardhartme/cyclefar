@@ -638,8 +638,9 @@ Two activities of the same rider whose UTC starts are within 60 seconds are the 
 
 ### GAR-006 Sport mapping
 
-- Each activity has a `sport`: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming` or `other`, plus the raw Garmin type key.
+- Each activity has a `sport`: `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `rowing` or `other`, plus the raw Garmin type key.
 - An activity is `cycling` when its Garmin type's parent is cycling (`parentTypeId` 2) or the type itself is cycling. Road, indoor, virtual, gravel and MTB rides are all cycling.
+- Indoor rowing (`indoor_rowing`) and on-water rowing (`rowing`) map to `rowing`.
 - Unknown types map to `other`.
 - Only cycling activities store a file, calculate ridden figures or take part in matching. Other sports show duration, distance and heart rate from the summary.
 

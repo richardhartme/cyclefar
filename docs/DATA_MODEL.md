@@ -260,7 +260,7 @@ Fields:
 - `user_id: bigint, null: false` — owner
 - `source: enum, null: false` — `upload`, `garmin`
 - `garmin_activity_id: bigint, nullable` — Garmin's `activityId` (around 2.5 × 10¹⁰)
-- `sport: enum, null: false` — `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `other`
+- `sport: enum, null: false` — `cycling`, `running`, `walking`, `strength`, `yoga`, `swimming`, `rowing`, `other`
 - `external_type: string, nullable` — the raw Garmin `activityType.typeKey`
 - `name: string, nullable`
 - `started_at: datetime, null: false`
