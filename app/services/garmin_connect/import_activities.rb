@@ -1,8 +1,9 @@
 module GarminConnect
-  # Imports the Garmin rider's activities for the active plan's dates
-  # (GAR-003–GAR-005, docs/GARMIN_CONNECT.md#reconciliation). Each activity
-  # commits in its own short transaction and no transaction spans HTTP, so a
-  # failure keeps what was committed and a re-run is safe.
+  # Imports the Garmin rider's activities for the active plan's dates, then
+  # auto-links the rides it created (GAR-003–GAR-005, GAR-007,
+  # docs/GARMIN_CONNECT.md#reconciliation). Each activity commits in its own
+  # short transaction and no transaction spans HTTP, so a failure keeps what
+  # was committed and a re-run is safe.
   class ImportActivities
     # Later imports look back this far, to catch rides edited or deleted since.
     LOOKBACK = 7.days
@@ -41,6 +42,7 @@ module GarminConnect
       outcomes.each do |outcome|
         outcome[:result] = :updated if attach_file(client, outcome[:activity]) && outcome[:result] == :unchanged
       end
+      Activities::RideMatcher.new(@user).link_imported!(outcomes.select { |outcome| outcome[:result] == :imported }.pluck(:activity))
       profile.update!(garmin_last_imported_at: started_at)
       results = outcomes.pluck(:result)
       Result.new(imported_count: results.count(:imported), updated_count: results.count(:updated), removed_count: removed_count)

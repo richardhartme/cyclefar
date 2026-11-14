@@ -4,7 +4,7 @@
 
 When the Garmin rider asks, import their Garmin Connect activities for the active plan's dates, show them on the calendar and link rides to completed workouts. This is Stage 1 of [ADR 0002](adr/0002-garmin-connect-activity-import.md): display only, with no effect on the training engine. The requirements are [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect).
 
-**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement, the Settings key and the import are built; matching and calendar display are not yet built (#57–#58).
+**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement, the Settings key, the import and ride matching are built; calendar display is not yet built (#58).
 
 Import is manual. There is no background polling, recurring job, webhook, OAuth, business-tier access or workout push to Garmin.
 
@@ -96,7 +96,7 @@ For each listed activity, under an owner-scoped advisory lock:
 2. **Merge** a new Garmin ride into the closest uploaded activity without a Garmin id whose UTC start is within 60 seconds: add the Garmin id, name, type and summary. The upload keeps its source, file and link.
 3. **Download** the file for a cycling activity without one, then calculate its figures (see [ADR 0002](adr/0002-garmin-connect-activity-import.md#figures)). If the download or parse fails, keep the activity without a file and try again on the next import.
 4. **Delete** Garmin activities stored for the window that the complete listing no longer returns. A Garmin-only record is destroyed, along with its link and file. A merged upload only loses its Garmin id and summary. If listing fails partway, delete nothing.
-5. **Auto-link** *(not yet built, #57)* the rides this import created to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)). Activities from earlier imports are left alone, so a ride the rider unlinked stays unlinked.
+5. **Auto-link** the rides this import created to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)). Activities from earlier imports are left alone, so a ride the rider unlinked stays unlinked.
 
 Hold no database transaction or row lock across HTTP. Commit each activity's changes in a short transaction, so a failure keeps what was already committed and a re-run is safe.
 

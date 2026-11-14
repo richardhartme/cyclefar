@@ -135,6 +135,33 @@ RSpec.describe GarminConnect::ImportActivities, type: :service do
     expect(user.activities.garmin.sole).to have_attributes(garmin_activity_id: 25_012_345_678, planned_workout: nil)
   end
 
+  describe "GAR-007 automatic linking" do
+    before { allow(client).to receive(:activity_file).and_raise(GarminConnect::Client::InvalidFileError) }
+
+    it "links a ride the import created to the completed workout on its date, leaving the workout unchanged" do
+      workout = completed_workout(Date.new(2026, 11, 10))
+      before = history(workout)
+      list(summary(1, [ 2026, 11, 10, 7, 0, 0 ]))
+
+      import
+
+      expect(user.activities.sole).to have_attributes(planned_workout: workout, link_origin: "automatic")
+      expect(history(workout)).to eq(before)
+    end
+
+    it "never links again a ride the rider unlinked, on a later import" do
+      workout = completed_workout(Date.new(2026, 11, 10))
+      list(summary(1, [ 2026, 11, 10, 7, 0, 0 ]))
+      import
+      Activities::Linker.new(user.activities.sole).unlink!
+
+      import
+
+      expect(user.activities.sole.planned_workout).to be_nil
+      expect(workout.reload.activity).to be_nil
+    end
+  end
+
   describe "GAR-004 deletions" do
     before { profile.update!(garmin_last_imported_at: Time.utc(2026, 11, 12, 20)) }
 

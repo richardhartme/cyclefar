@@ -1,5 +1,5 @@
 @startuml
-title CycleFar — Import from Garmin and link rides (ADR 0002, not yet built)
+title CycleFar — Import from Garmin and link rides (ADR 0002)
 
 autonumber
 hide footbox
@@ -9,7 +9,7 @@ boundary "GarminImportsController" as Controller
 control "GarminConnect::\nImportActivities" as Import
 control "GarminConnect::Client" as Client
 control "Fit::Reader +\nRideCalculator" as Calculator
-control "Ride linking" as Linker
+control "Activities::\nRideMatcher" as Linker
 entity "Activity" as Activity
 database "PostgreSQL" as Database
 collections "Active Storage\nlocal disk volume" as Storage
@@ -74,10 +74,10 @@ group transaction under plan lock
   Linker -> Activity: link when exactly one unlinked cycling\nactivity falls on the scheduled date
   note right: Never replaces an existing link.\nTrigger: completed workout, same rider.
 end
-Rider -> Controller: Choose ride (picker: ±3 days, newest first)
+Rider -> Controller: Choose ride via RideLinksController\n(picker: ±3 days, newest first)
 Controller -> Linker: link(workout, activity)
 group transaction under plan lock
-  Linker -> Activity: unlink from any other workout, link here,\nrecalculate figures at the frozen FTP
+  Linker -> Activity: unlink from any other workout (or unlink\nthe Garmin ride it replaces), link here,\nrecalculate figures at the frozen FTP
 end
 Rider -> Controller: Ride found -> completion form with the ride preselected
 note over Controller

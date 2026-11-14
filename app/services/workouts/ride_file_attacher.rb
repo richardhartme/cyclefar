@@ -2,7 +2,8 @@ module Workouts
   # Attaches an uploaded FIT ride file to a completed workout, replacing any
   # earlier upload, with figures calculated at the workout's completion FTP.
   # A file matching one of the rider's existing activities links that
-  # activity instead of creating a second record (GAR-005).
+  # activity instead of creating a second record (GAR-005), also when it
+  # replaces an earlier upload, which is then deleted.
   class RideFileAttacher
     class Rejected < StandardError; end
 
@@ -12,10 +13,15 @@ module Workouts
       @workout = workout
       @file = file
       @linked_existing = false
+      @replaced_upload = false
     end
 
     def linked_existing?
       @linked_existing
+    end
+
+    def replaced_upload?
+      @replaced_upload
     end
 
     def call
@@ -30,7 +36,14 @@ module Workouts
         raise Rejected, "Only completed workouts accept ride files" unless @workout.completed?
         raise Rejected, "Unlink the Garmin ride first." if @workout.activity&.garmin?
 
-        activity = @workout.activity || matching_activity(samples.first.recorded_at) || new_activity
+        current = @workout.activity
+        activity = matching_activity(samples.first.recorded_at, except: current)
+        if activity && current
+          # The new file is a ride already stored, so the upload it replaces goes.
+          current.destroy!
+          @replaced_upload = true
+        end
+        activity ||= current || new_activity
         if @linked_existing && activity.ride_file.attached?
           Activities::Figures.new(activity).assign
         else
@@ -54,11 +67,11 @@ module Workouts
       Activity.new(user: user, planned_workout: @workout, link_origin: :rider, source: :upload, sport: :cycling)
     end
 
-    # The closest cycling activity within the duplicate window, unlinked
-    # ones first. Links it to this workout, or rejects the upload when the
-    # ride is linked elsewhere.
-    def matching_activity(started_at)
-      match = user.activities.cycling.starting_near(started_at)
+    # The closest cycling activity within the duplicate window, other than
+    # the workout's own upload, unlinked ones first. Links it to this workout,
+    # or rejects the upload when the ride is linked elsewhere.
+    def matching_activity(started_at, except:)
+      match = user.activities.cycling.starting_near(started_at).where.not(id: except)
         .min_by { |activity| [ activity.linked? ? 1 : 0, (activity.started_at - started_at).abs ] }
       return unless match
 

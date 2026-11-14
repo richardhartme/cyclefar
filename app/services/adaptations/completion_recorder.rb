@@ -1,10 +1,13 @@
 module Adaptations
   # Record completed workout, snapshot targets, and generate adaptation proposal if applicable.
+  # Then links the ride preselected from Ride found, or the one ride on the
+  # workout's date (GAR-007, GAR-009); a ride that can't be linked completes nothing.
   class CompletionRecorder
-    def initialize(workout:, rpe:, completion_quality:)
+    def initialize(workout:, rpe:, completion_quality:, ride: nil)
       @workout = workout
       @rpe = rpe
       @completion_quality = completion_quality
+      @ride = ride
     end
 
     def call
@@ -43,6 +46,7 @@ module Adaptations
 
         evaluation = FeedbackEvaluator.new(@workout).call
         proposal = ProposalCreator.new(@workout.training_plan).create!(**evaluation) if evaluation
+        Activities::RideMatcher.new(@workout.training_plan.user).link_after_completion!(@workout, ride: @ride)
       end
       proposal
     end
