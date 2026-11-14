@@ -1,6 +1,6 @@
 # CycleFar UX Specification
 
-This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect import, which is accepted but not yet built.
+This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect matching and calendar display, which are accepted but not yet built.
 
 ## Branding
 
@@ -63,7 +63,7 @@ Behaviour:
 - Key expiry date, required with a key, with a note that Garmin doesn't show it to CycleFar;
 - `Save Garmin key`, returning to Settings with `Garmin key saved.` or `Garmin key not saved: …`;
 - a warning when the key expires in 14 days or fewer (including the expiry day), and an alert once it has expired, telling the rider to create a new key;
-- `Remove Garmin key` asks for confirmation, clears the key and its date and keeps imported activities; *(ADR 0002, import not yet built)* it hides the import button;
+- `Remove Garmin key` asks for confirmation, clears the key and its date and keeps imported activities; it hides the import button;
 - before FTP is saved, the section asks for FTP first.
 
 ## 3. Create-plan configuration
@@ -173,7 +173,7 @@ Include:
 - plan goal summary; discipline only for event plans, including when displaying existing plans;
 - current FTP;
 - `Sync all structured workouts to Intervals.icu`;
-- `Import from Garmin` *(ADR 0002)*, next to sync, only for the Garmin rider with a saved key, with the expiry warning beside it when it applies. It returns to the calendar with `Imported N, updated N, removed N`, or guidance for a rejected or expired key, rate limiting or Garmin being unavailable;
+- `Import from Garmin`, next to sync, only for the Garmin rider with a saved key, with the expiry warning under the header actions when it applies. It returns to the calendar with `Imported N, updated N, removed N.`, or guidance for a rejected or expired key, rate limiting or Garmin being unavailable;
 - `Change availability`;
 - `Add time off`;
 - destructive `Delete plan` in a secondary menu/action area; it is labelled `Archive plan` once the plan has completed workouts, which are retained.

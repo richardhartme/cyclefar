@@ -20,6 +20,7 @@ class Activity < ApplicationRecord
   attr_readonly :user_id
 
   scope :unlinked, -> { where(planned_workout_id: nil) }
+  scope :starting_near, ->(time) { where(started_at: (time - DUPLICATE_WINDOW)..(time + DUPLICATE_WINDOW)) }
 
   validates :planned_workout_id, uniqueness: true, allow_nil: true
   validates :garmin_activity_id, uniqueness: { scope: :user_id }, allow_nil: true

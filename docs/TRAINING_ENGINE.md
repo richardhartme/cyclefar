@@ -682,7 +682,7 @@ Internally keep sufficient precision.
 Ridden figures for a cycling activity use the same formulas and `Metrics::NormalizedPower` over the recorded one-second samples, with a different FTP:
 
 - a ride linked to a completed workout uses that workout's frozen `completed_ftp_watts`;
-- an unlinked ride (ADR 0002, not yet built) uses the FTP in force on its local date: the newest FTP reading on or before it, highest ID on a tie, or the earliest reading for a ride before the first.
+- an unlinked ride (ADR 0002) uses the FTP in force on its local date: the newest FTP reading on or before it, highest ID on a tie, or the earliest reading for a ride before the first.
 
 Garmin's own TSS and IF are never used. Ridden figures and imported activities have **no engine effect** in Stage 1: weekly totals, the §27 cap, feedback evaluation (§29–§32), adaptation proposals, missed handling and statuses ignore them. Actual load feeding planning is Garmin Stage 2 and needs its own ADR.
 

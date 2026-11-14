@@ -9,7 +9,7 @@ This maps the implemented application, plus the accepted but unbuilt Garmin Conn
 - Stimulus handles presentation only (for example, the plan form's goal-dependent fields). No training calculation runs in JavaScript.
 - Rails-generated authentication gates private requests.
 - Intervals.icu export is manual; an FTP change refreshes already-exported workouts in the foreground. There are no background sync or generation jobs.
-- Garmin Connect import ([ADR 0002](adr/0002-garmin-connect-activity-import.md)) is accepted but not yet built; see [Garmin Connect import](#garmin-connect-import-adr-0002-not-yet-built) for the intended shape.
+- Garmin Connect import ([ADR 0002](adr/0002-garmin-connect-activity-import.md)) is partly built; see [Garmin Connect import](#garmin-connect-import-adr-0002-partly-built) for what exists and the intended shape of the rest.
 
 Services live under `app/services/`:
 
@@ -23,7 +23,7 @@ app/services/
   accounts/      # controlled operator provisioning and password setup delivery
   settings/      # transactional profile and FTP changes
   intervals_icu/ # serializer, HTTP client and calendar reconciliation
-  garmin_connect/ # Personal API client and activity summaries; import and linking (ADR 0002) not yet built
+  garmin_connect/ # Personal API client, activity summaries and import; linking (ADR 0002) not yet built
 ```
 
 Avoid repository layers, command buses, event sourcing, GraphQL and front-end SPAs.
@@ -129,14 +129,14 @@ The `plan-configuration` Stimulus controller fetches the end date, disables inac
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the request contract. Specs stub HTTP.
 
-## Garmin Connect import (ADR 0002, not yet built)
+## Garmin Connect import (ADR 0002, partly built)
 
 The intended Stage 1 shape, built in #53–#58. See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the API contract and [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect) for behaviour.
 
 - **Model (built).** The rider-owned `Activity`, linked to at most one completed workout; see [Ride files](#completion-adaptations-and-schedule-changes) above.
-- **Enablement (built).** `User#garmin_rider?` compares the email address with `GARMIN_RIDER_EMAIL`, ignoring case and spaces. It gates the Settings section, and `GarminRiderRequired` 404s the Garmin routes for everyone else. `GarminKeysController` saves or removes the key and expiry on `RiderProfile`; `RiderProfile#garmin_api_key_expiry` and the `garmin_keys/expiry_warning` partial give the warning that Settings shows and the import button will.
+- **Enablement (built).** `User#garmin_rider?` compares the email address with `GARMIN_RIDER_EMAIL`, ignoring case and spaces. It gates the Settings section, and `GarminRiderRequired` 404s the Garmin routes for everyone else. `GarminKeysController` saves or removes the key and expiry on `RiderProfile`; `RiderProfile#garmin_api_key_expiry` and the `garmin_keys/expiry_warning` partial give the warning that Settings and the import button show.
 - **Client (built).** `GarminConnect::Client` exchanges the Personal API key for a token once per import, lists activities by date range with paging as `GarminConnect::ActivitySummary` values, and downloads and unzips the original `.fit`. `GarminConnect::SportMapping` maps Garmin types to `sport`. The client raises typed errors (rejected key, rate limited, unavailable, invalid file), and never puts the key or token in errors or logs. Short timeouts, no retries.
-- **Import.** `GarminConnect::ImportActivities` takes an owner-scoped advisory lock like `IntervalsIcu::Synchronization`, works out the window, upserts and merges activities, downloads missing ride files, removes activities Garmin no longer returns, then auto-links only the activities it created. Each activity commits in its own short transaction; no transaction is held across HTTP.
+- **Import (built).** `GarminImportsController` runs `GarminConnect::ImportActivities` in the request and reports its counts or the client's guidance. The service takes an owner-scoped advisory lock (`OwnerLock`, shared with `IntervalsIcu::Synchronization`), works out the window, upserts and merges activities, removes activities Garmin no longer returns, then downloads missing ride files with figures from `Activities::Figures`. Each activity commits in its own short transaction; no transaction is held across HTTP. Auto-linking the activities it created comes with matching (#57).
 - **Matching.** A linking service applies GAR-007 and GAR-008 under the plan lock: auto-link one candidate, list candidates for `Choose ride` (including rides linked in the active plan), relink in one transaction, and unlink. `Adaptations::CompletionRecorder` links a preselected ride from the `Ride found` prompt after recording completion, and calls auto-linking for that workout's date otherwise.
 - **Upload.** `Workouts::RideFileAttacher` checks for an activity starting within 60 seconds of the parsed file (GAR-005) and links it instead of creating one, and rejects an upload to a workout with a Garmin ride linked.
 - **Calendar.** `Planning::CalendarPresenter` adds unlinked activities in the active plan's range to each date. Weekly summaries and the TSS chart stay planned-only.

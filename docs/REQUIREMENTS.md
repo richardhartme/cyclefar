@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement and the Settings key are built, the import is not yet built (#56–#58). The rider-owned `Activity` in FBK-004 is built, but until then the only way to create one is a FIT upload, so every ride is linked to a completed workout. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement, the Settings key and the import are built; matching and calendar display are not yet built (#57–#58), so imported activities are stored but not yet linked or shown. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -591,7 +591,7 @@ Automated coverage target: end-to-end two-user regression matrix with foreign-ID
 
 ## 17. Garmin Connect
 
-Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 and GAR-002 are built; the import, matching and calendar display are not yet built (#56–#58).
+Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 to GAR-006 are built; matching and calendar display are not yet built (#57–#58).
 
 ### GAR-001 Garmin enablement
 
@@ -614,10 +614,10 @@ Settings, for the Garmin rider only, take an optional Garmin Connect Personal AP
 An `Import from Garmin` button sits in the calendar header next to `Sync to Intervals.icu`. It is shown only to the Garmin rider, with an active plan and a saved key.
 
 - The import runs in the foreground request. There is no background or scheduled import.
-- **Window:** the first import runs from the active plan's start date to today. Later imports run from 7 days before the last successful import to today. Store the last import time on the rider.
+- **Window:** the active plan's first import runs from its start date to today. Later imports run from 7 days before the last successful import to today, never before the active plan's start. Store the last import time on the rider. Nothing is imported before the plan starts.
 - Upsert activities by Garmin activity id. Download the original file only for cycling activities without one; never download a stored file again. If a download or parse fails, keep the activity without a file and try again next time.
 - Activities outside the window are never touched.
-- A flash reports `Imported N, updated N, removed N`. A failure keeps what was already committed, is safe to re-run and shows readable guidance for a bad or expired key, rate limiting and Garmin being unavailable.
+- A flash reports `Imported N, updated N, removed N.` A failure keeps what was already committed, is safe to re-run and shows readable guidance for a bad or expired key, rate limiting and Garmin being unavailable.
 - An owner-scoped lock stops two imports racing. No database transaction is held across HTTP.
 
 ### GAR-004 Edited and deleted activities
