@@ -1,6 +1,6 @@
 # CycleFar UX Specification
 
-This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect calendar display, which is accepted but not yet built.
+This document describes the interaction design as implemented. Controls not described here do not exist.
 
 ## Branding
 
@@ -235,12 +235,13 @@ Time off:
 
 - marks affected dates, using the optional name as the heading; unnamed Event time off is labelled `Time off`. Named non-event periods also display their reason.
 
-Activities *(ADR 0002)*:
+Activities ([ADR 0002](adr/0002-garmin-connect-activity-import.md)):
 
 - unlinked activities sit as compact secondary entries under the day's card, or alone on a rest day: sport, name, duration and, for rides with power, TSS;
 - a linked ride never appears as a separate entry; its figures are on the workout card;
 - activities show only within the active plan's calendar range;
-- an entry opens a read-only activity detail view: name, date, sport, source label (`Garmin Connect` or `Uploaded FIT`), and ridden figures for cycling or duration, distance and heart rate for other sports. An unlinked ride says its figures use the FTP on the ride date.
+- entries are listed in start order; a ride's duration is its moving time and another sport's is its elapsed time;
+- an entry opens a read-only activity detail view in a modal dialog (a Turbo Frame; the same URL opened directly is a full page with Back to calendar): name, date, sport, source label (`Garmin Connect` or `Uploaded FIT`), and ridden figures for cycling (`No power data` without power) or duration, distance and heart rate for other sports. A ride with power figures says which FTP they use: the FTP on the ride date when unlinked, the completion FTP when linked, with a link to the workout. `Close`, Escape or the backdrop closes it.
 
 Empty date headings offer Add Workout. The form accepts type (including Opener) and duration. The service rejects occupied dates, dates outside the plan, target-event dates and time-off dates.
 

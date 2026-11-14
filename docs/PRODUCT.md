@@ -103,7 +103,7 @@ Whenever the engine proposes an adaptation or replans a block, present a concise
 - Weekly totals and weekly load progression
 - Manual workout completion + RPE + completion quality
 - Optional FIT ride file upload on a completed workout, showing ridden against planned metrics
-- Manual Garmin Connect import for one rider per deployment: activities on the calendar, rides linked to completed workouts, display only ([ADR 0002](adr/0002-garmin-connect-activity-import.md); import and matching built, calendar display not yet built)
+- Manual Garmin Connect import for one rider per deployment: activities on the calendar, rides linked to completed workouts, display only ([ADR 0002](adr/0002-garmin-connect-activity-import.md))
 - Optional adaptation proposals
 - Workout shuffle/change/move/copy and adding a workout to an empty date
 - Persistent missed-workout calendar status and a weekly TSS chart

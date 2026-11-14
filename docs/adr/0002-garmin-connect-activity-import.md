@@ -99,7 +99,7 @@ Weekly totals, load limits, feedback evaluation, adaptation proposals, missed-wo
 ## Consequences
 
 - `REQUIREMENTS.md` gains the `GAR-*` requirements and an FBK-004 rewrite. `PRODUCT.md`, `DATA_MODEL.md`, `ARCHITECTURE.md`, `UX.md`, `TRAINING_ENGINE.md`, `AGENTS.md`, the README and the diagrams describe Stage 1. [`GARMIN_CONNECT.md`](../GARMIN_CONNECT.md) records the API contract.
-- The work is split across #53 (the `Activity` model), #54 (client), #55 (enablement and key), #56 (import), #57 (matching) and #58 (calendar display). Until they land, the application still has ADR 0001's `WorkoutActivity`.
+- The work is split across #53 (the `Activity` model), #54 (client), #55 (enablement and key), #56 (import), #57 (matching) and #58 (calendar display), all now built.
 - Imported activities, including Garmin files on the `cycle_far_storage` volume, become rider data worth backing up.
 - Only one rider per deployment can use Garmin. Supporting more needs a Garmin business-tier application and a new ADR.
 - "Automatic ride imports" stays excluded in `AGENTS.md` until a background job is decided.

@@ -4,7 +4,7 @@
 
 When the Garmin rider asks, import their Garmin Connect activities for the active plan's dates, show them on the calendar and link rides to completed workouts. This is Stage 1 of [ADR 0002](adr/0002-garmin-connect-activity-import.md): display only, with no effect on the training engine. The requirements are [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect).
 
-**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement, the Settings key, the import and ride matching are built; calendar display is not yet built (#58).
+**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement, the Settings key, the import, ride matching and calendar display are built.
 
 Import is manual. There is no background polling, recurring job, webhook, OAuth, business-tier access or workout push to Garmin.
 

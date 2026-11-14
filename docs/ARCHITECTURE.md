@@ -129,9 +129,9 @@ The `plan-configuration` Stimulus controller fetches the end date, disables inac
 
 See [INTERVALS_ICU.md](INTERVALS_ICU.md) for the request contract. Specs stub HTTP.
 
-## Garmin Connect import (ADR 0002, partly built)
+## Garmin Connect import (ADR 0002)
 
-The intended Stage 1 shape, built in #53–#58. See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the API contract and [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect) for behaviour.
+The Stage 1 shape. See [GARMIN_CONNECT.md](GARMIN_CONNECT.md) for the API contract and [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect) for behaviour.
 
 - **Model (built).** The rider-owned `Activity`, linked to at most one completed workout; see [Ride files](#completion-adaptations-and-schedule-changes) above.
 - **Enablement (built).** `User#garmin_rider?` compares the email address with `GARMIN_RIDER_EMAIL`, ignoring case and spaces. It gates the Settings section, and `GarminRiderRequired` 404s the Garmin routes for everyone else. `GarminKeysController` saves or removes the key and expiry on `RiderProfile`; `RiderProfile#garmin_api_key_expiry` and the `garmin_keys/expiry_warning` partial give the warning that Settings and the import button show.
@@ -139,7 +139,7 @@ The intended Stage 1 shape, built in #53–#58. See [GARMIN_CONNECT.md](GARMIN_C
 - **Import (built).** `GarminImportsController` runs `GarminConnect::ImportActivities` in the request and reports its counts or the client's guidance. The service takes an owner-scoped advisory lock (`OwnerLock`, shared with `IntervalsIcu::Synchronization`), works out the window, upserts and merges activities, removes activities Garmin no longer returns, then downloads missing ride files with figures from `Activities::Figures`. Each activity commits in its own short transaction; no transaction is held across HTTP. Finally it auto-links the rides it created through `Activities::RideMatcher`.
 - **Matching (built).** `Activities::RideMatcher` applies GAR-007 to GAR-009, taking the plan lock that ride uploads also take: it auto-links the one candidate, lists candidates for `Choose ride` (including rides linked in the active plan), relinks or changes a Garmin ride in one transaction and finds rides for `Ride found`. A lost race on the one-ride-per-workout index becomes a readable rejection. `RideLinksController` (Garmin rider only) serves the picker. `Adaptations::CompletionRecorder` links a preselected ride from `Ride found` after recording completion, or auto-links for that workout's date; a ride that can't be linked rolls the completion back. Unlinking goes through `RideFilesController#destroy`.
 - **Upload (built).** `Workouts::RideFileAttacher` checks for an activity starting within 60 seconds of the parsed file (GAR-005) and links it instead of creating one, deleting an earlier upload it replaces, and rejects an upload to a workout with a Garmin ride linked.
-- **Calendar.** `Planning::CalendarPresenter` adds unlinked activities in the active plan's range to each date. Weekly summaries and the TSS chart stay planned-only.
+- **Calendar (built).** `Planning::CalendarPresenter#activities_on` gives each date the rider's unlinked activities within the calendar's weeks; linked rides show only on their workout card. Each entry opens `ActivitiesController#show`, scoped to `Current.user`, in the `activity_detail` Turbo Frame, where the `activity-dialog` Stimulus controller opens it as a modal. Weekly summaries and the TSS chart stay planned-only.
 - **No engine effect.** No `Training`, `Planning` load, `Adaptations` evaluation or status code reads activities.
 
 ## Routes and UI boundaries
@@ -169,6 +169,7 @@ resources :planned_workouts, only: [:new, :create, :show, :destroy] do
   resource :ride_file, only: [:create, :destroy]
   resource :ride_link, only: [:new, :create] # Garmin rider only
 end
+resources :activities, only: :show
 resources :adaptation_proposals, only: [] do
   member do
     post :accept

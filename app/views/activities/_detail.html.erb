@@ -1,0 +1,40 @@
+<%# GAR-010/GAR-011: read-only. Rides show ridden figures; other sports show
+    Garmin's duration, distance and heart rate. %>
+<div class="space-y-4">
+  <header>
+    <h2 id="activity-detail-title" class="text-2xl font-semibold"><%= activity_name(activity) %></h2>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <span class="badge badge-primary badge-outline"><%= activity.ridden_on.to_fs(:long) %></span>
+      <span class="badge badge-secondary badge-outline"><%= activity.sport.humanize %></span>
+      <span class="badge badge-ghost"><%= activity_source_label(activity) %></span>
+    </div>
+  </header>
+
+  <% if (workout = activity.planned_workout) %>
+    <p>
+      Linked to <%= link_to workout.name, planned_workout_path(workout), class: "link link-primary", data: { turbo_frame: "_top" } %> on <%= workout.scheduled_on.to_fs(:long) %>.
+      <% if activity.power? && activity.figures_ftp_watts %>Figures use your completion FTP of <%= activity.figures_ftp_watts %> W.<% end %>
+    </p>
+  <% elsif activity.cycling? && activity.power? && activity.figures_ftp_watts %>
+    <p>Figures use your FTP on the ride date: <%= activity.figures_ftp_watts %> W.</p>
+  <% end %>
+
+  <dl class="divide-base-300 divide-y tabular-nums" aria-label="Activity figures">
+    <% if activity.cycling? %>
+      <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Duration</dt><dd><%= ride_duration(activity.moving_seconds) %> moving · <%= ride_duration(activity.elapsed_seconds) %> elapsed</dd></div>
+      <% if activity.power? %>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Average power</dt><dd><%= activity.average_power_watts.round %> W</dd></div>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">NP</dt><dd><%= activity.np_watts.round %> W</dd></div>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">IF</dt><dd><%= format("%.2f", activity.intensity_factor) %></dd></div>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">TSS</dt><dd><%= activity.tss.round %></dd></div>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Work</dt><dd><%= activity.work_kj.round %> kJ</dd></div>
+      <% else %>
+        <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Power</dt><dd>No power data</dd></div>
+      <% end %>
+    <% else %>
+      <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Duration</dt><dd><%= ride_duration(activity_duration_seconds(activity)) %></dd></div>
+      <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Distance</dt><dd><%= activity.distance_metres ? "#{number_with_precision(activity.distance_metres / 1000, precision: 2)} km" : "Not recorded" %></dd></div>
+    <% end %>
+    <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Average heart rate</dt><dd><%= activity.average_heart_rate_bpm ? "#{activity.average_heart_rate_bpm.round} bpm" : "Not recorded" %></dd></div>
+  </dl>
+</div>

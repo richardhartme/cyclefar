@@ -9,6 +9,9 @@ module Planning
       @ends_on = plan&.ends_on || ends_on
       @workouts_by_date = plan ? plan.planned_workouts.includes(:workout_steps, :plan_phase, :activity, :workout_feedback).order(:scheduled_on).group_by(&:scheduled_on) : {}
       @time_off_by_date = plan ? plan.time_off_periods.flat_map { |period| (period.starts_on..period.ends_on).map { |date| [ date, period ] } }.to_h : {}
+      # GAR-010: a linked ride shows on its workout card, so only unlinked
+      # activities get their own entries, and only within the plan's weeks.
+      @activities_by_date = plan ? plan.user.activities.unlinked.where(started_on: dates).order(:started_at, :id).group_by(&:started_on) : {}
     end
 
     def weeks
@@ -33,6 +36,10 @@ module Planning
 
     def workouts_on(date)
       @workouts_by_date.fetch(date, [])
+    end
+
+    def activities_on(date)
+      @activities_by_date.fetch(date, [])
     end
 
     def event_on(date)
