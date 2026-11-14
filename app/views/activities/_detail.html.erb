@@ -32,7 +32,7 @@
         <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Power</dt><dd>No power data</dd></div>
       <% end %>
     <% else %>
-      <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Duration</dt><dd><%= ride_duration(activity_duration_seconds(activity)) %></dd></div>
+      <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Duration</dt><dd><%= ride_duration(activity.duration_seconds) %></dd></div>
       <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Distance</dt><dd><%= activity.distance_metres ? "#{number_with_precision(activity.distance_metres / 1000, precision: 2)} km" : "Not recorded" %></dd></div>
     <% end %>
     <div class="flex justify-between gap-4 py-2"><dt class="font-semibold">Average heart rate</dt><dd><%= activity.average_heart_rate_bpm ? "#{activity.average_heart_rate_bpm.round} bpm" : "Not recorded" %></dd></div>

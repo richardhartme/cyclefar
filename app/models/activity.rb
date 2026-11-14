@@ -48,6 +48,12 @@ class Activity < ApplicationRecord
     started_on
   end
 
+  # A ride counts its moving time, as its ridden figures do; other sports
+  # count Garmin's elapsed duration (GAR-010).
+  def duration_seconds
+    cycling? ? moving_seconds : elapsed_seconds
+  end
+
   def date_mismatch?
     linked? && ridden_on != planned_workout.scheduled_on
   end

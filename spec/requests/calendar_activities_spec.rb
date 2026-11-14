@@ -84,6 +84,20 @@ RSpec.describe "Calendar activities", type: :request do
     expect(response.body).not_to include("Before the plan", "After the plan")
   end
 
+  it "GAR-010 counts every date in the calendar's weeks when the plan starts and ends mid-week" do
+    midweek = create(:training_plan, user: rider, starts_on: Date.new(2026, 9, 9), ends_on: Date.new(2026, 11, 26))
+    create(:plan_phase, training_plan: midweek, starts_on: midweek.starts_on, ends_on: midweek.ends_on)
+    activity(Date.new(2026, 9, 7), "Monday of the first week")
+    activity(Date.new(2026, 11, 29), "Sunday of the last week")
+    activity(Date.new(2026, 9, 6), "Week before the plan")
+    activity(Date.new(2026, 11, 30), "Week after the plan")
+
+    get root_path
+
+    expect(response.body).to include("Monday of the first week", "Sunday of the last week")
+    expect(response.body).not_to include("Week before the plan", "Week after the plan")
+  end
+
   it "GAR-012 never shows another rider's activities" do
     date = Date.new(2026, 9, 16)
     phase

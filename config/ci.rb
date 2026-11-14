@@ -5,6 +5,7 @@ CI.run do
   step "Tests", "bundle exec rspec"
   step "Autoloading", "bin/rails zeitwerk:check"
   step "Tests: Plan form interactions", "node --test spec/javascript/plan_configuration_controller_test.mjs"
+  step "Tests: Activity dialog", "node --test spec/javascript/activity_dialog_controller_test.mjs"
 
   step "Style: Ruby", "bin/rubocop"
 
