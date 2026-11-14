@@ -182,7 +182,7 @@ resource :intervals_icu_sync, only: :create
 resource :garmin_import, only: :create
 ```
 
-`/up` is the Rails health endpoint. Workout detail is a full page with inline forms and redirects, not a Turbo Frame modal; UX.md's modal recommendations are not implemented.
+`/up` is the Rails health endpoint. Workout detail is a full page with inline forms and redirects, not a Turbo Frame modal. The only modal is the read-only activity detail (GAR-010), loaded into the calendar's `activity_detail` Turbo Frame.
 
 ## Persistence, dates and invariants
 

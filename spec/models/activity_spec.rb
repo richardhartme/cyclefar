@@ -116,6 +116,14 @@ RSpec.describe Activity, type: :model do
     expect(run).not_to be_valid
   end
 
+  it "GAR-010 counts a ride's moving time and another sport's elapsed time" do
+    ride = build(:activity, :unlinked, moving_seconds: 3600, elapsed_seconds: 3725)
+    run = build(:activity, :unlinked, :garmin, :without_power, sport: :running, moving_seconds: 1750, elapsed_seconds: 1800)
+
+    expect(ride.duration_seconds).to eq(3600)
+    expect(run.duration_seconds).to eq(1800)
+  end
+
   it "compares the local ride date with the scheduled date" do
     activity = build(:activity)
     scheduled = activity.planned_workout.scheduled_on

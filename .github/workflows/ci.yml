@@ -73,6 +73,9 @@ jobs:
       - name: Test plan form interactions
         run: node --test spec/javascript/plan_configuration_controller_test.mjs
 
+      - name: Test activity dialog
+        run: node --test spec/javascript/activity_dialog_controller_test.mjs
+
   lint:
     runs-on: ubuntu-latest
     env:
