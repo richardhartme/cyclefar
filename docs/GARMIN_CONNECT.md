@@ -4,7 +4,7 @@
 
 When the Garmin rider asks, import their Garmin Connect activities for the active plan's dates, show them on the calendar and link rides to completed workouts. This is Stage 1 of [ADR 0002](adr/0002-garmin-connect-activity-import.md): display only, with no effect on the training engine. The requirements are [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect).
 
-**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement and the Settings key are built; import, matching and calendar display are not yet built (#56–#58).
+**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement, the Settings key and the import are built; matching and calendar display are not yet built (#57–#58).
 
 Import is manual. There is no background polling, recurring job, webhook, OAuth, business-tier access or workout push to Garmin.
 
@@ -84,23 +84,23 @@ The adapter maps each summary to the domain `sport` enum: `cycling`, `running`, 
 
 ## Import window
 
-- **First import:** active plan start date to today.
-- **Later imports:** 7 days before the last successful import to today. The last import time is stored on the rider's profile.
+- **First import:** active plan start date to today. An import is the plan's first when the last successful import came before the plan was created, so a new plan, even a backdated one, is covered from its start. Before the plan starts there is nothing to import and Garmin isn't called.
+- **Later imports:** 7 days before the last successful import to today, but never before the active plan's start, so an earlier plan's rides are never touched. The last import time (`RiderProfile#garmin_last_imported_at`) is stored only when an import finishes.
 - Dates are local dates (`startTimeLocal`). Activities outside the window are never touched.
 
 ## Reconciliation
 
 For each listed activity, under an owner-scoped advisory lock:
 
-1. **Upsert** by `garmin_activity_id`, refreshing name, type, sport, durations, distance and summary.
-2. **Merge** a new Garmin activity into an uploaded activity whose UTC start is within 60 seconds: add the Garmin id, name, type and summary. The upload keeps its source, file and link.
+1. **Upsert** by `garmin_activity_id`, refreshing name, type, sport, local date, distance and summary. Start time, durations and heart rate come from the summary until a file is stored, then from the file. A ride Garmin changes to another sport loses its file and ridden figures.
+2. **Merge** a new Garmin ride into the closest uploaded activity without a Garmin id whose UTC start is within 60 seconds: add the Garmin id, name, type and summary. The upload keeps its source, file and link.
 3. **Download** the file for a cycling activity without one, then calculate its figures (see [ADR 0002](adr/0002-garmin-connect-activity-import.md#figures)). If the download or parse fails, keep the activity without a file and try again on the next import.
 4. **Delete** Garmin activities stored for the window that the complete listing no longer returns. A Garmin-only record is destroyed, along with its link and file. A merged upload only loses its Garmin id and summary. If listing fails partway, delete nothing.
-5. **Auto-link** the rides this import created to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)). Activities from earlier imports are left alone, so a ride the rider unlinked stays unlinked.
+5. **Auto-link** *(not yet built, #57)* the rides this import created to completed workouts ([GAR-007](REQUIREMENTS.md#gar-007-automatic-linking)). Activities from earlier imports are left alone, so a ride the rider unlinked stays unlinked.
 
 Hold no database transaction or row lock across HTTP. Commit each activity's changes in a short transaction, so a failure keeps what was already committed and a re-run is safe.
 
-The flash reports `Imported N, updated N, removed N`.
+The flash reports `Imported N, updated N, removed N.`: activities created, existing ones whose stored fields or file changed (a merge counts as updated), and deletions (a merged upload losing its Garmin id counts as removed). A re-run with nothing new reports zeros.
 
 ## Failure handling
 
@@ -110,6 +110,7 @@ The flash reports `Imported N, updated N, removed N`.
 | `429` | "Garmin is rate limiting requests." Respect `Retry-After` in the message if sent. The spike saw no rate-limit headers. |
 | Timeout, connection error or `5xx` | "Garmin Connect is unavailable. Try again later." |
 | Invalid file | Keep the activity without a file; not a whole-import failure. |
+| An activity CycleFar can't save | "Garmin import stopped: …" with the validation message; activities saved before it are kept. |
 
 `GarminConnect::Client` raises `AuthenticationError`, `RateLimitedError` (with `retry_after` in seconds), `RemoteError` and `InvalidFileError`, all under `GarminConnect::Client::Error`. Each message is the guidance above. Messages never echo Garmin's response body, the key or the token, and the errors carry no cause. Connect and read timeouts are 5 and 10 seconds, with no retries inside the request.
 

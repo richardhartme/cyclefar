@@ -21,7 +21,7 @@ Garmin fields (ADR 0002), used only for the `GARMIN_RIDER_EMAIL` rider:
 
 - `garmin_api_key: text, nullable` — Personal API key, encrypted with Active Record Encryption
 - `garmin_api_key_expires_on: date, nullable` — entered by the rider, because Garmin doesn't return it; required when a key is saved (`rider_profiles_garmin_key_expiry` check)
-- `garmin_last_imported_at: datetime, nullable` *(not yet built)* — start of the next import window (minus 7 days)
+- `garmin_last_imported_at: datetime, nullable` — when the last successful import started; the next window starts 7 days before it
 
 Validations:
 

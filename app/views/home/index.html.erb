@@ -19,6 +19,9 @@
           <%= link_to "Change availability", new_availability_change_path, class: "btn btn-outline btn-primary btn-sm" %>
           <%= link_to "Add time off", new_time_off_period_path, class: "btn btn-outline btn-secondary btn-sm" %>
           <%= button_to "Sync workouts to Intervals.icu", intervals_icu_sync_path, class: "btn btn-accent btn-sm" %>
+          <% if @garmin_profile %>
+            <%= button_to "Import from Garmin", garmin_import_path, class: "btn btn-accent btn-outline btn-sm" %>
+          <% end %>
           <%= button_to(
             @has_completed_workouts ? "Archive plan" : "Delete plan",
             training_plan_path,
@@ -27,6 +30,9 @@
             class: "btn btn-error btn-outline btn-sm") %>
         </div>
       </div>
+      <% if @garmin_profile&.garmin_api_key_expiry.in?(%i[expiring expired]) %>
+        <div class="px-6 pb-5"><%= render "garmin_keys/expiry_warning", profile: @garmin_profile %></div>
+      <% end %>
     </header>
 
     <%= render "load_guidance", weeks: @load_warning_weeks if @load_warning_weeks.any? %>

@@ -58,8 +58,7 @@ module Workouts
     # ones first. Links it to this workout, or rejects the upload when the
     # ride is linked elsewhere.
     def matching_activity(started_at)
-      window = (started_at - Activity::DUPLICATE_WINDOW)..(started_at + Activity::DUPLICATE_WINDOW)
-      match = user.activities.cycling.where(started_at: window)
+      match = user.activities.cycling.starting_near(started_at)
         .min_by { |activity| [ activity.linked? ? 1 : 0, (activity.started_at - started_at).abs ] }
       return unless match
 

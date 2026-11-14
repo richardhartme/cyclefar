@@ -10,6 +10,7 @@ class HomeController < ApplicationController
       @load_warning_weeks = Planning::WeeklyLoadReview.new(plan).weeks_above_target
       @plan = Current.user.training_plans.includes(:target_event, :plan_phases, :time_off_periods, :adaptation_proposals).find(plan.id)
       @has_completed_workouts = @plan.planned_workouts.completed.exists?
+      @garmin_profile = Current.user.rider_profile if Current.user.garmin_rider? && Current.user.rider_profile&.garmin_api_key.present?
       @proposal_errors = {}
       @proposal_comparisons = @plan.adaptation_proposals.to_h do |proposal|
         comparison = if proposal.material_change_replan?
