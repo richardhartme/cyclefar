@@ -633,7 +633,7 @@ Two activities of the same rider whose UTC starts are within 60 seconds are the 
 
 - **Garmin after upload.** An imported Garmin activity matching an uploaded activity is merged into it. The upload gains the Garmin id, name, type and summary, and keeps its source, file and link.
 - **Upload after Garmin.** An uploaded file matching an unlinked activity links that activity to the workout instead of creating a second record. The activity keeps its stored file, or takes the uploaded one if it has none, and the rider is told the existing ride was linked. If the matching activity is linked to another workout, the upload is rejected with guidance to use `Change ride`.
-- **Replacing an upload.** The same match runs when a new file replaces the workout's uploaded ride. If the file matches another activity, the earlier upload and its file are deleted and the matching activity is linked instead, so one ride is never stored twice. A file matching the workout's own upload replaces it in place.
+- **Replacing an upload.** The same match runs when a new file replaces the workout's uploaded ride. If the file matches another activity, the earlier upload and its file are deleted and the matching activity is linked instead, so one ride is never stored twice. A file matching the workout's own upload replaces it in place. A replacement matching a ride linked to another workout is rejected with guidance to remove this ride file and then use `Choose ride`.
 - Activities more than 60 seconds apart stay separate.
 
 ### GAR-006 Sport mapping
@@ -667,7 +667,7 @@ An activity the rider has unlinked is therefore never linked automatically again
 ### GAR-009 Ride found
 
 - A `planned` workout with an unlinked cycling activity on its date shows `Ride found — mark this workout completed?`.
-- It opens the normal completion form (RPE and completion quality) with that ride preselected. Completing the workout links the ride.
+- It opens the normal completion form (RPE and completion quality) with the newest such ride preselected. Completing the workout links the ride. The server accepts only an unlinked ride on the workout's date; if it can't be linked, nothing is completed.
 - Nothing completes automatically, and the prompt never marks a workout missed.
 
 ### GAR-010 Calendar and activity detail

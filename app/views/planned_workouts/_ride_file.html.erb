@@ -5,7 +5,7 @@
 
   <% if activity %>
     <p>
-      <% if activity.garmin? %><strong><%= activity.name.presence || "Garmin ride" %></strong>, ridden<% elsif activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
+      <% if activity.garmin? %><strong><%= activity_name(activity) %></strong>, ridden<% elsif activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
       <% if activity.figures_ftp_watts %>Calculated at your completion FTP of <%= activity.figures_ftp_watts %> W.<% end %>
     </p>
     <p class="badge badge-ghost"><%= activity_source_label(activity) %></p>

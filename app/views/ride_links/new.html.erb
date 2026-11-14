@@ -12,7 +12,7 @@
           <% other = activity.planned_workout %>
           <li class="rounded-box border-base-300 flex flex-wrap items-center justify-between gap-3 border p-4">
             <div>
-              <strong><%= activity.name.presence || "Ride" %></strong>
+              <strong><%= activity_name(activity) %></strong>
               <p class="text-sm tabular-nums"><%= ride_summary(activity) %> · <%= activity_source_label(activity) %></p>
               <% if other %>
                 <p class="text-base-content/70 text-sm">Linked to <%= other.name %> on <%= other.scheduled_on.to_fs(:long) %></p>

@@ -15,6 +15,10 @@ module ApplicationHelper
     activity.garmin? ? "Garmin Connect" : "Uploaded FIT"
   end
 
+  def activity_name(activity)
+    activity.name.presence || "Ride"
+  end
+
   # Start time, moving duration and, with power, TSS: enough to tell rides apart.
   def ride_summary(activity)
     parts = [ activity.started_at.in_time_zone.strftime("%a %-d %b, %H:%M"), ride_duration(activity.moving_seconds) ]

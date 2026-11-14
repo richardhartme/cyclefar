@@ -26,6 +26,11 @@ module Planning
       end
     end
 
+    # Every date the weeks cover, Monday of the first to Sunday of the last.
+    def dates
+      @starts_on.beginning_of_week..(@ends_on.beginning_of_week + 6)
+    end
+
     def workouts_on(date)
       @workouts_by_date.fetch(date, [])
     end

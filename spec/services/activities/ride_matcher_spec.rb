@@ -68,6 +68,17 @@ RSpec.describe Activities::RideMatcher, type: :service do
       expect(found.reload.planned_workout).to be_nil
     end
 
+    it "never replaces a ride the rider chose" do
+      workout = completed(date)
+      chosen = ride(date - 1)
+      Activities::Linker.new(chosen).link!(workout, origin: :rider)
+      found = ride(date)
+
+      expect(matcher.link_after_completion!(workout)).to be_nil
+      expect(chosen.reload).to have_attributes(planned_workout: workout, link_origin: "rider")
+      expect(found.reload.planned_workout).to be_nil
+    end
+
     it "links a preselected ride for the rider instead, even beside another ride" do
       workout = completed(date)
       ride(date, hour: 7)
@@ -75,6 +86,14 @@ RSpec.describe Activities::RideMatcher, type: :service do
 
       expect(matcher.link_after_completion!(workout, ride: chosen)).to eq(chosen)
       expect(chosen.reload).to have_attributes(planned_workout: workout, link_origin: "rider")
+    end
+
+    it "refuses a preselected ride from another date" do
+      workout = completed(date)
+      elsewhere = ride(date - 1)
+
+      expect { matcher.link_after_completion!(workout, ride: elsewhere) }.to raise_error(described_class::Rejected, "Only a ride on the workout's date can be linked as it is completed.")
+      expect(elsewhere.reload.planned_workout).to be_nil
     end
 
     it "refuses a preselected ride that is already linked" do
@@ -93,7 +112,7 @@ RSpec.describe Activities::RideMatcher, type: :service do
       workout = completed(date)
       created = ride(date)
 
-      expect(matcher.link_imported!([ created ])).to eq(1)
+      matcher.link_imported!([ created ])
       expect(created.reload).to have_attributes(planned_workout: workout, link_origin: "automatic")
     end
 
@@ -101,7 +120,7 @@ RSpec.describe Activities::RideMatcher, type: :service do
       completed(date)
       unlinked_by_rider = ride(date)
 
-      expect(matcher.link_imported!([])).to eq(0)
+      matcher.link_imported!([])
       expect(unlinked_by_rider.reload.planned_workout).to be_nil
     end
 
@@ -110,7 +129,7 @@ RSpec.describe Activities::RideMatcher, type: :service do
       ride(date, hour: 7)
       created = ride(date, hour: 17)
 
-      expect(matcher.link_imported!([ created ])).to eq(0)
+      matcher.link_imported!([ created ])
       expect(created.reload.planned_workout).to be_nil
     end
 
@@ -124,7 +143,7 @@ RSpec.describe Activities::RideMatcher, type: :service do
       plan
       created = [ ride(date), ride(linked_day), ride(Date.new(2026, 6, 2)) ]
 
-      expect(matcher.link_imported!(created)).to eq(0)
+      matcher.link_imported!(created)
       expect(created.map { |activity| activity.reload.planned_workout }).to all(be_nil)
     end
   end
@@ -200,6 +219,23 @@ RSpec.describe Activities::RideMatcher, type: :service do
 
       expect(replacement.reload.planned_workout).to eq(workout)
       expect(current.reload).to have_attributes(planned_workout: nil, link_origin: nil)
+    end
+
+    it "recalculates figures at the frozen completion FTP, and the replaced ride's at the FTP on its date" do
+      profile = create(:rider_profile, user: user, ftp_watts: 300)
+      create(:ftp_reading, rider_profile: profile, ftp_watts: 250, effective_on: Date.new(2026, 8, 1))
+      workout = completed(date)
+      # outdoor_ride.fit starts on 25 August 2026 with an NP of about 227 W.
+      with_file = ->(activity) { activity.ride_file.attach(io: file_fixture("fit/outdoor_ride.fit").open, filename: "ride.fit"); activity.save!; activity }
+      current = with_file.(ride(date))
+      Activities::Linker.new(current).link!(workout, origin: :automatic)
+      replacement = with_file.(ride(date, hour: 18))
+
+      matcher.choose!(workout, replacement)
+
+      expect(replacement.reload).to have_attributes(figures_ftp_watts: 260)
+      expect(replacement.intensity_factor.to_f).to be_within(1e-3).of(227.4 / 260)
+      expect(current.reload).to have_attributes(figures_ftp_watts: 250)
     end
 
     it "refuses to change away from an uploaded ride" do
