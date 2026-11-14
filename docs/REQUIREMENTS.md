@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement, the Settings key, the import and ride matching are built; calendar display is not yet built (#58), so unlinked activities are stored but not yet shown on the calendar. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); Stage 1 (enablement, the Settings key, the import, ride matching and calendar display) is built. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -590,7 +590,7 @@ Automated coverage target: end-to-end two-user regression matrix with foreign-ID
 
 ## 17. Garmin Connect
 
-Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 to GAR-009 and GAR-011 to GAR-013 are built; calendar display (GAR-010) is not yet built (#58).
+Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 to GAR-013 are built.
 
 ### GAR-001 Garmin enablement
 

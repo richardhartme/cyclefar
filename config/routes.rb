@@ -26,6 +26,7 @@ Rails.application.routes.draw do
     resource :ride_file, only: [ :create, :destroy ]
     resource :ride_link, only: [ :new, :create ]
   end
+  resources :activities, only: :show
   resources :adaptation_proposals, only: [] do
     member do
       post :accept

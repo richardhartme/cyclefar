@@ -16,7 +16,20 @@ module ApplicationHelper
   end
 
   def activity_name(activity)
-    activity.name.presence || "Ride"
+    activity.name.presence || (activity.cycling? ? "Ride" : activity.sport.humanize)
+  end
+
+  # A ride counts its moving time, as its ridden figures do; other sports
+  # show Garmin's elapsed duration.
+  def activity_duration_seconds(activity)
+    activity.cycling? ? activity.moving_seconds : activity.elapsed_seconds
+  end
+
+  # GAR-010: a calendar entry's sport, name, duration and, with power, TSS.
+  def activity_entry_summary(activity)
+    parts = [ activity.sport.humanize, activity_name(activity), ride_duration(activity_duration_seconds(activity)) ]
+    parts << "#{activity.tss.round} TSS" if activity.power?
+    parts.join(" · ")
   end
 
   # Start time, moving duration and, with power, TSS: enough to tell rides apart.

@@ -1,6 +1,6 @@
 # CycleFar architecture diagrams
 
-Fourteen PlantUML diagrams: the implemented application, plus Garmin Connect import ([ADR 0002](../adr/0002-garmin-connect-activity-import.md)) marked as planned where it appears. They show structure and flow; they don't certify every V1 requirement. For the behaviour behind them, see [ARCHITECTURE.md](../ARCHITECTURE.md).
+Fourteen PlantUML diagrams: the implemented application, including Garmin Connect import ([ADR 0002](../adr/0002-garmin-connect-activity-import.md)). They show structure and flow; they don't certify every V1 requirement. For the behaviour behind them, see [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## Component views
 
@@ -8,8 +8,8 @@ Which parts own a responsibility. Arrows show dependencies, not call order.
 
 | View (source) | PNG | Scope |
 | --- | --- | --- |
-| [System context](context-cyclefar-system.puml) | [PNG](png/context-cyclefar-system.png) | Rider, CycleFar, Intervals.icu, the SMTP provider and (planned) Garmin Connect |
-| [Containers](container-cyclefar.puml) | [PNG](png/container-cyclefar.png) | Rails/Puma with Solid Queue, PostgreSQL, ride file storage, SMTP and (planned) Garmin Connect |
+| [System context](context-cyclefar-system.puml) | [PNG](png/context-cyclefar-system.png) | Rider, CycleFar, Intervals.icu, the SMTP provider and Garmin Connect |
+| [Containers](container-cyclefar.puml) | [PNG](png/container-cyclefar.png) | Rails/Puma with Solid Queue, PostgreSQL, ride file storage, SMTP and Garmin Connect |
 | [Application components](component-cyclefar-application.puml) | [PNG](png/component-cyclefar-application.png) | Authentication, account access, calendar, domain services, ride files and persistence |
 | [Plan generation](component-cyclefar-plan-generation.puml) | [PNG](png/component-cyclefar-plan-generation.png) | Preview draft, recovery alignment, taper budgets, confirmation and materialisation |
 | [Plan changes](component-cyclefar-plan-change.puml) | [PNG](png/component-cyclefar-plan-change.png) | Manual edits, completion, feedback proposals, schedule changes, return ramps and FTP updates |
@@ -27,7 +27,7 @@ Request order and read/write boundaries for one rider action.
 | [Material Change Workout proposal](sequence-cyclefar-material-change-proposal.puml) | [PNG](png/sequence-cyclefar-material-change-proposal.png) | Change Workout saves immediately; an optional proposal replans the following block |
 | [Make a workout Easier/Harder](sequence-cyclefar-directional-adjustment.puml) | [PNG](png/sequence-cyclefar-directional-adjustment.png) | Pick the next ladder level or profile that moves TSS the right way, or report the limit |
 | [Upload, replace or remove a ride file](sequence-cyclefar-ride-file-upload.puml) | [PNG](png/sequence-cyclefar-ride-file-upload.png) | Parse the FIT file outside the lock, then save ridden metrics beside completed history |
-| [Import from Garmin and link rides](sequence-cyclefar-garmin-import.puml) | [PNG](png/sequence-cyclefar-garmin-import.png) | Planned (ADR 0002): token, list, upsert/merge, file download, deletions, then auto-link, Choose ride and Ride found |
+| [Import from Garmin and link rides](sequence-cyclefar-garmin-import.puml) | [PNG](png/sequence-cyclefar-garmin-import.png) | ADR 0002: token, list, upsert/merge, file download, deletions, then auto-link, Choose ride and Ride found |
 | [Manual Intervals.icu reconciliation](sequence-cyclefar-intervals-icu-sync.puml) | [PNG](png/sequence-cyclefar-intervals-icu-sync.png) | Save identities, upload, confirm, clean up stale events, keep retry metadata on failure |
 
 Start with the application component view, then open the sequence for the action you care about. The two proposal sequences are separate because feedback proposes edits to upcoming workouts, whereas Change Workout has already saved its workout before the replan is offered.

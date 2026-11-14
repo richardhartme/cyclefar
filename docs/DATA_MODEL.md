@@ -1,6 +1,6 @@
 # CycleFar — Rails Data Model
 
-The implemented persistence shape, plus the accepted Garmin changes marked *(ADR 0002, not yet built)*. [`db/structure.sql`](../db/structure.sql) is authoritative for what exists; [REQUIREMENTS.md](REQUIREMENTS.md) defines intended behaviour. Enums use string values. JSONB holds progression state, proposal payloads and completion snapshots.
+The implemented persistence shape. [`db/structure.sql`](../db/structure.sql) is authoritative for what exists; [REQUIREMENTS.md](REQUIREMENTS.md) defines intended behaviour. Enums use string values. JSONB holds progression state, proposal payloads and completion snapshots.
 
 ## User and Session
 
