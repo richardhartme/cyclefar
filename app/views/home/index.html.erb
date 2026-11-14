@@ -160,10 +160,16 @@
                           <% if rpe %><span><%= rpe %></span><% end %>
                         </p>
                       <% end %>
+                      <% if @garmin_rider && !workout.activity %>
+                        <%= link_to "Choose ride", new_planned_workout_ride_link_path(workout), class: "link link-primary text-sm" %>
+                      <% end %>
                     <% elsif workout.missed? %>
                       <p class="badge badge-neutral badge-sm mt-1">Missed</p>
                     <% elsif workout.scheduled_on < Date.current %>
                       <p class="badge badge-warning badge-sm mt-1">Awaiting status</p>
+                    <% end %>
+                    <% if workout.planned? && (found_ride = @found_rides[workout.scheduled_on]&.first) %>
+                      <%= link_to "Ride found — mark this workout completed?", planned_workout_path(workout, ride: found_ride.id, anchor: "mark-completed"), class: "link link-primary text-sm" %>
                     <% end %>
                   </div>
                 </article>

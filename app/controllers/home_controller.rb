@@ -29,5 +29,8 @@ class HomeController < ApplicationController
     end
 
     @calendar = Planning::CalendarPresenter.new(@plan)
+    # GAR-008/GAR-009 prompts are Garmin UI, shown only to the Garmin rider.
+    @garmin_rider = @plan && Current.user.garmin_rider?
+    @found_rides = @garmin_rider ? Activities::RideMatcher.new(Current.user).found_rides(@calendar.weeks.first.starts_on..@calendar.weeks.last.ends_on) : {}
   end
 end

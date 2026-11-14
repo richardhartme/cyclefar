@@ -1,11 +1,14 @@
+<% activity = workout.activity %>
+<% garmin_rider = Current.user.garmin_rider? %>
 <section aria-labelledby="ride-file-title" class="space-y-4">
-  <h2 id="ride-file-title" class="text-xl font-semibold">Ride file</h2>
+  <h2 id="ride-file-title" class="text-xl font-semibold"><%= activity&.garmin? ? "Ride" : "Ride file" %></h2>
 
-  <% if (activity = workout.activity) %>
+  <% if activity %>
     <p>
-      <% if activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
+      <% if activity.garmin? %><strong><%= activity.name.presence || "Garmin ride" %></strong>, ridden<% elsif activity.ride_file.attached? %><strong><%= activity.ride_file.filename %></strong>, ridden<% else %>Ridden<% end %> on <%= activity.ridden_on.to_fs(:long) %>.
       <% if activity.figures_ftp_watts %>Calculated at your completion FTP of <%= activity.figures_ftp_watts %> W.<% end %>
     </p>
+    <p class="badge badge-ghost"><%= activity_source_label(activity) %></p>
     <% if activity.date_mismatch? %>
       <div role="note" class="alert alert-warning alert-soft">This ride is dated <%= activity.ridden_on.to_fs(:long) %>, but the workout was scheduled for <%= workout.scheduled_on.to_fs(:long) %>.</div>
     <% end %>
@@ -34,16 +37,28 @@
     <p>Upload the FIT file from your bike computer or trainer app to compare what you rode with the plan.</p>
   <% end %>
 
-  <div class="flex flex-wrap items-end gap-4">
-    <%= form_with url: planned_workout_ride_file_path(workout), method: :post, multipart: true, class: "fieldset" do %>
-      <%= label_tag :ride_file, activity ? "Replace with another FIT file" : "FIT file", class: "fieldset-label font-semibold" %>
-      <%= file_field_tag :ride_file, accept: ".fit", required: true, class: "file-input w-full" %>
-      <p class="fieldset-label">Up to 10 MB.</p>
-      <div class="mt-2"><%= submit_tag activity ? "Replace ride file" : "Upload ride file", class: "btn btn-primary" %></div>
-    <% end %>
+  <% if activity&.garmin? %>
+    <%# GAR-008: a Garmin ride is changed or unlinked, never replaced by an upload. %>
+    <div class="flex flex-wrap items-center gap-3">
+      <% if garmin_rider %>
+        <%= link_to "Change ride", new_planned_workout_ride_link_path(workout), class: "btn btn-outline btn-primary" %>
+      <% end %>
+      <%= button_to "Unlink ride", planned_workout_ride_file_path(workout), method: :delete, class: "btn btn-outline btn-error", form: { data: { turbo_confirm: "Unlink this ride? It stays with your activities, and the completed workout and your feedback stay unchanged." } } %>
+    </div>
+  <% else %>
+    <div class="flex flex-wrap items-end gap-4">
+      <%= form_with url: planned_workout_ride_file_path(workout), method: :post, multipart: true, class: "fieldset" do %>
+        <%= label_tag :ride_file, activity ? "Replace with another FIT file" : "FIT file", class: "fieldset-label font-semibold" %>
+        <%= file_field_tag :ride_file, accept: ".fit", required: true, class: "file-input w-full" %>
+        <p class="fieldset-label">Up to 10 MB.</p>
+        <div class="mt-2"><%= submit_tag activity ? "Replace ride file" : "Upload ride file", class: "btn btn-primary" %></div>
+      <% end %>
 
-    <% if activity %>
-      <%= button_to "Remove ride file", planned_workout_ride_file_path(workout), method: :delete, class: "btn btn-outline btn-error", form: { data: { turbo_confirm: "Remove this ride file? The completed workout and your feedback stay unchanged." } } %>
-    <% end %>
-  </div>
+      <% if activity %>
+        <%= button_to "Remove ride file", planned_workout_ride_file_path(workout), method: :delete, class: "btn btn-outline btn-error", form: { data: { turbo_confirm: "Remove this ride file? The completed workout and your feedback stay unchanged." } } %>
+      <% elsif garmin_rider %>
+        <%= link_to "Choose ride", new_planned_workout_ride_link_path(workout), class: "btn btn-outline btn-primary" %>
+      <% end %>
+    </div>
+  <% end %>
 </section>

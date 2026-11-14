@@ -1,0 +1,33 @@
+<section class="card bg-base-100 border-base-300 mx-auto w-full max-w-3xl border shadow-sm">
+  <div class="card-body gap-6 p-6 sm:p-8">
+    <header>
+      <%= link_to "Back to workout", planned_workout_path(@workout), class: "link link-primary font-semibold" %>
+      <h1 class="card-title mt-5 text-3xl"><%= @workout.activity ? "Change ride" : "Choose ride" %></h1>
+      <p class="text-base-content/70 mt-2">Rides within <%= Activities::RideMatcher::PICKER_DAYS %> days of <%= @workout.name %> on <%= @workout.scheduled_on.to_fs(:long) %>, newest first. Linking a ride never changes the completed workout or your feedback.</p>
+    </header>
+
+    <% if @candidates.any? %>
+      <ul class="space-y-3" aria-label="Rides to choose from">
+        <% @candidates.each do |activity| %>
+          <% other = activity.planned_workout %>
+          <li class="rounded-box border-base-300 flex flex-wrap items-center justify-between gap-3 border p-4">
+            <div>
+              <strong><%= activity.name.presence || "Ride" %></strong>
+              <p class="text-sm tabular-nums"><%= ride_summary(activity) %> · <%= activity_source_label(activity) %></p>
+              <% if other %>
+                <p class="text-base-content/70 text-sm">Linked to <%= other.name %> on <%= other.scheduled_on.to_fs(:long) %></p>
+              <% end %>
+            </div>
+            <%= button_to "Link this ride",
+              planned_workout_ride_link_path(@workout),
+              params: { activity_id: activity.id },
+              class: "btn btn-primary btn-sm",
+              form: { data: { turbo_confirm: (other && "Move this ride from #{other.name}? That workout will be left without a ride.") } } %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>No rides within <%= Activities::RideMatcher::PICKER_DAYS %> days of this workout. Import from Garmin on the calendar to fetch new rides.</p>
+    <% end %>
+  </div>
+</section>

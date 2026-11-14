@@ -102,8 +102,12 @@
         </div>
 
         <% if @workout.workout? || @workout.opener? %>
-          <%= form_with url: complete_planned_workout_path(@workout), method: :post, class: "fieldset bg-base-200 border-base-300 rounded-box border p-5" do %>
+          <%= form_with url: complete_planned_workout_path(@workout), method: :post, id: "mark-completed", class: "fieldset bg-base-200 border-base-300 rounded-box border p-5" do %>
             <h3 class="text-lg font-semibold">Mark completed</h3>
+            <% if @found_ride %>
+              <%= hidden_field_tag :activity_id, @found_ride.id %>
+              <p role="note">Links <%= @found_ride.name.presence || "the ride" %> (<%= ride_summary(@found_ride) %>) to this workout when you save.</p>
+            <% end %>
             <%= label_tag :rpe, "RPE (1–10)", class: "fieldset-label font-semibold" %>
             <%= number_field_tag :rpe, nil, min: 1, max: 10, required: true, class: "input w-full sm:w-40" %>
             <%= label_tag :completion_quality, "Completion quality", class: "fieldset-label mt-2 font-semibold" %>

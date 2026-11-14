@@ -1,6 +1,6 @@
 # CycleFar UX Specification
 
-This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect matching and calendar display, which are accepted but not yet built.
+This document describes the interaction design as implemented. Controls not described here do not exist. Items marked *(ADR 0002)* describe Garmin Connect calendar display, which is accepted but not yet built.
 
 ## Branding
 
@@ -209,7 +209,7 @@ Show enough to understand it without opening:
 - TSS / IF / kJ in compact form;
 - completed, awaiting-status or missed badge when applicable. Missed cards remain visible with muted workout details;
 - under the completed badge, ridden TSS when a ride with power is linked, and the recorded RPE;
-- *(ADR 0002)* for the Garmin rider, `Choose ride` on a completed card with no linked ride, and `Ride found — mark this workout completed?` on a planned card with an unlinked ride on its date.
+- for the Garmin rider, `Choose ride` on a completed card with no linked ride, and `Ride found — mark this workout completed?` on a planned card with an unlinked ride on its date, which opens the workout with the newest such ride preselected.
 
 Main-set summaries keep under/over and activation efforts separate and show both ends of a ramp. Planned watts use current FTP; completed watts use the frozen snapshot.
 
@@ -269,13 +269,13 @@ Actions:
 
 **Ride file (FBK-004).** Completed workouts in the active plan can upload, replace or remove one FIT file. The section compares planned and ridden duration, NP, IF, TSS and work, and shows ridden average power, heart rate and the completion FTP. A ride without power shows `No power data`; a ride on a different date shows a non-blocking warning. Removal asks for confirmation.
 
-*(ADR 0002)* The ride section shows the source label. For the Garmin rider it also offers:
+The ride section shows the source label (GAR-011). For the Garmin rider it also offers:
 
-- **Choose ride** when no ride is linked, or **Change ride** when one is: a picker of rides within 3 days either side of the scheduled date, newest first. Rides already linked to another workout in the active plan show that workout's name and date; choosing one asks for confirmation, then moves it;
+- **Choose ride** when no ride is linked, or **Change ride** when a Garmin ride is: a picker page of rides within 3 days either side of the scheduled date, newest first, each with `Link this ride`. Rides already linked to another workout in the active plan show that workout's name and date; choosing one asks for confirmation, then moves it. Changing a Garmin ride leaves the old one unlinked. The picker returns to the workout with `Ride linked.`;
 - with a Garmin ride linked, Upload is replaced by Change ride and Unlink. An upload that matches an existing ride (within 60 seconds) links that ride and says so;
-- **Unlink** on a Garmin ride, which leaves the activity on the calendar as an unlinked entry. Removing an uploaded file still deletes it.
+- **Unlink ride** on a Garmin ride asks for confirmation and returns with `Ride unlinked. It stays with your activities.` Removing an uploaded file still deletes it. An upload that replaces the workout's earlier upload but matches another ride links that ride and adds `Your earlier upload was removed.`
 
-**Ride found** *(ADR 0002)* on a planned workout opens the normal completion form with the found ride preselected; completing links it. Nothing completes on its own.
+**Ride found** on a planned workout opens the normal completion form with the found ride preselected; completing links it. Nothing completes on its own.
 
 **Remove** returns to the calendar with that date empty and nothing else changed; the message explains that manual Sync updates Intervals.icu. Completed workouts can't be removed.
 
@@ -328,7 +328,7 @@ A compact form:
 - RPE 1–10
 - Completion quality: Completed as planned / Struggled but completed / Could not complete
 
-Submit marks the workout complete and freezes it. *(ADR 0002)* When opened from `Ride found`, the form names the preselected ride and links it on submit. Otherwise, a single unlinked Garmin ride on the workout's date is linked automatically after completion.
+Submit marks the workout complete and freezes it. When opened from `Ride found`, the form names the preselected ride and links it on submit. Otherwise, a single unlinked ride on the workout's date is linked automatically after completion. Either way the message adds `Ride linked.`
 
 If adaptation is warranted, next show an adaptation proposal:
 

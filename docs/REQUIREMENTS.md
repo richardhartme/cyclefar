@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement, the Settings key and the import are built; matching and calendar display are not yet built (#57–#58), so imported activities are stored but not yet linked or shown. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement, the Settings key, the import and ride matching are built; calendar display is not yet built (#58), so unlinked activities are stored but not yet shown on the calendar. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -433,7 +433,6 @@ A ride is a rider-owned `Activity` that may link to one completed workout, showi
 - Ridden figures are display only: they do not change weekly totals, load limits, feedback evaluation or adaptation proposals (GAR-013).
 - The completed workout's structure, snapshot, metrics and feedback never change through upload, link, unlink, relink or recalculation.
 - Activity import from Intervals.icu or Strava is not provided.
-- **As built today:** links are made only by uploading, and `Change ride`, `Unlink` and automatic linking arrive with Garmin import (#57).
 
 ## 9. Missed workouts
 
@@ -591,7 +590,7 @@ Automated coverage target: end-to-end two-user regression matrix with foreign-ID
 
 ## 17. Garmin Connect
 
-Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 to GAR-006 are built; matching and calendar display are not yet built (#57–#58).
+Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 to GAR-009 and GAR-011 to GAR-013 are built; calendar display (GAR-010) is not yet built (#58).
 
 ### GAR-001 Garmin enablement
 
@@ -634,6 +633,7 @@ Two activities of the same rider whose UTC starts are within 60 seconds are the 
 
 - **Garmin after upload.** An imported Garmin activity matching an uploaded activity is merged into it. The upload gains the Garmin id, name, type and summary, and keeps its source, file and link.
 - **Upload after Garmin.** An uploaded file matching an unlinked activity links that activity to the workout instead of creating a second record. The activity keeps its stored file, or takes the uploaded one if it has none, and the rider is told the existing ride was linked. If the matching activity is linked to another workout, the upload is rejected with guidance to use `Change ride`.
+- **Replacing an upload.** The same match runs when a new file replaces the workout's uploaded ride. If the file matches another activity, the earlier upload and its file are deleted and the matching activity is linked instead, so one ride is never stored twice. A file matching the workout's own upload replaces it in place.
 - Activities more than 60 seconds apart stay separate.
 
 ### GAR-006 Sport mapping

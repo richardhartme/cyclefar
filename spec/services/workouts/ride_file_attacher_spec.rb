@@ -100,6 +100,31 @@ RSpec.describe Workouts::RideFileAttacher, type: :service do
       expect(ActiveStorage::Blob.count).to eq(1)
     end
 
+    it "replaces an earlier upload by linking the existing ride a new file matches, so the ride is stored once" do
+      described_class.new(workout: workout, file: upload("indoor_ride")).call
+      earlier = workout.reload.activity
+      existing = garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 30, 30))
+      attacher = described_class.new(workout: workout, file: upload("outdoor_ride"))
+
+      expect(attacher.call).to eq(existing)
+
+      expect(attacher).to be_linked_existing
+      expect(attacher).to be_replaced_upload
+      expect(Activity.exists?(earlier.id)).to be(false)
+      expect(existing.reload).to have_attributes(planned_workout: workout, link_origin: "rider")
+      expect(existing.ride_file.filename.to_s).to eq("outdoor_ride.fit")
+      expect(Activity.count).to eq(1)
+    end
+
+    it "replaces the upload in place when the new file matches it" do
+      first = described_class.new(workout: workout, file: upload("outdoor_ride")).call
+      attacher = described_class.new(workout: workout, file: upload("outdoor_ride_without_power"))
+
+      expect(attacher.call).to eq(first)
+      expect(attacher).not_to be_linked_existing
+      expect(attacher).not_to be_replaced_upload
+    end
+
     it "keeps activities more than 60 seconds apart separate" do
       existing = garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 31, 23))
 

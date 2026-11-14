@@ -1,7 +1,7 @@
 module Workouts
   # Removes a completed workout's ride. An uploaded activity is deleted with
   # its file; a Garmin ride is unlinked and kept (GAR-008). The workout's
-  # completion snapshot and feedback are untouched.
+  # completion snapshot and feedback are untouched. Returns the ride, if any.
   class RideFileRemover
     def initialize(workout)
       @workout = workout
@@ -15,6 +15,7 @@ module Workouts
         else
           activity&.destroy!
         end
+        activity
       end
     end
   end

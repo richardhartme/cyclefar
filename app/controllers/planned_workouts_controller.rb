@@ -24,6 +24,8 @@ class PlannedWorkoutsController < ApplicationController
     if @workout.planned? && @workout.outline? && @workout.scheduled_on <= Date.current
       Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout)
     end
+    # GAR-009: opened from Ride found, the completion form links that ride.
+    @found_ride = Current.user.activities.unlinked.cycling.find_by(id: params[:ride]) if @workout.planned? && params[:ride]
     @material_change_proposal = material_change_proposal
     @material_change_error = Adaptations::ProposalFreshness.new(@material_change_proposal).unavailability_message if @material_change_proposal
   end
@@ -70,9 +72,13 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def complete
-    proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality)).call
-    redirect_to root_path, notice: proposal ? "Workout completed. An adaptation proposal is ready for review." : "Workout completed."
-  rescue ArgumentError, ActiveRecord::RecordInvalid => error
+    ride = Current.user.activities.find(params[:activity_id]) if params[:activity_id].present?
+    proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality), ride: ride).call
+    notice = [ "Workout completed." ]
+    notice << "Ride linked." if @workout.reload.activity
+    notice << "An adaptation proposal is ready for review." if proposal
+    redirect_to root_path, notice: notice.join(" ")
+  rescue ArgumentError, ActiveRecord::RecordInvalid, Activities::RideMatcher::Rejected => error
     redirect_to planned_workout_path(@workout), alert: error.message
   end
 

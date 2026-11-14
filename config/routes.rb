@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       post :miss
     end
     resource :ride_file, only: [ :create, :destroy ]
+    resource :ride_link, only: [ :new, :create ]
   end
   resources :adaptation_proposals, only: [] do
     member do

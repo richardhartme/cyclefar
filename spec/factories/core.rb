@@ -142,10 +142,20 @@ FactoryBot.define do
     tss { 43.7633 }
     work_kj { 594 }
     average_heart_rate_bpm { 138 }
-    after(:build) { |activity| activity.ride_file.attach(io: StringIO.new("ride"), filename: "ride.fit") if activity.cycling? }
+    transient do
+      with_file { true }
+    end
+    after(:build) { |activity, context| activity.ride_file.attach(io: StringIO.new("ride"), filename: "ride.fit") if activity.cycling? && context.with_file }
 
     trait :unlinked do
       planned_workout { nil }
+    end
+
+    # A Garmin ride without a stored file, so linking leaves its figures as they are.
+    trait :garmin do
+      source { :garmin }
+      sequence(:garmin_activity_id) { |n| 25_000_000_000 + n }
+      with_file { false }
     end
 
     trait :without_power do

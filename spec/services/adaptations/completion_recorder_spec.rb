@@ -41,4 +41,38 @@ RSpec.describe Adaptations::CompletionRecorder, type: :service, generated_workou
     expect(next_workout.reload.progression_level).to eq(5)
     expect(AdaptationProposal).not_to exist(proposal.id)
   end
+
+  describe "GAR-007 and GAR-009 linking a ride" do
+    def ride(hour: 7)
+      create(:activity, :unlinked, :garmin, user: plan.user, started_at: workout.scheduled_on.in_time_zone.change(hour: hour), started_on: workout.scheduled_on)
+    end
+
+    it "links the one unlinked ride on the workout's date automatically" do
+      found = ride
+
+      described_class.new(workout: workout, rpe: 6, completion_quality: :as_planned).call
+
+      expect(found.reload).to have_attributes(planned_workout: workout, link_origin: "automatic")
+    end
+
+    it "links the ride preselected from Ride found" do
+      ride(hour: 7)
+      chosen = ride(hour: 18)
+
+      described_class.new(workout: workout, rpe: 6, completion_quality: :as_planned, ride: chosen).call
+
+      expect(chosen.reload).to have_attributes(planned_workout: workout, link_origin: "rider")
+    end
+
+    it "completes nothing when the preselected ride can't be linked" do
+      taken = ride
+      taken.update_columns(sport: "running")
+
+      expect {
+        described_class.new(workout: workout, rpe: 6, completion_quality: :as_planned, ride: taken).call
+      }.to raise_error(Activities::RideMatcher::Rejected)
+      expect(workout.reload).to be_planned
+      expect(workout.workout_feedback).to be_nil
+    end
+  end
 end
