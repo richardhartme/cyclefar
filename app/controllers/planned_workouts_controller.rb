@@ -25,7 +25,7 @@ class PlannedWorkoutsController < ApplicationController
       Planning::WorkoutBuilder.new(@workout.training_plan).build_for_completion!(@workout)
     end
     # GAR-009: opened from Ride found, the completion form links that ride.
-    @found_ride = Current.user.activities.unlinked.cycling.find_by(id: params[:ride]) if @workout.planned? && params[:ride]
+    @found_ride = Current.user.activities.unlinked.cycling.find_by(id: params[:ride]) if @workout.planned? && params[:ride] && Current.user.garmin_rider?
     @material_change_proposal = material_change_proposal
     @material_change_error = Adaptations::ProposalFreshness.new(@material_change_proposal).unavailability_message if @material_change_proposal
   end
@@ -72,7 +72,7 @@ class PlannedWorkoutsController < ApplicationController
   end
 
   def complete
-    ride = Current.user.activities.find(params[:activity_id]) if params[:activity_id].present?
+    ride = found_ride if params[:activity_id].present?
     proposal = Adaptations::CompletionRecorder.new(workout: @workout, rpe: params.require(:rpe), completion_quality: params.require(:completion_quality), ride: ride).call
     notice = [ "Workout completed." ]
     notice << "Ride linked." if @workout.reload.activity
@@ -94,6 +94,13 @@ class PlannedWorkoutsController < ApplicationController
 
   def load_workout
     @workout = Current.user.planned_workouts.includes(:workout_steps, :plan_phase, training_plan: :plan_phases).find(params[:id])
+  end
+
+  # A Ride found preselection is Garmin UI: anyone else gets a 404 (GAR-001).
+  def found_ride
+    raise ActiveRecord::RecordNotFound unless Current.user.garmin_rider?
+
+    Current.user.activities.find(params[:activity_id])
   end
 
   def material_change_proposal

@@ -132,6 +132,13 @@ RSpec.describe "Ride links", type: :request do
       get root_path
 
       expect(response.body).not_to include("Choose ride", "Ride found")
+      spin = rider.planned_workouts.find_by!(name: "Spin session")
+      found = rider.activities.sole
+      get planned_workout_path(spin, ride: found.id)
+      expect(response.body).not_to include("Links Morning ride")
+      post complete_planned_workout_path(spin), params: { rpe: 6, completion_quality: "as_planned", activity_id: found.id }
+      expect(response).to have_http_status(:not_found)
+      expect(spin.reload).to be_planned
       get new_planned_workout_ride_link_path(rider.planned_workouts.find_by!(name: "Tempo ride"))
       expect(response).to have_http_status(:not_found)
     end

@@ -22,6 +22,7 @@ module Activities
         ride.reload
         raise Rejected, "That ride is already linked to another workout." if ride.linked?
         raise Rejected, "Only rides can be linked to a workout." unless ride.cycling? && ride.user_id == @user.id
+        raise Rejected, "Only a ride on the workout's date can be linked as it is completed." unless ride.started_on == workout.scheduled_on
 
         Linker.new(ride).link!(workout, origin: :rider)
       else
@@ -30,12 +31,13 @@ module Activities
     end
 
     # After an import, links rides the import created, and only those, so a
-    # ride the rider unlinked is never linked again. Returns how many linked.
+    # ride the rider unlinked is never linked again. An older unlinked ride on
+    # the same date makes two candidates, so nothing links there.
     def link_imported!(created)
       plan = @user.training_plans.active.first
-      return 0 unless plan
+      return unless plan
 
-      created.select(&:cycling?).map(&:started_on).uniq.count do |date|
+      created.select(&:cycling?).map(&:started_on).uniq.each do |date|
         plan.with_lock { auto_link(plan, date, only: created) }
       end
     end

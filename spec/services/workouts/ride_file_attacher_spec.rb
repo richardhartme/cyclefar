@@ -116,6 +116,16 @@ RSpec.describe Workouts::RideFileAttacher, type: :service do
       expect(Activity.count).to eq(1)
     end
 
+    it "rejects a replacement matching a ride linked elsewhere, saying to remove this upload first" do
+      described_class.new(workout: workout, file: upload("indoor_ride")).call
+      other = create(:planned_workout, :completed, training_plan: workout.training_plan, scheduled_on: workout.scheduled_on + 1, name: "Long ride")
+      garmin_ride(started_at: Time.utc(2026, 8, 25, 9, 30, 22)).then { |ride| Activities::Linker.new(ride).link!(other, origin: :automatic) }
+
+      expect { described_class.new(workout: workout, file: upload("outdoor_ride")).call }
+        .to raise_error(described_class::Rejected, "This ride is already linked to Long ride on #{other.scheduled_on.to_fs(:long)}. Remove this ride file, then use Choose ride to move it.")
+      expect(workout.reload.activity.ride_file.filename.to_s).to eq("indoor_ride.fit")
+    end
+
     it "replaces the upload in place when the new file matches it" do
       first = described_class.new(workout: workout, file: upload("outdoor_ride")).call
       attacher = described_class.new(workout: workout, file: upload("outdoor_ride_without_power"))

@@ -37,7 +37,7 @@ module Workouts
         raise Rejected, "Unlink the Garmin ride first." if @workout.activity&.garmin?
 
         current = @workout.activity
-        activity = matching_activity(samples.first.recorded_at, except: current)
+        activity = matching_activity(samples.first.recorded_at, replacing: current)
         if activity && current
           # The new file is a ride already stored, so the upload it replaces goes.
           current.destroy!
@@ -70,8 +70,8 @@ module Workouts
     # The closest cycling activity within the duplicate window, other than
     # the workout's own upload, unlinked ones first. Links it to this workout,
     # or rejects the upload when the ride is linked elsewhere.
-    def matching_activity(started_at, except:)
-      match = user.activities.cycling.starting_near(started_at).where.not(id: except)
+    def matching_activity(started_at, replacing:)
+      match = user.activities.cycling.starting_near(started_at).where.not(id: replacing)
         .min_by { |activity| [ activity.linked? ? 1 : 0, (activity.started_at - started_at).abs ] }
       return unless match
 
@@ -79,6 +79,8 @@ module Workouts
       if (other = match.planned_workout)
         linked_to = "This ride is already linked to #{other.name} on #{other.scheduled_on.to_fs(:long)}"
         raise Rejected, "#{linked_to} in an archived plan." if other.training_plan.archived?
+        # Change ride isn't offered while an upload is linked.
+        raise Rejected, "#{linked_to}. Remove this ride file, then use Choose ride to move it." if replacing
         raise Rejected, "#{linked_to}. Use Change ride to move it."
       end
 
