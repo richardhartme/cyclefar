@@ -72,8 +72,8 @@ this is how a self-hoster will enable it. It uses Garmin's self-service Personal
 only reads the key owner's own data, so each deployment enables it for one rider:
 
 1. Set `GARMIN_RIDER_EMAIL` to that rider's CycleFar email address in the app's environment
-   (locally in your shell; for Kamal, in `.env.deploy`, which `config/deploy.yml` will pass
-   through once #55 adds it). Without it, nobody sees any Garmin controls.
+   (locally in your shell; for Kamal, in `.env.deploy`, which `config/deploy.yml` passes
+   through as a secret). Without it, nobody sees any Garmin controls.
 2. Create a Personal API key in the
    [Garmin Connect Developer Program](https://developer.garmin.com/gc-developer-program/).
 3. Sign in as that rider and save the key and its expiry date in **Settings**. Garmin

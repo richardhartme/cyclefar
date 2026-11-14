@@ -29,3 +29,8 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      rider_profile:
+        garmin_api_key: "Garmin API key"
+        garmin_api_key_expires_on: "Garmin key expiry date"

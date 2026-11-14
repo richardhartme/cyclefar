@@ -2,7 +2,7 @@
 
 Acceptance criteria for the application as built. Reference the IDs in RSpec descriptions and commits. Deliberately absent features are stated as such.
 
-**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md) but not yet built (#54–#58). The rider-owned `Activity` in FBK-004 is built, but until then the only way to create one is a FIT upload, so every ride is linked to a completed workout. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
+**Known gaps:** progression bias is stored globally, not per family (TRAINING_ENGINE.md §32), and live SMTP delivery has not been verified. Garmin Connect import ([§17](#17-garmin-connect)) is accepted in [ADR 0002](adr/0002-garmin-connect-activity-import.md); enablement and the Settings key are built, the import is not yet built (#56–#58). The rider-owned `Activity` in FBK-004 is built, but until then the only way to create one is a FIT upload, so every ride is linked to a completed workout. See [ARCHITECTURE.md](ARCHITECTURE.md) for how each requirement is implemented.
 
 ## 0. Product identity
 
@@ -591,7 +591,7 @@ Automated coverage target: end-to-end two-user regression matrix with foreign-ID
 
 ## 17. Garmin Connect
 
-Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). Not yet built (#53–#58).
+Stage 1 of Garmin import: pull the rider's activities into the calendar and link rides to completed workouts. Display only. See [ADR 0002](adr/0002-garmin-connect-activity-import.md) and [GARMIN_CONNECT.md](GARMIN_CONNECT.md). GAR-001 and GAR-002 are built; the import, matching and calendar display are not yet built (#56–#58).
 
 ### GAR-001 Garmin enablement
 

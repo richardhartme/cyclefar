@@ -4,7 +4,7 @@
 
 When the Garmin rider asks, import their Garmin Connect activities for the active plan's dates, show them on the calendar and link rides to completed workouts. This is Stage 1 of [ADR 0002](adr/0002-garmin-connect-activity-import.md): display only, with no effect on the training engine. The requirements are [GAR-001–GAR-013](REQUIREMENTS.md#17-garmin-connect).
 
-**Status:** accepted. The rider-owned `Activity` model and the `GarminConnect::Client` adapter are built; enablement, import, matching and calendar display are not yet built (#55–#58).
+**Status:** accepted. The rider-owned `Activity` model, the `GarminConnect::Client` adapter, enablement and the Settings key are built; import, matching and calendar display are not yet built (#56–#58).
 
 Import is manual. There is no background polling, recurring job, webhook, OAuth, business-tier access or workout push to Garmin.
 
@@ -13,8 +13,8 @@ Import is manual. There is no background polling, recurring job, webhook, OAuth,
 ## Enablement
 
 - Garmin is enabled for one rider per deployment: the user whose email matches `GARMIN_RIDER_EMAIL`.
-- Without the variable, or for any other rider, no Garmin UI is shown and Garmin routes return 404.
-- The rider saves a **Personal API key** from the Garmin Connect Developer Program in Settings, with its expiry date. The key is encrypted with Active Record Encryption and never shown after saving.
+- Without the variable, or for any other rider, no Garmin UI is shown and Garmin routes return 404 (`GarminRiderRequired`).
+- The rider saves a **Personal API key** from the Garmin Connect Developer Program in Settings, with its expiry date (`PATCH /settings/garmin_key`). The key is encrypted with Active Record Encryption and never shown after saving. A blank key field keeps the saved key; **Remove Garmin key** clears the key and its date and keeps imported activities. A saved FTP comes first, because the key lives on the rider profile.
 - Settings and the import button warn at 14 days or fewer before the expiry date, and once it has passed.
 
 ## Authentication

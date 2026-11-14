@@ -560,6 +560,9 @@ CREATE TABLE public.rider_profiles (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     user_id bigint NOT NULL,
+    garmin_api_key text,
+    garmin_api_key_expires_on date,
+    CONSTRAINT rider_profiles_garmin_key_expiry CHECK (((garmin_api_key IS NULL) OR (garmin_api_key_expires_on IS NOT NULL))),
     CONSTRAINT rider_profiles_positive_ftp CHECK ((ftp_watts > 0))
 );
 
@@ -1579,6 +1582,7 @@ ALTER TABLE ONLY public.activities
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261114120000'),
 ('20261113175339'),
 ('20261030133000'),
 ('20261030132254'),

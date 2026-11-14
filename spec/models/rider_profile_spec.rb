@@ -42,4 +42,30 @@ RSpec.describe RiderProfile, type: :model do
     expect(profile.reload.intervals_icu_api_key).to eq("secret-test-key")
     expect(profile.inspect).not_to include("secret-test-key")
   end
+
+  describe "GAR-002 Garmin key expiry" do
+    let(:today) { Date.new(2026, 11, 14) }
+
+    def profile_expiring_in(days)
+      build(:rider_profile, garmin_api_key: "garmin-key", garmin_api_key_expires_on: today + days)
+    end
+
+    it "is current more than 14 days out, expiring from 14 days to the expiry day, and expired after it" do
+      states = [ 15, 14, 0, -1 ].index_with { |days| profile_expiring_in(days).garmin_api_key_expiry(today) }
+
+      expect(states).to eq(15 => :current, 14 => :expiring, 0 => :expiring, -1 => :expired)
+    end
+
+    it "has no expiry state without a saved key" do
+      expect(build(:rider_profile).garmin_api_key_expiry(today)).to be_nil
+    end
+
+    it "requires an expiry date with a key, in the model and in PostgreSQL" do
+      profile = build(:rider_profile, garmin_api_key: "garmin-key")
+
+      expect(profile).not_to be_valid
+      expect(profile.errors[:garmin_api_key_expires_on]).to include("can't be blank")
+      expect_database_rejection(ActiveRecord::StatementInvalid) { profile.save!(validate: false) }
+    end
+  end
 end

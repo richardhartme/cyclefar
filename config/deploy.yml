@@ -54,6 +54,7 @@ env:
     - CYCLEFAR_SMTP_HOST
     - CYCLEFAR_SMTP_USERNAME
     - CYCLEFAR_SMTP_PASSWORD
+    - GARMIN_RIDER_EMAIL
   clear:
     CYCLEFAR_APP_HOST: cyclefar.com
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
