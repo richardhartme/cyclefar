@@ -1,0 +1,12 @@
+<%# GAR-002: shown in Settings and next to Import from Garmin. %>
+<% expiry = profile.garmin_api_key_expiry %>
+<% if expiry.in?(%i[expiring expired]) %>
+  <% expires_on = profile.garmin_api_key_expires_on %>
+  <div role="alert" class="alert <%= expiry == :expired ? "alert-error" : "alert-warning" %> alert-soft">
+    <span>
+      Your Garmin key <%= expiry == :expired ? "expired" : "expires" %> on
+      <time datetime="<%= expires_on.iso8601 %>"><%= expires_on.strftime("%-d %b %Y") %></time>.
+      Create a new key in the Garmin Connect Developer Program and save it in Settings.
+    </span>
+  </div>
+<% end %>

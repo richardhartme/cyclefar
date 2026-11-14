@@ -57,12 +57,14 @@ Behaviour:
 - A changed FTP refreshes workouts already synced to Intervals.icu, and the success message gives the count. If the refresh fails, the save still succeeds and the rider is told to check the API key and retry with Sync.
 - there is no `Test connection` button.
 
-**Garmin Connect** *(ADR 0002)*, shown only to the `GARMIN_RIDER_EMAIL` rider:
+**Garmin Connect**, its own section and form below the Settings form, shown only to the `GARMIN_RIDER_EMAIL` rider:
 
-- Garmin Personal API key, masked after save like the Intervals.icu key, with a short note on where to create one;
+- Garmin Personal API key, masked after save like the Intervals.icu key, with a short note on where to create one; leaving it blank keeps the saved key;
 - Key expiry date, required with a key, with a note that Garmin doesn't show it to CycleFar;
-- a warning when the key expires in 14 days or fewer, and an alert once it has expired, telling the rider to create a new key;
-- clearing the key hides the import button and keeps imported activities.
+- `Save Garmin key`, returning to Settings with `Garmin key saved.` or `Garmin key not saved: …`;
+- a warning when the key expires in 14 days or fewer (including the expiry day), and an alert once it has expired, telling the rider to create a new key;
+- `Remove Garmin key` asks for confirmation, clears the key and its date and keeps imported activities; *(ADR 0002, import not yet built)* it hides the import button;
+- before FTP is saved, the section asks for FTP first.
 
 ## 3. Create-plan configuration
 

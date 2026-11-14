@@ -1,0 +1,39 @@
+<%# GAR-002: only rendered for the GARMIN_RIDER_EMAIL rider. %>
+<section aria-labelledby="garmin-heading" class="border-base-300 rounded-box space-y-3 border p-5">
+  <h2 id="garmin-heading" class="text-base font-semibold">Garmin Connect</h2>
+
+  <% if profile.persisted? %>
+    <% saved_key = profile.garmin_api_key.present? %>
+    <% if saved_key %>
+      <%= render "garmin_keys/expiry_warning", profile: profile %>
+      <div class="alert alert-success alert-soft py-3" aria-label="Saved Garmin key">
+        <span>
+          Saved Garmin key: •••••••• · <%= profile.garmin_api_key_expiry == :expired ? "expired" : "expires" %>
+          <time datetime="<%= profile.garmin_api_key_expires_on.iso8601 %>"><%= profile.garmin_api_key_expires_on.strftime("%-d %b %Y") %></time>
+        </span>
+      </div>
+    <% end %>
+
+    <%= form_with scope: :garmin_key, url: garmin_key_path, method: :patch, class: "fieldset" do |form| %>
+      <%= form.label :garmin_api_key, "Garmin Personal API key", class: "label font-semibold" %>
+      <%= form.password_field :garmin_api_key, value: nil, autocomplete: "new-password", aria: { describedby: "garmin-key-help" }, class: "input w-full" %>
+      <p id="garmin-key-help" class="label text-base-content/60 leading-relaxed whitespace-normal">
+        Create a Personal API key in the Garmin Connect Developer Program. Stored encrypted.<% if saved_key %> Leave blank to keep your saved key.<% end %>
+      </p>
+
+      <%= form.label :garmin_api_key_expires_on, "Key expiry date", class: "label mt-3 font-semibold" %>
+      <%= form.date_field :garmin_api_key_expires_on, value: profile.garmin_api_key_expires_on, required: true, aria: { describedby: "garmin-expiry-help" }, class: "input w-full sm:w-56" %>
+      <p id="garmin-expiry-help" class="label text-base-content/60 leading-relaxed whitespace-normal">Garmin doesn't tell CycleFar when the key expires, so enter the date Garmin showed when you created it.</p>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <%= form.submit "Save Garmin key", class: "btn btn-primary btn-sm" %>
+      </div>
+    <% end %>
+
+    <% if saved_key %>
+      <%= button_to "Remove Garmin key", garmin_key_path, method: :delete, data: { turbo_confirm: "Remove your Garmin key? Imports stop; imported activities are kept." }, class: "btn btn-ghost btn-sm text-error" %>
+    <% end %>
+  <% else %>
+    <p class="text-base-content/70">Save your FTP above before adding a Garmin key.</p>
+  <% end %>
+</section>

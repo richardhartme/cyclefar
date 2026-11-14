@@ -51,6 +51,10 @@
       </div>
     <% end %>
 
+    <% if Current.user.garmin_rider? %>
+      <%= render "garmin_keys/settings", profile: @profile %>
+    <% end %>
+
     <section aria-labelledby="ftp-history-heading" class="border-base-300 border-t pt-6">
       <h2 id="ftp-history-heading" class="text-xl font-semibold">FTP history</h2>
       <p class="mt-2 text-base-content/70">The most recent reading date sets your current FTP. For readings on the same date, the newest entry wins. Completed workouts keep their saved targets.</p>

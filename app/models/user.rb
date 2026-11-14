@@ -13,4 +13,10 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   validates :email_address, presence: true, uniqueness: { case_sensitive: false }
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
+
+  # Garmin is enabled for the one rider GARMIN_RIDER_EMAIL names (GAR-001).
+  def garmin_rider?
+    garmin_email = User.normalize_value_for(:email_address, ENV["GARMIN_RIDER_EMAIL"].to_s)
+    garmin_email.present? && email_address == garmin_email
+  end
 end

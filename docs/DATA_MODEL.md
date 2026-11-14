@@ -17,15 +17,16 @@ Fields:
 - `user_id: bigint, null: false` — unique foreign key to `User`
 - timestamps
 
-Garmin fields *(ADR 0002, not yet built)*, used only for the `GARMIN_RIDER_EMAIL` rider:
+Garmin fields (ADR 0002), used only for the `GARMIN_RIDER_EMAIL` rider:
 
-- `garmin_api_key: string, nullable` — Personal API key, encrypted with Active Record Encryption
-- `garmin_api_key_expires_on: date, nullable` — entered by the rider, because Garmin doesn't return it; required when a key is saved
-- `garmin_last_imported_at: datetime, nullable` — start of the next import window (minus 7 days)
+- `garmin_api_key: text, nullable` — Personal API key, encrypted with Active Record Encryption
+- `garmin_api_key_expires_on: date, nullable` — entered by the rider, because Garmin doesn't return it; required when a key is saved (`rider_profiles_garmin_key_expiry` check)
+- `garmin_last_imported_at: datetime, nullable` *(not yet built)* — start of the next import window (minus 7 days)
 
 Validations:
 
 - FTP > 0
+- Garmin key expiry date present whenever a Garmin key is saved; a key required when saving through the Garmin key form
 
 ## FtpReading
 
